@@ -22,7 +22,7 @@
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tesla Delivery Hub</title>'
   +'<style>'
   +'*{box-sizing:border-box;margin:0;padding:0}'
-  +'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#393c41;background:#fff;font-size:15px;line-height:1.5}'
+  +'body{font-family:Universal Sans Display,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#393c41;background:#fff;font-size:15px;line-height:1.5}'
   +'.hdr{height:56px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;padding:0 32px}'
   +'.hdr .logo{font-size:18px;font-weight:600;letter-spacing:3px;color:#171a20}'
   +'.hdr .sep{margin:0 14px;color:#ccc}'
