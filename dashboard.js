@@ -208,40 +208,6 @@ function launchDashboard() {
           .catch(function() { tiResults[a.ReferenceNumber] = { make: '', model: '', plate: '', vin: '', acqId: '' }; });
       }));
 
-      // Step 3: Get trade-in details from AMP search (bypass CORS with GM_xmlhttpRequest)
-      if (true) {
-        await Promise.all(tiClients.map(function(a) {
-          return new Promise(function(resolve) {
-            fetch_amp({
-              method: 'POST',
-              url: 'https://amp.tesla.com/search/search-acquisitions-by-filter-rest',
-              headers: { 'Content-Type': 'application/json' },
-              data: JSON.stringify({ args: { limit: 5, offset: 0, filters: [{ referenceNumber: { equals: a.ReferenceNumber, caseSensitive: false } }], orderBy: [{ field: 'createdDate', order: 'DESC' }] } }),
-              anonymous: false,
-              onload: function(resp) {
-                try {
-                  var j = JSON.parse(resp.responseText);
-                  if (j.acquisitions && j.acquisitions.length > 0) {
-                    var acq = j.acquisitions[0];
-                    var v = acq.vehicle || {};
-                    var ti = tiResults[a.ReferenceNumber] || {};
-                    ti.plate = v.license_plate_number || ti.plate || '';
-                    if (!ti.make && acq.acq_name) {
-                      var parts = (acq.acq_name||'').split('-');
-                      if (parts.length >= 5) { ti.make = parts[3].replace(/_/g,' '); ti.model = parts[4]; }
-                    }
-                    if (!ti.vin) ti.vin = acq.vin || '';
-                    tiResults[a.ReferenceNumber] = ti;
-                  }
-                } catch(e) {}
-                resolve();
-              },
-              onerror: function() { resolve(); }
-            });
-          });
-        }));
-      }
-
       const items = advisor.Data.Dashboard.map(a => {
         const dro = droMap[a.ReferenceNumber] || {};
         const droTime = dro.ScheduledDeliveryStartDateString || '';
