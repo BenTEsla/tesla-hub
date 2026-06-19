@@ -28,56 +28,15 @@ function launchDashboard() {
   // === Tesla Delivery Hub Dashboard v1 ===
   // Injected into DRO page to bypass CORS
 
-  // === AUTO-CAPTURE AUTH ===
-  // Monkey-patch XMLHttpRequest AND fetch to intercept DRO's own API calls
-  var AUTH = window._tdhAuth || null;
+  // === AUTH FROM LOCALSTORAGE (reliable, no monkey-patching!) ===
+  var token = (localStorage.getItem('delops_id_token')||'').replace(/^"|"$/g, '');
+  var userId = (localStorage.getItem('UserId')||'').replace(/^"|"$/g, '');
+  var AUTH = (token && userId) ? { token: 'Bearer ' + token, userId: userId } : null;
   var _authReady = AUTH ? Promise.resolve(AUTH) : null;
 
   if (!AUTH) {
-    _authReady = new Promise(function(resolve) {
-      // Patch fetch
-      var _origFetch = window.fetch;
-      window.fetch = function() {
-        var url = (typeof arguments[0] === 'string') ? arguments[0] : (arguments[0]?.url || '');
-        var opts = arguments[1] || {};
-        var hdrs = opts.headers || {};
-        if (url.includes('mytdeliveryopsapi') && (hdrs['Authorization'] || hdrs['authorization'])) {
-          if (!AUTH) {
-            AUTH = { token: hdrs['Authorization'] || hdrs['authorization'], userId: hdrs['userid'] || hdrs['UserId'] || '' };
-            window._tdhAuth = AUTH;
-            resolve(AUTH);
-          }
-        }
-        return _origFetch.apply(this, arguments);
-      };
-
-      // Also patch XMLHttpRequest for older code paths
-      var _origOpen = XMLHttpRequest.prototype.open;
-      var _origSetHeader = XMLHttpRequest.prototype.setRequestHeader;
-      XMLHttpRequest.prototype.open = function(method, url) {
-        this._tdhUrl = url;
-        this._tdhHeaders = {};
-        return _origOpen.apply(this, arguments);
-      };
-      XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
-        if (this._tdhHeaders) this._tdhHeaders[name] = value;
-        if (this._tdhUrl && this._tdhUrl.includes('mytdeliveryopsapi') && (name === 'Authorization' || name === 'authorization') && !AUTH) {
-          AUTH = { token: value, userId: this._tdhHeaders['userid'] || this._tdhHeaders['UserId'] || '' };
-          window._tdhAuth = AUTH;
-          resolve(AUTH);
-        }
-        return _origSetHeader.apply(this, arguments);
-      };
-
-      // The DRO page makes API calls on its own ??? just wait
-      // If after 30s still no auth, show message
-      setTimeout(function() {
-        if (!AUTH) {
-          var ld = document.getElementById('tdh-ld');
-          if (ld) ld.innerHTML = 'En attente du token... Navigue sur DRO (ouvre un RN) pour declencher une requete API.';
-        }
-      }, 10000);
-    });
+    alert('Token non trouve. Connecte-toi a DRO d\'abord puis relance.');
+    return;
   }
 
   // Remove existing
@@ -195,13 +154,6 @@ function launchDashboard() {
     const tbl = document.getElementById('tdh-tbl');
     const tb = document.getElementById('tdh-tb');
     ld.style.display = ''; tbl.style.display = 'none';
-
-    // Wait for auth if not ready yet
-    if (!AUTH && _authReady) {
-      ld.innerHTML = '<span class="sp"></span> Capture du token en cours...';
-      AUTH = await _authReady;
-    }
-    if (!AUTH) { ld.innerHTML = 'Token non capture. Ouvre DRO Advisor puis relance.'; return; }
 
     ld.innerHTML = '<span class="sp"></span> Chargement des livraisons...';
     const h = { 'Authorization': AUTH.token, 'Content-Type': 'application/json', 'userid': AUTH.userId };
