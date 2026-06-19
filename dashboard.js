@@ -14,6 +14,8 @@
   var fD=function(d){return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})};
   var iD=function(d){return d.toISOString().split('T')[0]};
 
+  var dates=[];for(var di=0;di<7;di++){var dd=new Date(Date.now()+di*864e5);var lbl=di===0?'Aujourd\'hui':di===1?'Demain':'J+'+di;dates.push('<option value="'+iD(dd)+'">'+lbl+' - '+fD(dd)+'</option>')}
+
   // Open new tab and write clean HTML
   var w=window.open('','_blank');
   if(!w){alert('Popup bloque!');return}
@@ -36,9 +38,8 @@
   +'.s2{width:1px;height:28px;background:#e0e0e0;margin:0 10px;display:inline-block}'
   +'select{padding:10px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;font-family:inherit;color:#333}'
   +'.btn{padding:10px 24px;border-radius:6px;border:none;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer}'
-  +'.bp{background:#fff;color:#393c41;border:1px solid #d0d0d0}.bp:hover,.bk:hover,.bl:hover{background:#f5f5f5}'
-  +'.bk{background:#fff;color:#393c41;border:1px solid #d0d0d0}'
-  +'.bl{background:#fff;color:#393c41;border:1px solid #d0d0d0}'
+  +'.bp{background:#f5f5f5;color:#393c41;border:1px solid #d0d0d0}.bp:hover,.bk:hover{background:#e8e8e8}'
+  +'.bk{background:#f5f5f5;color:#393c41;border:1px solid #d0d0d0}'
   +'.sts{margin-left:auto;display:flex;gap:36px}'
   +'.sn{font-size:32px;font-weight:300;text-align:center;color:#171a20}'
   +'.sl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#999;text-align:center}'
@@ -47,9 +48,9 @@
   +'th{padding:16px 20px;text-align:left;font-size:13px;color:#888;font-weight:500;border-bottom:2px solid #eee}'
   +'td{padding:20px 20px;font-size:15px;border-bottom:1px solid #f0f0f0;vertical-align:middle}'
   +'tr:hover td{background:#fafbff}'
-  +'.ck{width:18px;height:18px;cursor:pointer;-webkit-appearance:none;appearance:none;border:2px solid #ccc;border-radius:3px;background:#fff;position:relative}'
+  +'.ck{width:16px;height:16px;cursor:pointer;-webkit-appearance:none;appearance:none;border:1.5px solid #bbb;border-radius:2px;background:#fff;position:relative;vertical-align:middle}'
   +'.ck:checked{background:#393c41;border-color:#393c41}'
-  +'.ck:checked::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}'
+  +'.ck:checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}'
   +'.badge{display:inline-block;padding:5px 14px;border-radius:4px;font-size:13px;font-weight:600}'
   +'.badge.cash{background:#e6f4ea;color:#1e7e34}'
   +'.badge.leasing{background:#e3f2fd;color:#1565c0}'
@@ -67,21 +68,20 @@
   +'.spin{display:inline-block;width:24px;height:24px;border:3px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:s .7s linear infinite;margin-right:12px;vertical-align:middle}'
   +'@keyframes s{to{transform:rotate(360deg)}}'
   +'</style></head><body>'
-  +'<div class="hdr"><span class="logo">TESLA</span><span class="sep">|</span><span class="app">Delivery Hub</span><div style="flex:1;max-width:400px;margin:0 40px"><input type="text" id="srch" placeholder="Search by VIN, RN, LP or Name" style="width:100%;padding:10px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:14px;font-family:inherit;color:#333;outline:none"></div><span class="ri">Ben Daubin</span></div>'
+  +'<div class="hdr"><div style="display:flex;align-items:center;gap:14px;flex-shrink:0"><span class="logo">TESLA</span><span class="sep">|</span><span class="app">Delivery Hub</span></div><div style="flex:1;display:flex;justify-content:center"><input type="text" id="srch" placeholder="Search by VIN, RN, LP or Name" style="width:100%;max-width:500px;padding:10px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:14px;font-family:inherit;color:#333;outline:none"></div><span class="ri">Ben Daubin</span></div>'
   +'<div class="ttl">Delivery Dashboard</div>'
   +'<div class="bar">'
   +'<button class="pill on" onclick="F(\'all\')">Tous</button>'
   +CES.map(function(c){return'<button class="pill" onclick="F(\''+c+'\')">'+c.split(' ')[0]+'</button>'}).join('')
   +'<span class="s2"></span>'
-  +'<select id="dt"><option value="'+iD(now)+'">Aujourd\'hui - '+fD(now)+'</option><option value="'+iD(tmr)+'">Demain - '+fD(tmr)+'</option></select>'
+  +'<select id="dt">'+dates.join('')+'</select>'
   +'<button class="btn bp" onclick="L()">Charger</button>'
   +'<button class="btn bk" id="gn" style="display:none" onclick="G()">Generer PDFs</button>'
-  +'<button class="btn bl" onclick="window.close()">Fermer</button>'
   +'<div class="sts"><div><div class="sn" id="sT">-</div><div class="sl">Livraisons</div></div>'
   +'<div><div class="sn" id="sO">-</div><div class="sl">Pretes</div></div>'
   +'<div><div class="sn" id="sA">-</div><div class="sl">Alertes</div></div></div>'
   +'</div>'
-  +'<div class="wrp"><div class="ld" id="lg"><span class="spin"></span> Chargement...</div>'
+  +'<div class="wrp"><div class="ld" id="lg" style="display:none"><span class="spin"></span> Chargement...</div>'
   +'<table id="tbl" style="display:none"><thead><tr><th style="width:44px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
   +'<th style="cursor:pointer" onclick="S(\'t\')">Heure</th><th style="cursor:pointer" onclick="S(\'name\')">Client</th><th style="cursor:pointer" onclick="S(\'model\')">Vehicule</th><th style="cursor:pointer" onclick="S(\'plate\')">Plaque</th><th>Amount Due</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
   +'</tr></thead><tbody id="tb"></tbody></table></div>'
