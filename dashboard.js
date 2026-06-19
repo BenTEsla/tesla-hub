@@ -370,19 +370,16 @@ function launchDashboard() {
     try {
     var data = window._tdhData || [];
     var checked = [];
-    document.querySelectorAll('.rc:checked').forEach(function(c) {
-      var idx = parseInt(c.dataset.idx);
-      if (data[idx]) checked.push(data[idx]);
-    });
-    if (checked.length === 0) {
-      // Fallback: if no checkboxes found, use all visible data
-      document.querySelectorAll('.rc').forEach(function(c) {
+    // Get checked items from the overlay table
+    var overlay = document.getElementById('tdh-overlay');
+    if (overlay) {
+      overlay.querySelectorAll('.rc:checked').forEach(function(c) {
         var idx = parseInt(c.dataset.idx);
-        if (data[idx] && c.closest('tr').style.display !== 'none') checked.push(data[idx]);
+        if (data[idx]) checked.push(data[idx]);
       });
     }
-    if (checked.length === 0 && data.length > 0) {
-      // Last fallback: use all data
+    if (checked.length === 0) {
+      // No checkboxes found in overlay, use all data
       checked = data;
     }
     if (checked.length === 0) { alert('Aucune livraison !'); return; }
@@ -429,7 +426,7 @@ function launchDashboard() {
       var motorLabel = motorFR(d.trim);
       var modelLine = trimLabel + (motorLabel ? ',  ' + motorLabel : '');
       var imgUrl = 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&model=' + mdl + '&view=STUD_3QTR&bkba_opt=1&options=' + (d.optionCodes||cc) + '&size=1820';
-      var carSection = '<div class="car-wrap"><div class="model-label">' + modelLine + '</div><img src="' + imgUrl + '" style="max-width:600px;width:85%;height:auto;margin:12px auto;display:block" onerror="this.outerHTML=\'<div style=padding:20px;font-size:28px;font-weight:200;color:#999;letter-spacing:4px>' + colorFR(d.color) + '</div>\'"/></div>';
+      var carSection = '<div class="car-wrap"><div class="model-label">' + modelLine + '</div><img src="' + imgUrl + '" style="max-width:100%;width:500px;height:auto;margin:12px auto;display:block" onerror="this.outerHTML=\'<div style=padding:20px;font-size:28px;font-weight:200;color:#999;letter-spacing:4px>' + colorFR(d.color) + '</div>\'"/></div>';
 
       // Trade-in content
       var tiContent;
@@ -441,8 +438,6 @@ function launchDashboard() {
         if (d.tradeInVin) {
           tiContent += '<div style="margin-top:6px"><span class="lbl">VIN</span><br><span style="font-size:10px;font-family:monospace">' + d.tradeInVin + '</span></div>';
         }
-      } else if (hasTI) {
-        tiContent = '<div style="text-align:center;padding:8px 0"><span style="font-size:13px;font-weight:600;color:#92400e">Reprise en cours</span></div>';
       } else {
         tiContent = '<div style="text-align:center;flex:1;display:flex;align-items:center;justify-content:center"><span style="font-size:14px;font-weight:600;color:#dc2626">Aucune reprise</span></div>';
       }
