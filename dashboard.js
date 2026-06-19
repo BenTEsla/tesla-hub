@@ -1,6 +1,6 @@
 // Tesla Delivery Hub v7 - Overlay with prefixed CSS (no iframe, no shadow DOM)
 (function(){
-  if(document.getElementById('tdh-launch'))return;
+  var _old=document.getElementById('tdh-launch');if(_old)_old.remove();
   var b=document.createElement('div');b.id='tdh-launch';b.textContent='DELIVERY HUB';
   b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99998;background:#171a20;color:#fff;padding:12px 24px;border-radius:30px;cursor:pointer;font-family:sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;box-shadow:0 4px 12px rgba(0,0,0,.3)';
   b.onclick=function(){startDashboard()};document.body.appendChild(b);
