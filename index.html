@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesla Delivery Hub</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:20px;padding:48px;max-width:600px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.08);text-align:center}
+.logo{font-size:14px;letter-spacing:8px;color:#999;font-weight:500}
+h1{font-size:32px;font-weight:300;margin:8px 0 4px}
+h1 b{font-weight:700}
+.sub{color:#999;font-size:14px;margin-bottom:32px}
+.big-btn{display:inline-block;padding:18px 48px;background:#171a20;color:#fff;border-radius:40px;text-decoration:none;font-size:18px;letter-spacing:2px;font-weight:600;cursor:grab;transition:transform 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.big-btn:hover{transform:scale(1.03)}
+.arrow{font-size:32px;color:#ccc;margin:16px 0}
+.steps{text-align:left;margin-top:32px}
+.step{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
+.num{width:36px;height:36px;border-radius:50%;background:#171a20;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.step p{font-size:15px;color:#333;line-height:1.6}
+.step strong{color:#171a20}
+.step code{background:#f0f0f0;padding:3px 10px;border-radius:6px;font-size:13px}
+.divider{height:1px;background:#eee;margin:32px 0}
+.footer{font-size:11px;color:#bbb;margin-top:24px;line-height:1.6}
+.manual{margin-top:24px;padding:16px;background:#f9f9f9;border-radius:12px;text-align:left}
+.manual summary{cursor:pointer;font-size:13px;color:#666;font-weight:600}
+.manual pre{margin-top:12px;padding:12px;background:#fff;border:1px solid #eee;border-radius:8px;font-size:11px;overflow-x:auto;word-break:break-all;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo">T E S L A</div>
+<h1><b>Delivery Hub</b></h1>
+<p class="sub">Dashboard de preparation des livraisons</p>
+
+<p style="font-size:15px;color:#555;margin-bottom:16px">Glisse ce bouton dans ta barre de favoris :</p>
+
+<a class="big-btn" href="javascript:void(fetch('https://raw.githubusercontent.com/BenTEsla/tesla-hub/main/dashboard.js').then(function(r){return r.text()}).then(function(t){eval(t)}))">
+DELIVERY HUB
+</a>
+
+<div class="arrow">&#8595;</div>
+<p style="font-size:13px;color:#999">Glisse-le vers ta barre de favoris Chrome</p>
+
+<div class="divider"></div>
+
+<div class="steps">
+<div class="step">
+<div class="num">1</div>
+<div><p>Glisse le bouton noir ci-dessus dans ta <strong>barre de favoris</strong></p></div>
+</div>
+<div class="step">
+<div class="num">2</div>
+<div><p>Ouvre <a href="https://dro.tesla.com/advisor" target="_blank" style="color:#3e6ae1"><strong>dro.tesla.com</strong></a></p></div>
+</div>
+<div class="step">
+<div class="num">3</div>
+<div><p>Clique sur le favori <strong>DELIVERY HUB</strong></p></div>
+</div>
+<div class="step">
+<div class="num">4</div>
+<div><p>Clique le bouton noir en bas a droite, puis <strong>Charger</strong></p></div>
+</div>
+</div>
+
+<details class="manual">
+<summary>Installation manuelle (si le glisser-deposer ne marche pas)</summary>
+<p style="font-size:13px;color:#666;margin-top:8px">Clic droit sur la barre de favoris > Ajouter une page :</p>
+<p style="font-size:13px;color:#333;margin:8px 0"><strong>Nom :</strong> DELIVERY HUB</p>
+<p style="font-size:13px;color:#333;margin-bottom:4px"><strong>URL :</strong></p>
+<pre>javascript:void(fetch('https://raw.githubusercontent.com/BenTEsla/tesla-hub/main/dashboard.js').then(function(r){return r.text()}).then(function(t){eval(t)}))</pre>
+</details>
+
+<div class="footer">
+Tesla Delivery Hub v1.0<br>
+Developpe par Ben Daubin - Rennes Saint-Jacques
+</div>
+</div>
+</body>
+</html>
