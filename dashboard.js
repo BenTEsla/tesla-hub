@@ -28,12 +28,21 @@ function launchDashboard() {
   // === Tesla Delivery Hub Dashboard v1 ===
   // Injected into DRO page to bypass CORS
 
-  // === AUTH: try localStorage first, fallback to monkey-patch ===
-  var token = (localStorage.getItem('delops_id_token')||'').replace(/^"|"$/g, '');
-  var userId = (localStorage.getItem('UserId')||'').replace(/^"|"$/g, '');
-  var AUTH = (token && userId) ? { token: 'Bearer ' + token, userId: userId } : null;
+  // === AUTH: try multiple sources ===
+  var AUTH = null;
 
-  // Fallback: monkey-patch fetch to capture token from DRO's own API calls
+  // Source 1: localStorage tokens
+  var tokenKeys = ['delops_id_token', 'delops_id_token_data', 'delops_id_warp_token'];
+  var userId = (localStorage.getItem('UserId')||'').replace(/^"|"$/g, '');
+  for (var ki = 0; ki < tokenKeys.length; ki++) {
+    var rawToken = (localStorage.getItem(tokenKeys[ki])||'').replace(/^"|"$/g, '');
+    if (rawToken && rawToken.length > 100 && userId) {
+      AUTH = { token: 'Bearer ' + rawToken, userId: userId };
+      break;
+    }
+  }
+
+  // Source 2: monkey-patch fetch to capture from DRO's API calls
   if (!AUTH) {
     var _origFetch = window.fetch;
     window.fetch = function() {
@@ -42,7 +51,7 @@ function launchDashboard() {
       var hdrs = opts.headers || {};
       if (url.indexOf('mytdeliveryopsapi') >= 0 && (hdrs['Authorization'] || hdrs['authorization'])) {
         if (!AUTH) {
-          AUTH = { token: hdrs['Authorization'] || hdrs['authorization'], userId: hdrs['userid'] || hdrs['UserId'] || '' };
+          AUTH = { token: hdrs['Authorization'] || hdrs['authorization'], userId: hdrs['userid'] || hdrs['UserId'] || userId || '' };
         }
       }
       return _origFetch.apply(this, arguments);
@@ -166,7 +175,10 @@ function launchDashboard() {
     ld.style.display = ''; tbl.style.display = 'none';
 
     ld.innerHTML = '<span class="sp"></span> Chargement des livraisons...';
-    if (!AUTH) { ld.innerHTML = 'Token non trouve. Clique sur un client dans DRO, puis relance le dashboard.'; return; }
+    if (!AUTH) {
+      ld.innerHTML = 'Token non trouve.<br><br><button onclick="location.reload()" style="padding:10px 24px;background:#3e6ae1;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">Rafraichir DRO et reessayer</button>';
+      return;
+    }
     const h = { 'Authorization': AUTH.token, 'Content-Type': 'application/json', 'userid': AUTH.userId };
     const dateStr = document.getElementById('tdh-date').value;
 
