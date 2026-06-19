@@ -28,15 +28,25 @@ function launchDashboard() {
   // === Tesla Delivery Hub Dashboard v1 ===
   // Injected into DRO page to bypass CORS
 
-  // === AUTH FROM LOCALSTORAGE (reliable, no monkey-patching!) ===
+  // === AUTH: try localStorage first, fallback to monkey-patch ===
   var token = (localStorage.getItem('delops_id_token')||'').replace(/^"|"$/g, '');
   var userId = (localStorage.getItem('UserId')||'').replace(/^"|"$/g, '');
   var AUTH = (token && userId) ? { token: 'Bearer ' + token, userId: userId } : null;
-  var _authReady = AUTH ? Promise.resolve(AUTH) : null;
 
+  // Fallback: monkey-patch fetch to capture token from DRO's own API calls
   if (!AUTH) {
-    alert('Token non trouve. Connecte-toi a DRO d\'abord puis relance.');
-    return;
+    var _origFetch = window.fetch;
+    window.fetch = function() {
+      var url = (typeof arguments[0] === 'string') ? arguments[0] : (arguments[0]?.url || '');
+      var opts = arguments[1] || {};
+      var hdrs = opts.headers || {};
+      if (url.indexOf('mytdeliveryopsapi') >= 0 && (hdrs['Authorization'] || hdrs['authorization'])) {
+        if (!AUTH) {
+          AUTH = { token: hdrs['Authorization'] || hdrs['authorization'], userId: hdrs['userid'] || hdrs['UserId'] || '' };
+        }
+      }
+      return _origFetch.apply(this, arguments);
+    };
   }
 
   // Remove existing
@@ -156,6 +166,7 @@ function launchDashboard() {
     ld.style.display = ''; tbl.style.display = 'none';
 
     ld.innerHTML = '<span class="sp"></span> Chargement des livraisons...';
+    if (!AUTH) { ld.innerHTML = 'Token non trouve. Clique sur un client dans DRO, puis relance le dashboard.'; return; }
     const h = { 'Authorization': AUTH.token, 'Content-Type': 'application/json', 'userid': AUTH.userId };
     const dateStr = document.getElementById('tdh-date').value;
 
