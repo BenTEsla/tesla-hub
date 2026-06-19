@@ -80,7 +80,7 @@
   +'.fi:focus{border-color:#999}'
   +'</style></head><body>'
   +'<div class="topfix">'
-  +'<div class="hdr"><div style="display:flex;align-items:center;gap:14px;flex-shrink:0"><svg width="20" height="24" viewBox="0 0 100 100" fill="#171a20"><path d="M50 5C30 5 14 9 14 9l6 13s12-4 30-4 30 4 30 4l6-13S70 5 50 5zm0 17c-14 0-25 3-25 3l5 10s8-3 20-3 20 3 20 3l5-10S64 22 50 22zm0 15l-8 58h16L50 37z"/></svg><span class="sep">|</span><span class="app">Delivery Hub</span></div><div style="flex:1;display:flex;justify-content:center"><input type="text" id="srch" placeholder="Search by VIN, RN, LP or Name" style="width:100%;max-width:500px;padding:10px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:14px;font-family:inherit;color:#333;outline:none"></div><span class="ri">Ben Daubin</span></div>'
+  +'<div class="hdr"><div style="display:flex;align-items:center;gap:14px;flex-shrink:0"><img src="https://dro.tesla.com/favicon.ico" style="height:22px;width:auto" onerror="this.outerHTML=\'<span style=font-size:22px;font-weight:800;color:#171a20>T</span>\'"><span class="sep">|</span><span class="app">Delivery Hub</span></div><div style="flex:1;display:flex;justify-content:center"><input type="text" id="srch" placeholder="Search by VIN, RN, LP or Name" style="width:100%;max-width:500px;padding:10px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:14px;font-family:inherit;color:#333;outline:none"></div><span class="ri">Ben Daubin</span></div>'
   +'<div class="ttl">Delivery Dashboard</div>'
   +'<div class="bar">'
   +'<button class="pill on" onclick="F(\'all\')">Tous</button>'
