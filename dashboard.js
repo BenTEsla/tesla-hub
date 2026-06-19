@@ -25,13 +25,11 @@ function launchHub(){
   var fD=function(d){return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})};
   var iD=function(d){return d.toISOString().split('T')[0]};
 
-  // NUKE the page â€” remove ALL DRO content and styles
-  document.querySelectorAll('link[rel="stylesheet"],style').forEach(function(s){s.remove()});
-  document.body.className='';
-  document.body.removeAttribute('style');
-
-  // Write clean page
-  document.head.innerHTML='<meta charset="utf-8"><title>Tesla Delivery Hub</title><style>'
+  // NUKE the page â€” document.open/write/close kills Angular completely
+  // Save references before nuking
+  window._TDH={AUTH:AUTH,CFG:CFG,CES:CES,BASE:BASE,FR:FR,tr:tr,pT:pT,pC:pC,fD:fD,iD:iD,now:now,tmr:tmr};
+  document.open();
+  document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tesla Delivery Hub</title><style>'
   +'*{box-sizing:border-box;margin:0;padding:0}'
   +'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#393c41;background:#fff;font-size:15px;line-height:1.5}'
   +'.hdr{height:56px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;padding:0 32px}'
@@ -74,10 +72,8 @@ function launchHub(){
   +'.ld{text-align:center;padding:100px;font-size:16px;color:#999}'
   +'.spin{display:inline-block;width:24px;height:24px;border:3px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:s .7s linear infinite;margin-right:12px;vertical-align:middle}'
   +'@keyframes s{to{transform:rotate(360deg)}}'
-  +'</style>';
-
-  document.body.innerHTML=
-    '<div class="hdr"><span class="logo">TESLA</span><span class="sep">|</span><span class="app">Delivery Hub</span><span class="ri">Ben Daubin</span></div>'
+  +'</style></head><body>'
+  +'<div class="hdr"><span class="logo">TESLA</span><span class="sep">|</span><span class="app">Delivery Hub</span><span class="ri">Ben Daubin</span></div>'
   + '<div class="ttl">Delivery Dashboard</div>'
   + '<div class="bar">'
   + '<button class="pill on" id="fa">Tous</button>'
@@ -94,7 +90,15 @@ function launchHub(){
   + '<div class="wrp"><div class="ld" id="lg" style="display:none"><span class="spin"></span> Chargement...</div>'
   + '<table id="tbl" style="display:none"><thead><tr><th style="width:44px"><input type="checkbox" class="ck" id="sa" checked/></th>'
   + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
-  + '</tr></thead><tbody id="tb"></tbody></table></div>';
+  + '</tr></thead><tbody id="tb"></tbody></table></div>'
+  + '<scr'+'ipt>window._TDH=parent._TDH||window._TDH;</scr'+'ipt>'
+  + '</body></html>');
+  document.close();
+
+  // Re-read saved state
+  var AUTH=window._TDH.AUTH,CFG=window._TDH.CFG,CES=window._TDH.CES,BASE=window._TDH.BASE;
+  var FR=window._TDH.FR,tr=window._TDH.tr,pT=window._TDH.pT,pC=window._TDH.pC;
+  var fD=window._TDH.fD,iD=window._TDH.iD;
 
   // Filters
   var fils=['all'].concat(CES);
