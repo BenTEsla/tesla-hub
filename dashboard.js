@@ -42,8 +42,10 @@
   +'.bp{background:#f5f5f5;color:#393c41;border:1px solid #d0d0d0}.bp:hover,.bk:hover{background:#e8e8e8}'
   +'.bk{background:#f5f5f5;color:#393c41;border:1px solid #d0d0d0}'
   +'.sts{margin-left:auto;display:flex;gap:36px}'
-  +'.sn{font-size:32px;font-weight:300;text-align:center;color:#171a20}'
-  +'.sl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#999;text-align:center}'
+  +'.sn{font-size:44px;font-weight:300;text-align:center;color:#171a20}'
+  +'.sn.red{color:#dc3545}'
+  +'.sl{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#999;text-align:center}'
+  +'.stat-click{cursor:pointer}.stat-click:hover .sn{color:#3e6ae1}'
   +'.wrp{padding:8px 32px 40px}'
   +'table{width:100%;border-collapse:collapse}'
   +'th{padding:16px 20px;text-align:left;font-size:14px;color:#393c41;font-weight:600;border-bottom:2px solid #eee;cursor:pointer;user-select:none}'
@@ -83,9 +85,9 @@
   +'<select id="dt">'+dates.join('')+'</select>'
   +'<button class="btn bp" onclick="L()">Charger</button>'
   +'<button class="btn bk" id="gn" style="display:none" onclick="G()">Generer PDFs</button>'
-  +'<div class="sts"><div><div class="sn" id="sT">-</div><div class="sl">Livraisons</div></div>'
-  +'<div><div class="sn" id="sO">-</div><div class="sl">Pretes</div></div>'
-  +'<div><div class="sn" id="sA">-</div><div class="sl">Alertes</div></div></div>'
+  +'<div class="sts"><div class="stat-click" onclick="SF(\'all\')"><div class="sn" id="sT">-</div><div class="sl">Livraisons</div></div>'
+  +'<div class="stat-click" onclick="SF(\'ok\')"><div class="sn" id="sO">-</div><div class="sl">Pretes</div></div>'
+  +'<div class="stat-click" onclick="SF(\'al\')"><div class="sn red" id="sA">-</div><div class="sl" style="color:#dc3545">Alertes</div></div></div>'
   +'</div>'
   +'</div>'
   +'<div class="wrp"><div class="ld" id="lg" style="display:none"><span class="spin"></span> Chargement...</div>'
@@ -130,6 +132,7 @@
   +'var sortDir={};function S(k){sortDir[k]=!sortDir[k];DATA.sort(function(a,b){var v=sortDir[k]?1:-1;return(a[k]||"").toString().localeCompare((b[k]||"").toString())*v});R()}'
   +'function R(){var tb=document.getElementById("tb");var out="";for(var i=0;i<DATA.length;i++){var d=DATA[i];out+="<tr class=\\""+(d.al.length?"w":"")+"\\" data-host=\\""+d.host+"\\"><td><input type=checkbox class=\\"ck rc\\" data-i="+i+" "+(d.al.length===0?"checked":"")+"></td><td><span class=tm>"+d.t+"</span></td><td><span class=nm>"+d.name+"</span><div class=rn><a href=\\"https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn="+d.rn+"\\" target=_blank style=\\"color:#3e6ae1;text-decoration:none;font-size:13px\\">"+d.rn+"</a></div></td><td><strong>"+d.model+"</strong><br><span class=sub>"+d.color+"</span></td><td>"+(d.hp?"<span class=pl>"+d.plate+"</span>":"<span class=\\"dot dr\\"></span><span style=color:#dc3545>Manquante</span>")+"</td><td>"+(d.amtOk?"<span class=\\"dot dg\\"></span>OK":"<span class=\\"dot dr\\"></span>Non")+"</td><td>"+(d.tims?"<span class=\\"dot dg\\"></span>"+d.tims:"<span style=color:#ccc>Non</span>")+"</td><td>"+(d.otg?"<span class=\\"dot dg\\"></span>Oui":"<span class=\\"dot do\\"></span><span class=sub>"+(d.vs||"Non")+"</span>")+"</td><td>"+(d.io?"<span class=\\"dot dg\\"></span>OK":"<span style=color:#999>Non</span>")+"</td></tr>"}tb.innerHTML=out}'
   +'document.getElementById("srch").oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?"":"none"})}'
+  +'function SF(t){document.querySelectorAll("#tb tr").forEach(function(r){if(t==="all"){r.style.display=""}else if(t==="ok"){r.style.display=r.classList.contains("w")?"none":""}else{r.style.display=r.classList.contains("w")?"":"none"}})}'
   +'</scr'+'ipt></body></html>');
   w.document.close();
 })();
