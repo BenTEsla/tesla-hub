@@ -86,76 +86,107 @@ function launchDashboard() {
   // === CREATE OVERLAY ===
   const ov = document.createElement('div');
   ov.id = 'tdh-overlay';
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:#f5f5f5;overflow-y:auto;font-family:Segoe UI,Helvetica Neue,Arial,sans-serif;color:#171a20';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:#f8f8f8;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#171a20';
 
   ov.innerHTML = '<style>'
-    + '#tdh-overlay *{box-sizing:border-box}'
-    + '.th{background:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e5e5;position:sticky;top:0;z-index:10}'
-    + '.th h1{font-size:22px;font-weight:300;letter-spacing:2px}.th h1 b{font-weight:700}'
-    + '.tb{background:#fff;padding:12px 32px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;flex-wrap:wrap}'
-    + '.btn{padding:7px 18px;border-radius:20px;border:1.5px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;color:#555;transition:all .2s;font-family:inherit}'
-    + '.btn:hover{border-color:#999}.btn.on{background:#171a20;color:#fff;border-color:#171a20}'
-    + '.btn.pri{background:#3e6ae1;color:#fff;border-color:#3e6ae1}.btn.pri:hover{background:#2d5ad0}'
-    + '.btn.ok{background:#22c55e;color:#fff;border-color:#22c55e}'
-    + '.sts{display:flex;gap:24px;margin-left:auto}.st{text-align:center}.st .n{font-size:28px;font-weight:200}.st .l{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#999}'
-    + '.tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}'
-    + '.tbl th{padding:10px 14px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#999;font-weight:600;border-bottom:2px solid #f0f0f0;background:#fff}'
-    + '.tbl td{padding:10px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;vertical-align:middle}'
-    + '.tbl tr:hover td{background:#fafbff}'
-    + '.tbl tr.warn td{background:#fff7ed}.tbl tr.bad td{background:#fef2f2}'
-    + '.tbl tr.good td{background:#f0fdf4}'
-    + '.ck{width:18px;height:18px;cursor:pointer;accent-color:#3e6ae1}'
-    + '.bg{display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600}'
-    + '.bg.cash{background:#f0faf0;color:#16a34a}.bg.leasing{background:#eff6ff;color:#2563eb}'
-    + '.bg.credit{background:#faf5ff;color:#9333ea}.bg.lld{background:#fefce8;color:#ca8a04}'
+    + '#tdh-overlay *{box-sizing:border-box;margin:0;padding:0}'
+    // Header - Tesla dark bar
+    + '.tdh-hdr{background:#171a20;padding:0 32px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}'
+    + '.tdh-hdr .logo{color:#e12d2d;font-weight:800;font-size:15px;letter-spacing:4px}'
+    + '.tdh-hdr .sep{width:1px;height:24px;background:#333;margin:0 16px}'
+    + '.tdh-hdr .title{color:#fff;font-size:14px;font-weight:400;letter-spacing:1px}'
+    + '.tdh-hdr .right{display:flex;align-items:center;gap:12px}'
+    + '.tdh-hdr select{background:#2a2d33;color:#ccc;border:1px solid #3a3d43;padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit}'
+    + '.tdh-hdr .close{color:#666;font-size:22px;cursor:pointer;background:none;border:none;padding:4px 8px}'
+    + '.tdh-hdr .close:hover{color:#fff}'
+    // Toolbar
+    + '.tdh-bar{background:#fff;padding:10px 32px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e8e8e8}'
+    + '.tdh-bar .pill{padding:6px 16px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;color:#666;font-family:inherit;font-weight:500;transition:all .15s}'
+    + '.tdh-bar .pill:hover{background:#f5f5f5;border-color:#bbb}'
+    + '.tdh-bar .pill.on{background:#171a20;color:#fff;border-color:#171a20}'
+    + '.tdh-bar .sep2{width:1px;height:20px;background:#e0e0e0;margin:0 4px}'
+    + '.tdh-bar .act{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;transition:all .15s}'
+    + '.tdh-bar .act-blue{background:#3e6ae1;color:#fff}.tdh-bar .act-blue:hover{background:#2d5ad0}'
+    + '.tdh-bar .act-green{background:#22c55e;color:#fff}.tdh-bar .act-green:hover{background:#16a34a}'
+    + '.tdh-bar .stats{margin-left:auto;display:flex;gap:20px}'
+    + '.tdh-bar .stat{text-align:center}'
+    + '.tdh-bar .stat-n{font-size:22px;font-weight:200;color:#171a20}'
+    + '.tdh-bar .stat-l{font-size:8px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:600}'
+    // Table
+    + '.tdh-grid{padding:16px 32px}'
+    + '.tdh-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e8e8e8}'
+    + '.tdh-tbl th{padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#888;font-weight:600;background:#fafafa;border-bottom:1px solid #e8e8e8}'
+    + '.tdh-tbl td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;vertical-align:middle}'
+    + '.tdh-tbl tr:last-child td{border-bottom:none}'
+    + '.tdh-tbl tr:hover td{background:#f8faff}'
+    + '.tdh-tbl tr.good td{border-left:3px solid #22c55e}'
+    + '.tdh-tbl tr.warn td{border-left:3px solid #f59e0b;background:#fffdf5}'
+    + '.tdh-tbl tr.bad td{border-left:3px solid #ef4444;background:#fef8f8}'
+    // Elements
+    + '.ck{width:16px;height:16px;cursor:pointer;accent-color:#3e6ae1}'
+    + '.bg{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}'
+    + '.bg.cash{background:#dcfce7;color:#166534}.bg.leasing{background:#dbeafe;color:#1e40af}'
+    + '.bg.credit{background:#ede9fe;color:#5b21b6}.bg.lld{background:#fef9c3;color:#854d0e}'
     + '.bg.enterprise{background:#f1f5f9;color:#475569}'
-    + '.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}'
+    + '.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}'
     + '.dot.g{background:#22c55e}.dot.r{background:#ef4444}.dot.o{background:#f59e0b}'
-    + '.nm{font-weight:600;cursor:pointer;color:#171a20}.nm:hover{color:#3e6ae1;text-decoration:underline}'
-    + '.tm{font-size:18px;font-weight:200;color:#393c41}'
-    + '.pl{font-family:monospace;font-weight:700;letter-spacing:1px;font-size:12px}'
-    + '.ld{text-align:center;padding:60px;font-size:16px;color:#999}'
-    + '.sp{display:inline-block;width:24px;height:24px;border:3px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:sp .8s linear infinite;margin-right:12px;vertical-align:middle}'
+    + '.nm{font-weight:600;cursor:pointer;color:#171a20;font-size:13px}.nm:hover{color:#3e6ae1}'
+    + '.tm{font-size:15px;font-weight:500;color:#171a20;font-variant-numeric:tabular-nums}'
+    + '.pl{font-family:SF Mono,Consolas,monospace;font-weight:600;letter-spacing:0.5px;font-size:12px;color:#333}'
+    + '.sub-text{font-size:11px;color:#999}'
+    + '.ld{text-align:center;padding:80px;font-size:14px;color:#999}'
+    + '.sp{display:inline-block;width:20px;height:20px;border:2px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:sp .7s linear infinite;margin-right:10px;vertical-align:middle}'
     + '@keyframes sp{to{transform:rotate(360deg)}}'
-    + '.pv{position:fixed;top:0;right:0;width:45vw;height:100vh;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:100000;overflow-y:auto;display:none;padding:24px}'
-    + '.pv-close{position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:#999;background:none;border:none}'
+    // Preview panel
+    + '.pv{position:fixed;top:0;right:0;width:45vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:100000;overflow-y:auto;display:none;padding:24px}'
+    + '.pv-close{position:absolute;top:12px;right:16px;font-size:20px;cursor:pointer;color:#999;background:none;border:none}'
     + '</style>'
 
-    + '<div class="th"><h1>T E S L A <b>Delivery Hub</b></h1>'
-    + '<div style="display:flex;align-items:center;gap:16px">'
-    + '<select id="tdh-date" style="padding:8px 16px;border-radius:8px;border:1.5px solid #e5e5e5;font-size:14px;font-family:inherit">'
+    // Header
+    + '<div class="tdh-hdr">'
+    + '<div style="display:flex;align-items:center">'
+    + '<span class="logo">TESLA</span>'
+    + '<span class="sep"></span>'
+    + '<span class="title">Delivery Hub</span>'
+    + '</div>'
+    + '<div class="right">'
+    + '<select id="tdh-date">'
     + '<option value="' + isoDate(today) + '">Aujourd\'hui - ' + fmtDate(today) + '</option>'
     + '<option value="' + isoDate(tomorrow) + '">Demain - ' + fmtDate(tomorrow) + '</option>'
     + '</select>'
-    + '<button style="cursor:pointer;font-size:28px;color:#999;background:none;border:none;padding:4px 12px" onclick="document.getElementById(\'tdh-overlay\').remove()">X</button>'
+    + '<button class="close" onclick="document.getElementById(\'tdh-overlay\').remove()">&times;</button>'
     + '</div></div>'
 
-    + '<div class="tb" id="tdh-toolbar">'
-    + '<button class="btn on" data-f="all">Tous</button>'
-    + CES.map(c => '<button class="btn" data-f="' + c + '">' + c.split(' ')[0] + '</button>').join('')
-    + '<div style="width:1px;height:24px;background:#e5e5e5;margin:0 8px"></div>'
-    + '<button class="btn pri" id="tdh-load">Charger</button>'
-    + '<button class="btn ok" id="tdh-gen" style="display:none">Generer PDFs</button>'
-    + '<div class="sts"><div class="st"><div class="n" id="s-tot">-</div><div class="l">Livraisons</div></div>'
-    + '<div class="st"><div class="n" id="s-ok">-</div><div class="l">Pretes</div></div>'
-    + '<div class="st"><div class="n" id="s-al">-</div><div class="l">Alertes</div></div></div>'
-    + '</div>'
+    // Toolbar
+    + '<div class="tdh-bar">'
+    + '<button class="pill on" data-f="all">Tous</button>'
+    + CES.map(c => '<button class="pill" data-f="' + c + '">' + c.split(' ')[0] + '</button>').join('')
+    + '<div class="sep2"></div>'
+    + '<button class="act act-blue" id="tdh-load">Charger</button>'
+    + '<button class="act act-green" id="tdh-gen" style="display:none">Generer PDFs</button>'
+    + '<div class="stats">'
+    + '<div class="stat"><div class="stat-n" id="s-tot">-</div><div class="stat-l">Livraisons</div></div>'
+    + '<div class="stat"><div class="stat-n" id="s-ok">-</div><div class="stat-l">Pretes</div></div>'
+    + '<div class="stat"><div class="stat-n" id="s-al">-</div><div class="stat-l">Alertes</div></div>'
+    + '</div></div>'
 
-    + '<div style="padding:16px 32px">'
-    + '<div class="ld" id="tdh-ld" style="display:none"><span class="sp"></span> Chargement des livraisons...</div>'
-    + '<table class="tbl" id="tdh-tbl" style="display:none"><thead><tr>'
-    + '<th><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
+    // Grid
+    + '<div class="tdh-grid">'
+    + '<div class="ld" id="tdh-ld" style="display:none"><span class="sp"></span> Chargement...</div>'
+    + '<table class="tdh-tbl" id="tdh-tbl" style="display:none"><thead><tr>'
+    + '<th style="width:30px"><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
     + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
     + '</tr></thead><tbody id="tdh-tb"></tbody></table></div>'
 
-    + '<div class="pv" id="tdh-pv"><button class="pv-close" onclick="document.getElementById(\'tdh-pv\').style.display=\'none\'">X</button><div id="tdh-pc"></div></div>';
+    // Preview
+    + '<div class="pv" id="tdh-pv"><button class="pv-close" onclick="document.getElementById(\'tdh-pv\').style.display=\'none\'">&times;</button><div id="tdh-pc"></div></div>';
 
   document.body.appendChild(ov);
 
   // === FILTER LOGIC ===
-  ov.querySelectorAll('.btn[data-f]').forEach(btn => {
+  ov.querySelectorAll('.pill[data-f]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ov.querySelectorAll('.btn[data-f]').forEach(b => b.classList.remove('on'));
+      ov.querySelectorAll('.pill[data-f]').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
       const f = btn.dataset.f;
       ov.querySelectorAll('#tdh-tb tr').forEach(r => {
