@@ -97,7 +97,7 @@
   +'<div class="wrp"><div class="ld" id="lg" style="display:none"><div style="text-align:center;padding:80px"><div class="ldbar"></div><div style="font-size:14px;color:#999;margin-top:16px">Chargement des livraisons...</div></div></div>'
   +'<table id="tbl" style="display:none"><thead><tr><th style="width:44px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
   +'<th style="cursor:pointer;width:80px" onclick="S(\'t\')">Heure</th><th style="cursor:pointer;width:22%" onclick="S(\'name\')">Client</th><th style="cursor:pointer;width:12%" onclick="S(\'model\')">Vehicule</th><th style="cursor:pointer;width:12%" onclick="S(\'plate\')">Plaque</th><th style="width:9%">Paiement</th><th style="width:12%">Trade-In</th><th style="width:10%">OTG</th><th style="width:10%">Assurance</th>'
-  +'</tr></thead><tbody id="tb"></tbody></table><div id="trec" style="padding:16px 20px;font-size:13px;color:#999"></div></div>'
+  +'</tr></thead><tbody id="tb"></tbody></table><div id="trec" style="padding:20px 20px;font-size:16px;color:#393c41;font-weight:600"></div></div>'
   +'<script>'
   +'var AUTH={token:"Bearer '+at.replace(/"/g,'\\"')+'",userId:"'+ui+'"};'
   +'var BASE="https://mytdeliveryopsapi.tesla.com/api";'
