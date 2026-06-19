@@ -145,7 +145,7 @@ function launchDashboard() {
     + '<div class="ld" id="tdh-ld" style="display:none"><span class="sp"></span> Chargement des livraisons...</div>'
     + '<table class="tbl" id="tdh-tbl" style="display:none"><thead><tr>'
     + '<th><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
-    + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Host</th><th>DA</th><th>Assurance</th>'
+    + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
     + '</tr></thead><tbody id="tdh-tb"></tbody></table></div>'
 
     + '<div class="pv" id="tdh-pv"><button class="pv-close" onclick="document.getElementById(\'tdh-pv\').style.display=\'none\'">X</button><div id="tdh-pc"></div></div>';
@@ -238,7 +238,6 @@ function launchDashboard() {
         var vehicleStage = a.VehicleStage || dro.MOSStage || '';
         var alerts = [];
         if (!hasPlate) alerts.push('Plaque manquante');
-        if (!insurOK && a.InsuranceActionStatus !== 'NOT_REQUIRED') alerts.push('Assurance');
         if (!otg) alerts.push('Vehicule pas sur site');
 
         return {
@@ -279,9 +278,7 @@ function launchDashboard() {
           + '<td><span class="bg ' + payClass(d.payType) + '">' + (d.isB2B ? 'ENTERPRISE' : payText(d.payType)) + '</span></td>'
           + '<td>' + (d.hasTI ? '<span class="dot g"></span>' + (d.tradeInMake ? d.tradeInMake + ' ' + (d.tradeInModel||'') : 'Oui') : '<span style="color:#ccc">Non</span>') + '</td>'
           + '<td>' + (d.otg ? '<span class="dot g"></span>Oui' : '<span class="dot o"></span><span style="font-size:11px;color:#d97706">' + (d.vehicleStage || 'Non') + '</span>') + '</td>'
-          + '<td style="font-size:12px">' + d.host + '</td>'
-          + '<td style="font-size:12px">' + d.da + '</td>'
-          + '<td>' + (d.insurOK ? '<span class="dot g"></span>OK' : '<span class="dot r"></span><span style="font-size:11px;color:#ef4444">Non</span>') + '</td>'
+          + '<td>' + (d.insurOK ? '<span class="dot g"></span>OK' : '<span style="color:#999;font-size:11px">Non</span>') + '</td>'
           + '</tr>';
       }
       tb.innerHTML = html;
@@ -348,19 +345,18 @@ function launchDashboard() {
     try {
     var data = window._tdhData || [];
     var checked = [];
-    // Get checked items from the overlay table
+    // Get checked items from VISIBLE rows only
     var overlay = document.getElementById('tdh-overlay');
     if (overlay) {
       overlay.querySelectorAll('.rc:checked').forEach(function(c) {
-        var idx = parseInt(c.dataset.idx);
-        if (data[idx]) checked.push(data[idx]);
+        var tr = c.closest('tr');
+        if (tr && tr.style.display !== 'none') {
+          var idx = parseInt(c.dataset.idx);
+          if (data[idx]) checked.push(data[idx]);
+        }
       });
     }
-    if (checked.length === 0) {
-      // No checkboxes found in overlay, use all data
-      checked = data;
-    }
-    if (checked.length === 0) { alert('Aucune livraison !'); return; }
+    if (checked.length === 0) { alert('Aucune livraison selectionnee !'); return; }
 
     var trimFR = function(t) {
       if (!t) return '';
