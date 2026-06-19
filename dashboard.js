@@ -59,7 +59,7 @@ function launchDashboard() {
   }
 
   // Remove existing
-  document.getElementById('tdh-overlay')?.remove();
+  root.getElementById('tdh-overlay')?.remove();
 
   // Config
   const HUB = { name: 'Rennes Saint-Jacques', trtId: 28498, countryCode: 'FR' };
@@ -83,112 +83,127 @@ function launchDashboard() {
   const fmtDate = d => d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
   const isoDate = d => d.toISOString().split('T')[0];
 
-  // === CREATE OVERLAY ===
-  const ov = document.createElement('div');
-  ov.id = 'tdh-overlay';
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:#fff;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#171a20;font-size:14px';
+  // === CREATE OVERLAY WITH SHADOW DOM (isolated from DRO CSS) ===
+  var host = document.createElement('div');
+  host.id = 'tdh-overlay';
+  host.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999';
+  document.body.appendChild(host);
+  var shadow = host.attachShadow({mode:'open'});
+  var ov = document.createElement('div');
+  ov.id = 'tdh-root';
+  shadow.appendChild(ov);
 
   ov.innerHTML = '<style>'
-    + '#tdh-overlay *{box-sizing:border-box;margin:0;padding:0}'
-    // Header - thin Tesla red bar like DRO
-    + '.tdh-hdr{background:#393c41;padding:0 32px;height:44px;display:flex;align-items:center;gap:16px}'
-    + '.tdh-hdr .logo{color:#fff;font-size:13px;letter-spacing:6px;font-weight:500}'
-    + '.tdh-hdr .sep{color:#666;font-size:13px}'
-    + '.tdh-hdr .title{color:#ccc;font-size:13px;font-weight:400}'
-    // Sub header
-    + '.tdh-sub{padding:20px 32px 0}'
-    + '.tdh-sub h2{font-size:24px;font-weight:400;color:#171a20}'
+    + '*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif; }'
+    + '#tdh-root { background:#fff; width:100%; height:100vh; overflow-y:auto; color:#171a20; font-size:14px; line-height:1.5; }'
+    // Header
+    + '.hdr { padding:12px 32px; border-bottom:1px solid #eee; display:flex; align-items:center; gap:12px; }'
+    + '.hdr-logo { font-size:14px; font-weight:600; letter-spacing:3px; color:#171a20; }'
+    + '.hdr-sep { color:#ccc; font-size:14px; }'
+    + '.hdr-name { font-size:14px; color:#888; font-weight:400; }'
+    + '.hdr-right { margin-left:auto; display:flex; align-items:center; gap:12px; }'
+    + '.hdr-user { font-size:13px; color:#666; }'
+    // Title
+    + '.title-bar { padding:24px 32px 16px; }'
+    + '.title-bar h1 { font-size:28px; font-weight:700; color:#171a20; }'
     // Toolbar
-    + '.tdh-bar{padding:16px 32px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eee}'
-    + '.tdh-bar .pill{padding:8px 20px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:14px;color:#555;font-family:inherit;font-weight:400;transition:all .15s}'
-    + '.tdh-bar .pill:hover{background:#f5f5f5}'
-    + '.tdh-bar .pill.on{background:#171a20;color:#fff;border-color:#171a20}'
-    + '.tdh-bar .sep2{width:1px;height:28px;background:#e0e0e0;margin:0 6px}'
-    + '.tdh-bar select{padding:8px 14px;border-radius:8px;border:1px solid #ddd;font-size:14px;font-family:inherit;color:#333}'
-    + '.tdh-bar .act{padding:8px 20px;border-radius:20px;border:none;cursor:pointer;font-size:14px;font-family:inherit;font-weight:500;transition:all .15s}'
-    + '.tdh-bar .act-blue{background:#3e6ae1;color:#fff}.tdh-bar .act-blue:hover{background:#2d5ad0}'
-    + '.tdh-bar .act-green{background:#22c55e;color:#fff}.tdh-bar .act-green:hover{background:#16a34a}'
-    + '.tdh-bar .stats{margin-left:auto;display:flex;gap:28px}'
-    + '.tdh-bar .stat{text-align:center}'
-    + '.tdh-bar .stat-n{font-size:28px;font-weight:300;color:#171a20}'
-    + '.tdh-bar .stat-l{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:500}'
+    + '.toolbar { padding:12px 32px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }'
+    + '.tb-pill { padding:8px 20px; border-radius:20px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:14px; color:#555; font-weight:400; }'
+    + '.tb-pill:hover { background:#f5f5f5; }'
+    + '.tb-pill.active { background:#171a20; color:#fff; border-color:#171a20; }'
+    + '.tb-sep { width:1px; height:24px; background:#e0e0e0; margin:0 8px; }'
+    + '.tb-select { padding:8px 16px; border:1px solid #ddd; border-radius:8px; font-size:14px; color:#333; background:#fff; }'
+    + '.tb-btn { padding:8px 20px; border-radius:20px; border:none; cursor:pointer; font-size:14px; font-weight:500; }'
+    + '.tb-btn-blue { background:#3e6ae1; color:#fff; }'
+    + '.tb-btn-green { background:#22c55e; color:#fff; }'
+    + '.tb-btn-grey { background:#f0f0f0; color:#666; }'
+    + '.tb-stats { margin-left:auto; display:flex; gap:32px; }'
+    + '.tb-stat { text-align:center; }'
+    + '.tb-stat-n { font-size:28px; font-weight:300; color:#171a20; }'
+    + '.tb-stat-l { font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; }'
     // Table
-    + '.tdh-grid{padding:20px 32px}'
-    + '.tdh-tbl{width:100%;border-collapse:collapse;background:#fff}'
-    + '.tdh-tbl th{padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:500;border-bottom:2px solid #eee}'
-    + '.tdh-tbl td{padding:12px 16px;font-size:14px;border-bottom:1px solid #f3f3f3;vertical-align:middle}'
-    + '.tdh-tbl tr:last-child td{border-bottom:none}'
-    + '.tdh-tbl tr:hover td{background:#f8f9fc}'
-    + '.tdh-tbl tr.good td{border-left:3px solid #22c55e}'
-    + '.tdh-tbl tr.warn td{border-left:3px solid #f59e0b;background:#fffef8}'
-    + '.tdh-tbl tr.bad td{border-left:3px solid #ef4444;background:#fefafa}'
+    + '.grid { padding:0 32px 32px; }'
+    + 'table { width:100%; border-collapse:collapse; }'
+    + 'th { padding:14px 16px; text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:500; border-bottom:2px solid #eee; }'
+    + 'td { padding:14px 16px; font-size:14px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }'
+    + 'tr:hover td { background:#fafbff; }'
+    + 'tr.good td { border-left:3px solid #22c55e; }'
+    + 'tr.warn td { border-left:3px solid #f59e0b; background:#fffef5; }'
+    + 'tr.bad td { border-left:3px solid #ef4444; background:#fef8f8; }'
     // Elements
-    + '.ck{width:18px;height:18px;cursor:pointer;accent-color:#3e6ae1}'
-    + '.bg{display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600}'
-    + '.bg.cash{background:#dcfce7;color:#166534}.bg.leasing{background:#dbeafe;color:#1e40af}'
-    + '.bg.credit{background:#ede9fe;color:#5b21b6}.bg.lld{background:#fef9c3;color:#854d0e}'
-    + '.bg.enterprise{background:#f1f5f9;color:#475569}'
-    + '.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}'
-    + '.dot.g{background:#22c55e}.dot.r{background:#ef4444}.dot.o{background:#f59e0b}'
-    + '.nm{font-weight:600;cursor:pointer;color:#171a20;font-size:14px}.nm:hover{color:#3e6ae1}'
-    + '.tm{font-size:16px;font-weight:500;color:#171a20}'
-    + '.pl{font-family:SF Mono,Consolas,monospace;font-weight:600;letter-spacing:0.5px;font-size:13px;color:#333}'
-    + '.ld{text-align:center;padding:80px;font-size:15px;color:#999}'
-    + '.sp{display:inline-block;width:22px;height:22px;border:2.5px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:sp .7s linear infinite;margin-right:10px;vertical-align:middle}'
-    + '@keyframes sp{to{transform:rotate(360deg)}}'
-    // Preview panel
-    + '.pv{position:fixed;top:0;right:0;width:45vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:100000;overflow-y:auto;display:none;padding:28px}'
-    + '.pv-close{position:absolute;top:14px;right:18px;font-size:22px;cursor:pointer;color:#999;background:none;border:none}'
+    + '.ck { width:18px; height:18px; cursor:pointer; accent-color:#3e6ae1; }'
+    + '.badge { display:inline-block; padding:3px 10px; border-radius:4px; font-size:12px; font-weight:600; }'
+    + '.badge-cash { background:#dcfce7; color:#166534; }'
+    + '.badge-leasing { background:#dbeafe; color:#1e40af; }'
+    + '.badge-credit { background:#ede9fe; color:#5b21b6; }'
+    + '.badge-lld { background:#fef9c3; color:#854d0e; }'
+    + '.badge-enterprise { background:#f1f5f9; color:#475569; }'
+    + '.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }'
+    + '.dot-g { background:#22c55e; } .dot-r { background:#ef4444; } .dot-o { background:#f59e0b; }'
+    + '.client-name { font-weight:600; cursor:pointer; color:#171a20; font-size:14px; }'
+    + '.client-name:hover { color:#3e6ae1; }'
+    + '.client-rn { font-size:11px; color:#999; }'
+    + '.time { font-size:16px; font-weight:500; color:#171a20; }'
+    + '.plate { font-family:SFMono-Regular,Consolas,monospace; font-weight:600; font-size:13px; letter-spacing:0.5px; }'
+    + '.loading { text-align:center; padding:80px; font-size:15px; color:#999; }'
+    + '.spinner { display:inline-block; width:22px; height:22px; border:2.5px solid #eee; border-top-color:#3e6ae1; border-radius:50%; animation:spin .7s linear infinite; margin-right:10px; vertical-align:middle; }'
+    + '@keyframes spin { to { transform:rotate(360deg); } }'
+    // Preview
+    + '.preview { position:fixed; top:0; right:0; width:45vw; height:100vh; background:#fff; box-shadow:-4px 0 24px rgba(0,0,0,.12); z-index:10; overflow-y:auto; display:none; padding:28px; }'
+    + '.preview-close { position:absolute; top:14px; right:18px; font-size:22px; cursor:pointer; color:#999; background:none; border:none; }'
     + '</style>'
 
-    // Header - thin bar like Tesla tools
-    + '<div class="tdh-hdr">'
-    + '<span class="logo">TESLA</span>'
-    + '<span class="sep">|</span>'
-    + '<span class="title">Delivery Hub</span>'
-    + '</div>'
+    // Header
+    + '<div class="hdr">'
+    + '<span class="hdr-logo">TESLA</span>'
+    + '<span class="hdr-sep">|</span>'
+    + '<span class="hdr-name">Delivery Hub</span>'
+    + '<div class="hdr-right">'
+    + '<span class="hdr-user">Ben Daubin</span>'
+    + '</div></div>'
 
-    // Sub header with title
-    + '<div class="tdh-sub"><h2>Delivery Dashboard</h2></div>'
+    // Title
+    + '<div class="title-bar"><h1>Delivery Dashboard</h1></div>'
 
     // Toolbar
-    + '<div class="tdh-bar">'
-    + '<button class="pill on" data-f="all">Tous</button>'
-    + CES.map(c => '<button class="pill" data-f="' + c + '">' + c.split(' ')[0] + '</button>').join('')
-    + '<div class="sep2"></div>'
-    + '<select id="tdh-date">'
+    + '<div class="toolbar">'
+    + '<button class="tb-pill active" data-f="all">Tous</button>'
+    + CES.map(c => '<button class="tb-pill" data-f="' + c + '">' + c.split(' ')[0] + '</button>').join('')
+    + '<div class="tb-sep"></div>'
+    + '<select class="tb-select" id="tdh-date">'
     + '<option value="' + isoDate(today) + '">Aujourd\'hui - ' + fmtDate(today) + '</option>'
     + '<option value="' + isoDate(tomorrow) + '">Demain - ' + fmtDate(tomorrow) + '</option>'
     + '</select>'
-    + '<button class="act act-blue" id="tdh-load">Charger</button>'
-    + '<button class="act act-green" id="tdh-gen" style="display:none">Generer PDFs</button>'
-    + '<button class="act" style="background:#eee;color:#666" onclick="document.getElementById(\'tdh-overlay\').remove()">Fermer</button>'
-    + '<div class="stats">'
-    + '<div class="stat"><div class="stat-n" id="s-tot">-</div><div class="stat-l">Livraisons</div></div>'
-    + '<div class="stat"><div class="stat-n" id="s-ok">-</div><div class="stat-l">Pretes</div></div>'
-    + '<div class="stat"><div class="stat-n" id="s-al">-</div><div class="stat-l">Alertes</div></div>'
+    + '<button class="tb-btn tb-btn-blue" id="tdh-load">Charger</button>'
+    + '<button class="tb-btn tb-btn-green" id="tdh-gen" style="display:none">Generer PDFs</button>'
+    + '<button class="tb-btn tb-btn-grey" onclick="document.getElementById(\'tdh-overlay\').remove()">Fermer</button>'
+    + '<div class="tb-stats">'
+    + '<div class="tb-stat"><div class="tb-stat-n" id="s-tot">-</div><div class="tb-stat-l">Livraisons</div></div>'
+    + '<div class="tb-stat"><div class="tb-stat-n" id="s-ok">-</div><div class="tb-stat-l">Pretes</div></div>'
+    + '<div class="tb-stat"><div class="tb-stat-n" id="s-al">-</div><div class="tb-stat-l">Alertes</div></div>'
     + '</div></div>'
 
     // Grid
-    + '<div class="tdh-grid">'
-    + '<div class="ld" id="tdh-ld" style="display:none"><span class="sp"></span> Chargement...</div>'
-    + '<table class="tdh-tbl" id="tdh-tbl" style="display:none"><thead><tr>'
-    + '<th style="width:36px"><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
+    + '<div class="grid">'
+    + '<div class="loading" id="tdh-ld" style="display:none"><span class="spinner"></span> Chargement...</div>'
+    + '<table id="tdh-tbl" style="display:none"><thead><tr>'
+    + '<th style="width:40px"><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
     + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
     + '</tr></thead><tbody id="tdh-tb"></tbody></table></div>'
 
     // Preview
-    + '<div class="pv" id="tdh-pv"><button class="pv-close" onclick="document.getElementById(\'tdh-pv\').style.display=\'none\'">&times;</button><div id="tdh-pc"></div></div>';
+    + '<div class="preview" id="tdh-pv"><button class="preview-close" onclick="this.parentElement.style.display=\'none\'">&times;</button><div id="tdh-pc"></div></div>';
 
   document.body.appendChild(ov);
 
   // === FILTER LOGIC ===
-  ov.querySelectorAll('.pill[data-f]').forEach(btn => {
+  var root = shadow;
+  root.querySelectorAll('.tb-pill[data-f]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ov.querySelectorAll('.pill[data-f]').forEach(b => b.classList.remove('on'));
-      btn.classList.add('on');
+      root.querySelectorAll('.tb-pill[data-f]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
       const f = btn.dataset.f;
-      ov.querySelectorAll('#tdh-tb tr').forEach(r => {
+      root.querySelectorAll('#tdh-tb tr').forEach(r => {
         if (f === 'all') { r.style.display = ''; return; }
         var host = (r.dataset.host || '').toLowerCase();
         var filter = f.toLowerCase();
@@ -198,10 +213,10 @@ function launchDashboard() {
   });
 
   // === LOAD ===
-  document.getElementById('tdh-load').addEventListener('click', async () => {
-    const ld = document.getElementById('tdh-ld');
-    const tbl = document.getElementById('tdh-tbl');
-    const tb = document.getElementById('tdh-tb');
+  root.getElementById('tdh-load').addEventListener('click', async () => {
+    const ld = root.getElementById('tdh-ld');
+    const tbl = root.getElementById('tdh-tbl');
+    const tb = root.getElementById('tdh-tb');
     ld.style.display = ''; tbl.style.display = 'none';
 
     ld.innerHTML = '<span class="sp"></span> Chargement des livraisons...';
@@ -210,7 +225,7 @@ function launchDashboard() {
       return;
     }
     const h = { 'Authorization': AUTH.token, 'Content-Type': 'application/json', 'userid': AUTH.userId };
-    const dateStr = document.getElementById('tdh-date').value;
+    const dateStr = root.getElementById('tdh-date').value;
 
     try {
       // API 1: DRO Dashboard
@@ -301,42 +316,42 @@ function launchDashboard() {
         var rowClass = d.alerts.length > 0 ? (d.hasPlate ? 'warn' : 'bad') : 'good';
         html += '<tr data-host="' + d.host + '" data-idx="' + i + '" class="' + rowClass + '">'
           + '<td><input type="checkbox" class="ck rc" data-idx="' + i + '" ' + (d.alerts.length === 0 ? 'checked' : '') + '/></td>'
-          + '<td><span class="tm">' + d.time24 + '</span></td>'
-          + '<td><span class="nm" data-idx="' + i + '">' + d.name + '</span><br><span style="font-size:10px;color:#999">' + d.rn + '</span></td>'
+          + '<td><span class="time">' + d.time24 + '</span></td>'
+          + '<td><span class="client-name" data-idx="' + i + '">' + d.name + '</span><br><span style="font-size:10px;color:#999">' + d.rn + '</span></td>'
           + '<td><strong>' + d.model + '</strong><br><span style="font-size:11px;color:#666">' + d.color + '</span></td>'
-          + '<td>' + (d.hasPlate ? '<span class="pl">' + d.plate + '</span>' : '<span class="dot r"></span><span style="color:#ef4444;font-size:11px">Manquante</span>') + '</td>'
-          + '<td><span class="bg ' + payClass(d.payType) + '">' + (d.isB2B ? 'ENTERPRISE' : payText(d.payType)) + '</span></td>'
-          + '<td>' + (d.hasTI ? '<span class="dot g"></span>' + (d.tradeInMake ? d.tradeInMake + ' ' + (d.tradeInModel||'') : 'Oui') : '<span style="color:#ccc">Non</span>') + '</td>'
-          + '<td>' + (d.otg ? '<span class="dot g"></span>Oui' : '<span class="dot o"></span><span style="font-size:11px;color:#d97706">' + (d.vehicleStage || 'Non') + '</span>') + '</td>'
-          + '<td>' + (d.insurOK ? '<span class="dot g"></span>OK' : '<span style="color:#999;font-size:11px">Non</span>') + '</td>'
+          + '<td>' + (d.hasPlate ? '<span class="plate">' + d.plate + '</span>' : '<span class="dot dot-r"></span><span style="color:#ef4444;font-size:11px">Manquante</span>') + '</td>'
+          + '<td><span class="badge badge-' + payClass(d.payType) + '">' + (d.isB2B ? 'ENTERPRISE' : payText(d.payType)) + '</span></td>'
+          + '<td>' + (d.hasTI ? '<span class="dot dot-g"></span>' + (d.tradeInMake ? d.tradeInMake + ' ' + (d.tradeInModel||'') : 'Oui') : '<span style="color:#ccc">Non</span>') + '</td>'
+          + '<td>' + (d.otg ? '<span class="dot dot-g"></span>Oui' : '<span class="dot dot-o"></span><span style="font-size:11px;color:#d97706">' + (d.vehicleStage || 'Non') + '</span>') + '</td>'
+          + '<td>' + (d.insurOK ? '<span class="dot dot-g"></span>OK' : '<span style="color:#999;font-size:11px">Non</span>') + '</td>'
           + '</tr>';
       }
       tb.innerHTML = html;
 
       // Stats
       var ok = items.filter(function(d) { return d.alerts.length === 0; }).length;
-      document.getElementById('s-tot').textContent = items.length;
-      document.getElementById('s-ok').textContent = ok;
-      document.getElementById('s-al').textContent = items.length - ok;
+      root.getElementById('s-tot').textContent = items.length;
+      root.getElementById('s-ok').textContent = ok;
+      root.getElementById('s-al').textContent = items.length - ok;
 
       ld.style.display = 'none';
       tbl.style.display = '';
-      document.getElementById('tdh-gen').style.display = '';
+      root.getElementById('tdh-gen').style.display = '';
 
       // Select all
-      document.getElementById('tdh-sa').addEventListener('change', function(e) {
-        ov.querySelectorAll('.rc').forEach(function(c) {
+      root.getElementById('tdh-sa').addEventListener('change', function(e) {
+        root.querySelectorAll('.rc').forEach(function(c) {
           if (c.closest('tr').style.display !== 'none') c.checked = e.target.checked;
         });
       });
 
       // Preview click
-      ov.querySelectorAll('.nm').forEach(function(el) {
+      root.querySelectorAll('.nm').forEach(function(el) {
         el.addEventListener('click', function() {
           var idx = parseInt(el.dataset.idx);
           var d = window._tdhData[idx];
-          var pv = document.getElementById('tdh-pv');
-          var pc = document.getElementById('tdh-pc');
+          var pv = root.getElementById('tdh-pv');
+          var pc = root.getElementById('tdh-pc');
           pv.style.display = 'block';
           pc.innerHTML = '<div style="padding:4px">'
             + '<h2 style="font-weight:300;font-size:28px;margin-bottom:4px">' + d.name + '</h2>'
@@ -371,12 +386,12 @@ function launchDashboard() {
   });
 
   // === GENERATE PDFs BUTTON (outside load handler) ===
-  document.getElementById('tdh-gen').addEventListener('click', function() {
+  root.getElementById('tdh-gen').addEventListener('click', function() {
     try {
     var data = window._tdhData || [];
     var checked = [];
     // Get checked items from VISIBLE rows only
-    var overlay = document.getElementById('tdh-overlay');
+    var overlay = root.getElementById('tdh-overlay');
     if (overlay) {
       overlay.querySelectorAll('.rc:checked').forEach(function(c) {
         var tr = c.closest('tr');
@@ -412,7 +427,7 @@ function launchDashboard() {
     };
 
     // Date for header
-    var dateStr = document.getElementById('tdh-date')?.value || '';
+    var dateStr = root.getElementById('tdh-date')?.value || '';
     var dateObj = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
     var dateFR = dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
 
@@ -476,7 +491,7 @@ function launchDashboard() {
     }
 
     // Show pages directly in the overlay (no popup needed)
-    var overlay = document.getElementById('tdh-overlay');
+    var overlay = root.getElementById('tdh-overlay');
     overlay.innerHTML = '<style>'
       + '@page{size:A4 portrait;margin:0}*{box-sizing:border-box;margin:0;padding:0}'
       + '#tdh-overlay{font-family:Segoe UI,Helvetica Neue,Arial,sans-serif;color:#171a20;background:#fff}'
