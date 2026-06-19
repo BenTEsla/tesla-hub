@@ -88,15 +88,6 @@
   +'<div class="wrp"><div class="ld" id="lg" style="display:none"><span class="spin"></span> Chargement...</div>'
   +'<table id="tbl" style="display:none"><thead><tr><th style="width:44px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
   +'<th style="cursor:pointer" onclick="S(\'t\')">Heure</th><th style="cursor:pointer" onclick="S(\'name\')">Client</th><th style="cursor:pointer" onclick="S(\'model\')">Vehicule</th><th style="cursor:pointer" onclick="S(\'plate\')">Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
-  +'</tr><tr style="background:#fafafa"><td></td>'
-  +'<td><input class="fi" data-c="0" placeholder="Filtrer"></td>'
-  +'<td><input class="fi" data-c="1" placeholder="Filtrer"></td>'
-  +'<td><input class="fi" data-c="2" placeholder="Filtrer"></td>'
-  +'<td><input class="fi" data-c="3" placeholder="Filtrer"></td>'
-  +'<td><select class="fi" data-c="4"><option value="">Tous</option><option value="OK">OK</option><option value="Non">Non</option></select></td>'
-  +'<td><select class="fi" data-c="5"><option value="">Tous</option><option value="Accepted">Oui</option><option value="Non">Non</option></select></td>'
-  +'<td><select class="fi" data-c="6"><option value="">Tous</option><option value="Oui">Oui</option><option value="Non">Non</option></select></td>'
-  +'<td><select class="fi" data-c="7"><option value="">Tous</option><option value="OK">OK</option><option value="Non">Non</option></select></td>'
   +'</tr></thead><tbody id="tb"></tbody></table></div>'
   +'<script>'
   +'var AUTH={token:"Bearer '+at.replace(/"/g,'\\"')+'",userId:"'+ui+'"};'
@@ -136,8 +127,6 @@
   +'var sortDir={};function S(k){sortDir[k]=!sortDir[k];DATA.sort(function(a,b){var v=sortDir[k]?1:-1;return(a[k]||"").toString().localeCompare((b[k]||"").toString())*v});R()}'
   +'function R(){var tb=document.getElementById("tb");var out="";for(var i=0;i<DATA.length;i++){var d=DATA[i];out+="<tr class=\\""+(d.al.length?"w":"")+"\\" data-host=\\""+d.host+"\\"><td><input type=checkbox class=\\"ck rc\\" data-i="+i+" "+(d.al.length===0?"checked":"")+"></td><td><span class=tm>"+d.t+"</span></td><td><span class=nm>"+d.name+"</span><div class=rn><a href=\\"https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn="+d.rn+"\\" target=_blank style=\\"color:#3e6ae1;text-decoration:none;font-size:13px\\">"+d.rn+"</a></div></td><td><strong>"+d.model+"</strong><br><span class=sub>"+d.color+"</span></td><td>"+(d.hp?"<span class=pl>"+d.plate+"</span>":"<span class=\\"dot dr\\"></span><span style=color:#dc3545>Manquante</span>")+"</td><td>"+(d.amtOk?"<span class=\\"dot dg\\"></span>OK":"<span class=\\"dot dr\\"></span>Non")+"</td><td>"+(d.tims?"<span class=\\"dot dg\\"></span>"+d.tims:"<span style=color:#ccc>Non</span>")+"</td><td>"+(d.otg?"<span class=\\"dot dg\\"></span>Oui":"<span class=\\"dot do\\"></span><span class=sub>"+(d.vs||"Non")+"</span>")+"</td><td>"+(d.io?"<span class=\\"dot dg\\"></span>OK":"<span style=color:#999>Non</span>")+"</td></tr>"}tb.innerHTML=out}'
   +'document.getElementById("srch").oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?"":"none"})}'
-  +'document.querySelectorAll(".fi").forEach(function(f){f.addEventListener("input",CF);f.addEventListener("change",CF)})'
-  +'function CF(){document.querySelectorAll("#tb tr").forEach(function(r){var cells=r.querySelectorAll("td");var show=true;document.querySelectorAll(".fi").forEach(function(f){var c=parseInt(f.dataset.c);var v=f.value.toLowerCase();if(!v)return;var cell=cells[c+1];if(!cell)return;var txt=cell.textContent.toLowerCase();if(txt.indexOf(v)<0)show=false});r.style.display=show?"":"none"})}'
   +'</scr'+'ipt></body></html>');
   w.document.close();
 })();
