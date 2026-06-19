@@ -121,7 +121,6 @@
   +'var sortDir={};function S(k){sortDir[k]=!sortDir[k];DATA.sort(function(a,b){var v=sortDir[k]?1:-1;return(a[k]||"").toString().localeCompare((b[k]||"").toString())*v});R()}'
   +'function R(){var tb=document.getElementById("tb");var out="";for(var i=0;i<DATA.length;i++){var d=DATA[i];out+="<tr data-host=\\""+d.host+"\\"><td><input type=checkbox class=\\"ck rc\\" data-i="+i+" "+(d.al.length===0?"checked":"")+"></td><td><span class=tm>"+d.t+"</span></td><td><span class=nm>"+d.name+"</span><div class=rn>"+d.rn+"</div></td><td><strong>"+d.model+"</strong><br><span class=sub>"+d.color+"</span></td><td>"+(d.hp?"<span class=pl>"+d.plate+"</span>":"<span class=\\"dot dr\\"></span><span style=color:#dc3545>Manquante</span>")+"</td><td><span class=\\"badge "+pC(d.pay)+"\\">"+(d.b2b?"ENTERPRISE":pT(d.pay))+"</span></td><td>"+(d.tims?"<span class=\\"dot dg\\"></span>"+d.tims:"<span style=color:#ccc>Non</span>")+"</td><td>"+(d.otg?"<span class=\\"dot dg\\"></span>Oui":"<span class=\\"dot do\\"></span><span class=sub>"+(d.vs||"Non")+"</span>")+"</td><td>"+(d.io?"<span class=\\"dot dg\\"></span>OK":"<span style=color:#999>Non</span>")+"</td></tr>"}tb.innerHTML=out}'
   +'document.getElementById("srch").oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?"":"none"})}'
-  +'L();'
-  +'</'+'script></body></html>');
+  +'</scr'+'ipt></body></html>');
   w.document.close();
 })();
