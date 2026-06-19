@@ -288,7 +288,7 @@ function launchDashboard() {
           + '<td><strong>' + d.model + '</strong><br><span style="font-size:11px;color:#666">' + d.color + '</span></td>'
           + '<td>' + (d.hasPlate ? '<span class="pl">' + d.plate + '</span>' : '<span class="dot r"></span><span style="color:#ef4444;font-size:11px">Manquante</span>') + '</td>'
           + '<td><span class="bg ' + payClass(d.payType) + '">' + (d.isB2B ? 'ENTERPRISE' : payText(d.payType)) + '</span></td>'
-          + '<td>' + (d.hasTI ? '<span class="dot g"></span>Oui' : '<span style="color:#ccc">Non</span>') + '</td>'
+          + '<td>' + (d.hasTI ? '<span class="dot g"></span>' + (d.tradeInMake ? d.tradeInMake + ' ' + (d.tradeInModel||'') : 'Oui') : '<span style="color:#ccc">Non</span>') + '</td>'
           + '<td>' + (d.otg ? '<span class="dot g"></span>Oui' : '<span class="dot o"></span><span style="font-size:11px;color:#d97706">' + (d.vehicleStage || 'Non') + '</span>') + '</td>'
           + '<td style="font-size:12px">' + d.host + '</td>'
           + '<td style="font-size:12px">' + d.da + '</td>'
@@ -426,11 +426,12 @@ function launchDashboard() {
         tiContent = '<div class="val" style="font-size:14px">' + d.tradeInMake + ' ' + (d.tradeInModel||'') + '</div>';
         if (d.tradeInPlate) {
           tiContent += '<div style="margin-top:8px"><span class="lbl">IMMATRICULATION</span><br><span style="font-size:16px;font-weight:700;letter-spacing:2px">' + d.tradeInPlate + '</span></div>';
-        } else if (d.tradeInVin) {
-          tiContent += '<div style="margin-top:8px"><span class="lbl">VIN</span><br><span style="font-size:11px;font-weight:700;font-family:monospace">' + d.tradeInVin + '</span></div>';
+        }
+        if (d.tradeInVin) {
+          tiContent += '<div style="margin-top:6px"><span class="lbl">VIN</span><br><span style="font-size:10px;font-family:monospace">' + d.tradeInVin + '</span></div>';
         }
       } else if (hasTI) {
-        tiContent = '<div style="text-align:center;padding:12px 0"><span style="font-size:14px;font-weight:600;color:#92400e">Reprise confirmee</span></div>';
+        tiContent = '<div style="text-align:center;padding:8px 0"><span style="font-size:13px;font-weight:600;color:#92400e">Reprise en cours</span></div>';
       } else {
         tiContent = '<div style="text-align:center;flex:1;display:flex;align-items:center;justify-content:center"><span style="font-size:14px;font-weight:600;color:#dc2626">Aucune reprise</span></div>';
       }
