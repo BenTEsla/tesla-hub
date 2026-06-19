@@ -31,7 +31,7 @@ function startDashboard(){
 
   // ALL CSS prefixed with #tdh-overlay to beat DRO specificity
   var css='#tdh-overlay{background:#fff !important;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif !important;color:#393c41 !important;font-size:14px !important;line-height:1.5 !important}'
-  +'#tdh-overlay *{box-sizing:border-box !important}'
+  +'#tdh-overlay,#tdh-overlay *,#tdh-overlay *::before,#tdh-overlay *::after{all:initial !important;box-sizing:border-box !important;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif !important}'
   +'#tdh-overlay .tdh-hdr{height:60px !important;background:#fff !important;border-bottom:1px solid #e5e5e5 !important;display:flex !important;align-items:center !important;padding:0 24px !important}'
   +'#tdh-overlay .tdh-hdr .lo{font-size:18px !important;font-weight:600 !important;letter-spacing:3px !important;color:#171a20 !important}'
   +'#tdh-overlay .tdh-hdr .se{margin:0 12px !important;color:#ccc !important}'
