@@ -59,7 +59,7 @@ function launchDashboard() {
   }
 
   // Remove existing
-  document.getElementById('tdh-overlay')?.remove();
+  doc.getElementById('tdh-overlay')?.remove();
 
   // Config
   const HUB = { name: 'Rennes Saint-Jacques', trtId: 28498, countryCode: 'FR' };
@@ -83,13 +83,16 @@ function launchDashboard() {
   const fmtDate = d => d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
   const isoDate = d => d.toISOString().split('T')[0];
 
-  // === CREATE OVERLAY ===
-  const ov = document.createElement('div');
-  ov.id = 'tdh-overlay';
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:#fff;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#393c41;font-size:14px';
-
-  ov.innerHTML = '<style>'
-    + '#tdh-overlay *{box-sizing:border-box;margin:0;padding:0}'
+  // === CREATE OVERLAY AS IFRAME (100% CSS isolated from DRO) ===
+  var iframe = document.createElement('iframe');
+  iframe.id = 'tdh-overlay';
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;border:none;background:#fff';
+  document.body.appendChild(iframe);
+  var doc = iframe.contentDocument;
+  doc.open();
+  doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#393c41;background:#fff;font-size:14px}'
     + '.t-header{height:48px;background:#fff;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;padding:0 24px}'
     + '.t-header .logo{font-size:16px;font-weight:600;letter-spacing:3px;color:#171a20}'
     + '.t-header .sep{margin:0 12px;color:#ccc}'
@@ -129,13 +132,11 @@ function launchDashboard() {
     + '.ld{text-align:center;padding:80px;font-size:15px;color:#999}'
     + '.sp{display:inline-block;width:22px;height:22px;border:2.5px solid #eee;border-top-color:#3e6ae1;border-radius:50%;animation:sp .7s linear infinite;margin-right:10px;vertical-align:middle}'
     + '@keyframes sp{to{transform:rotate(360deg)}}'
-    + '.pv{position:fixed;top:0;right:0;width:45vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:100000;overflow-y:auto;display:none;padding:28px}'
+    + '.pv{position:fixed;top:0;right:0;width:45vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:10;overflow-y:auto;display:none;padding:28px}'
     + '.pv-close{position:absolute;top:14px;right:18px;font-size:22px;cursor:pointer;color:#999;background:none;border:none}'
-    + '</style>'
-
+    + '</style></head><body>'
     + '<div class="t-header"><span class="logo">TESLA</span><span class="sep">|</span><span class="app">Delivery Hub</span><span class="right">Ben Daubin</span></div>'
     + '<div class="t-title">Delivery Dashboard</div>'
-
     + '<div class="t-bar">'
     + '<button class="pill on" data-f="all">Tous</button>'
     + CES.map(c => '<button class="pill" data-f="' + c + '">' + c.split(' ')[0] + '</button>').join('')
@@ -146,30 +147,35 @@ function launchDashboard() {
     + '</select>'
     + '<button class="btn btn-p" id="tdh-load">Charger</button>'
     + '<button class="btn btn-g" id="tdh-gen" style="display:none">Generer PDFs</button>'
-    + '<button class="btn btn-l" onclick="document.getElementById(\'tdh-overlay\').remove()">Fermer</button>'
+    + '<button class="btn btn-l" id="tdh-close">Fermer</button>'
     + '<div class="stats"><div><div class="stat-n" id="s-tot">-</div><div class="stat-l">Livraisons</div></div>'
     + '<div><div class="stat-n" id="s-ok">-</div><div class="stat-l">Pretes</div></div>'
     + '<div><div class="stat-n" id="s-al">-</div><div class="stat-l">Alertes</div></div></div>'
     + '</div>'
-
     + '<div class="wrap">'
     + '<div class="ld" id="tdh-ld" style="display:none"><span class="sp"></span> Chargement...</div>'
     + '<table class="tbl" id="tdh-tbl" style="display:none"><thead><tr>'
     + '<th style="width:40px"><input type="checkbox" class="ck" id="tdh-sa" checked/></th>'
     + '<th>Heure</th><th>Client</th><th>Vehicule</th><th>Plaque</th><th>Paiement</th><th>Trade-In</th><th>OTG</th><th>Assurance</th>'
     + '</tr></thead><tbody id="tdh-tb"></tbody></table></div>'
+    + '<div class="pv" id="tdh-pv"><button class="pv-close" id="tdh-pv-close">&times;</button><div id="tdh-pc"></div></div>'
+    + '</body></html>');
+  doc.close();
 
-    + '<div class="pv" id="tdh-pv"><button class="pv-close" onclick="document.getElementById(\'tdh-pv\').style.display=\'none\'">&times;</button><div id="tdh-pc"></div></div>';
+  // Use iframe's document for all DOM operations
+  var ov = { querySelector: function(s) { return doc.querySelector(s); }, querySelectorAll: function(s) { return doc.querySelectorAll(s); } };
 
-  document.body.appendChild(ov);
+  // Close button
+  doc.getElementById('tdh-close').addEventListener('click', function() { document.getElementById('tdh-overlay').remove(); });
+  doc.getElementById('tdh-pv-close').addEventListener('click', function() { doc.getElementById('tdh-pv').style.display = 'none'; });
 
   // === FILTER LOGIC ===
-  ov.querySelectorAll('.pill[data-f]').forEach(btn => {
+  doc.querySelectorAll('.pill[data-f]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ov.querySelectorAll('.pill[data-f]').forEach(b => b.classList.remove('on'));
+      doc.querySelectorAll('.pill[data-f]').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
       const f = btn.dataset.f;
-      ov.querySelectorAll('#tdh-tb tr').forEach(r => {
+      doc.querySelectorAll('#tdh-tb tr').forEach(r => {
         if (f === 'all') { r.style.display = ''; return; }
         var host = (r.dataset.host || '').toLowerCase();
         var filter = f.toLowerCase();
@@ -179,10 +185,10 @@ function launchDashboard() {
   });
 
   // === LOAD ===
-  document.getElementById('tdh-load').addEventListener('click', async () => {
-    const ld = document.getElementById('tdh-ld');
-    const tbl = document.getElementById('tdh-tbl');
-    const tb = document.getElementById('tdh-tb');
+  doc.getElementById('tdh-load').addEventListener('click', async () => {
+    const ld = doc.getElementById('tdh-ld');
+    const tbl = doc.getElementById('tdh-tbl');
+    const tb = doc.getElementById('tdh-tb');
     ld.style.display = ''; tbl.style.display = 'none';
 
     ld.innerHTML = '<span class="sp"></span> Chargement des livraisons...';
@@ -191,7 +197,7 @@ function launchDashboard() {
       return;
     }
     const h = { 'Authorization': AUTH.token, 'Content-Type': 'application/json', 'userid': AUTH.userId };
-    const dateStr = document.getElementById('tdh-date').value;
+    const dateStr = doc.getElementById('tdh-date').value;
 
     try {
       // API 1: DRO Dashboard
@@ -296,28 +302,28 @@ function launchDashboard() {
 
       // Stats
       var ok = items.filter(function(d) { return d.alerts.length === 0; }).length;
-      document.getElementById('s-tot').textContent = items.length;
-      document.getElementById('s-ok').textContent = ok;
-      document.getElementById('s-al').textContent = items.length - ok;
+      doc.getElementById('s-tot').textContent = items.length;
+      doc.getElementById('s-ok').textContent = ok;
+      doc.getElementById('s-al').textContent = items.length - ok;
 
       ld.style.display = 'none';
       tbl.style.display = '';
-      document.getElementById('tdh-gen').style.display = '';
+      doc.getElementById('tdh-gen').style.display = '';
 
       // Select all
-      document.getElementById('tdh-sa').addEventListener('change', function(e) {
-        ov.querySelectorAll('.rc').forEach(function(c) {
+      doc.getElementById('tdh-sa').addEventListener('change', function(e) {
+        doc.querySelectorAll('.rc').forEach(function(c) {
           if (c.closest('tr').style.display !== 'none') c.checked = e.target.checked;
         });
       });
 
       // Preview click
-      ov.querySelectorAll('.nm').forEach(function(el) {
+      doc.querySelectorAll('.nm').forEach(function(el) {
         el.addEventListener('click', function() {
           var idx = parseInt(el.dataset.idx);
           var d = window._tdhData[idx];
-          var pv = document.getElementById('tdh-pv');
-          var pc = document.getElementById('tdh-pc');
+          var pv = doc.getElementById('tdh-pv');
+          var pc = doc.getElementById('tdh-pc');
           pv.style.display = 'block';
           pc.innerHTML = '<div style="padding:4px">'
             + '<h2 style="font-weight:300;font-size:28px;margin-bottom:4px">' + d.name + '</h2>'
@@ -352,12 +358,12 @@ function launchDashboard() {
   });
 
   // === GENERATE PDFs BUTTON (outside load handler) ===
-  document.getElementById('tdh-gen').addEventListener('click', function() {
+  doc.getElementById('tdh-gen').addEventListener('click', function() {
     try {
     var data = window._tdhData || [];
     var checked = [];
     // Get checked items from VISIBLE rows only
-    var overlay = document.getElementById('tdh-overlay');
+    var overlay = doc.getElementById('tdh-overlay');
     if (overlay) {
       overlay.querySelectorAll('.rc:checked').forEach(function(c) {
         var tr = c.closest('tr');
@@ -393,7 +399,7 @@ function launchDashboard() {
     };
 
     // Date for header
-    var dateStr = document.getElementById('tdh-date')?.value || '';
+    var dateStr = doc.getElementById('tdh-date')?.value || '';
     var dateObj = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
     var dateFR = dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
 
@@ -457,7 +463,7 @@ function launchDashboard() {
     }
 
     // Show pages directly in the overlay (no popup needed)
-    var overlay = document.getElementById('tdh-overlay');
+    var overlay = doc.getElementById('tdh-overlay');
     overlay.innerHTML = '<style>'
       + '@page{size:A4 portrait;margin:0}*{box-sizing:border-box;margin:0;padding:0}'
       + '#tdh-overlay{font-family:Segoe UI,Helvetica Neue,Arial,sans-serif;color:#171a20;background:#fff}'
