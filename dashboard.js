@@ -82,6 +82,8 @@
   +'.ldbar{width:180px;height:2px;background:#eee;border-radius:1px;margin:12px auto;overflow:hidden}'
   +'.ldbar::after{content:"";display:block;width:50px;height:2px;background:#3e6ae1;border-radius:1px;animation:ldb .8s ease-in-out infinite}'
   +'@keyframes ldb{0%{transform:translateX(-50px)}100%{transform:translateX(180px)}}'
+  +'.spinner{width:48px;height:48px;border:3px solid #e8e8e8;border-top-color:#e8523a;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}'
+  +'@keyframes spin{to{transform:rotate(360deg)}}'
   +'.ft{padding:8px 24px;font-size:11px;color:#aaa}'
   +'.sf{text-align:center;font-weight:700;font-size:16px;color:#171a20;line-height:1.1}'
   +'.sf .top{font-size:20px}'
@@ -135,7 +137,7 @@
   +'</div>'
 
   // TABLE
-  +'<div class="tw"><div id="lg" style="display:none;text-align:center;padding:80px"><div class="ldbar"></div><div style="font-size:13px;color:#999;margin-top:12px">Loading deliveries...</div></div>'
+  +'<div class="tw"><div id="lg" style="display:none;text-align:center;padding:100px 0"><div class="spinner"></div><div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div></div>'
   +'<table id="tbl" style="display:none"><thead><tr>'
   +'<th style="width:30px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
   +'<th style="width:130px" id="thDate" class="hid" onclick="SO(\'sdd\')">Scheduled Delivery Date<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
