@@ -37,14 +37,17 @@
   // TITLE
   +'.ttl{font-size:24px;font-weight:700;color:#171a20;padding:20px 24px 14px}'
 
-  // STATS BOX â€” Intrepid exact
-  +'.sb{margin:0 24px 16px;border:1px solid #e0e0e0;border-radius:8px;display:flex;overflow:hidden}'
-  +'.si{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;border-right:1px solid #e0e0e0;cursor:pointer;transition:background .1s;min-width:0}'
+  // STATS BOXES â€” 2 blocs carrÃ©s avec ombre
+  +'.srow{display:flex;gap:16px;margin:0 24px 16px}'
+  +'.sb{border:1px solid #e0e0e0;border-radius:0;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}'
+  +'.sb1{flex:0 0 auto}'
+  +'.sb2{flex:1}'
+  +'.si{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;border-right:1px solid #e0e0e0;cursor:pointer;transition:background .1s;min-width:80px}'
   +'.si:last-child{border-right:none}'
   +'.si:hover{background:#f8f8f8}'
   +'.si.on{background:#f0f4ff}'
   +'.sn{font-size:20px;font-weight:700;line-height:1.2}'
-  +'.sn.b{color:#3e6ae1}.sn.g{color:#28a745}.sn.r{color:#dc3545}.sn.x{color:#bbb}.sn.w{color:#8d6e27}'
+  +'.sn.b{color:#3e6ae1}.sn.g{color:#28a745}.sn.r{color:#dc3545}.sn.x{color:#bbb}.sn.k{color:#171a20}'
   +'.sl{font-size:9px;color:#888;margin-top:3px;text-align:center;line-height:1.2}'
 
   // FILTERS + ACTIONS
@@ -104,16 +107,20 @@
   // TITLE
   +'<div class="ttl">Delivery Dashboard</div>'
 
-  // STATS BOX
-  +'<div class="sb">'
+  // STATS BOXES
+  +'<div class="srow">'
+  +'<div class="sb sb1">'
   +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn b" id="sT">-</div><div class="sl">Delivery<br>Today</div></div>'
   +'<div class="si" onclick="SF(\'ok\',this)"><div class="sn g" id="sO">-</div><div class="sl">Pretes</div></div>'
   +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Alertes</div></div>'
-  +'<div class="si"><div class="sn x" id="sP">0</div><div class="sl">Paiement<br>OK</div></div>'
-  +'<div class="si"><div class="sn x" id="sOTG">0</div><div class="sl">OTG</div></div>'
-  +'<div class="si"><div class="sn x" id="sPl">0</div><div class="sl">Plaques<br>OK</div></div>'
-  +'<div class="si"><div class="sn x" id="sTI">0</div><div class="sl">Trade-In</div></div>'
-  +'<div class="si"><div class="sn x" id="sAs">0</div><div class="sl">Assurance<br>OK</div></div>'
+  +'</div>'
+  +'<div class="sb sb2">'
+  +'<div class="si"><div class="sn k" id="sP">0</div><div class="sl">Paiement<br>OK</div></div>'
+  +'<div class="si"><div class="sn k" id="sOTG">0</div><div class="sl">OTG</div></div>'
+  +'<div class="si"><div class="sn k" id="sPl">0</div><div class="sl">Plaques<br>OK</div></div>'
+  +'<div class="si"><div class="sn k" id="sTI">0</div><div class="sl">Trade-In</div></div>'
+  +'<div class="si"><div class="sn k" id="sAs">0</div><div class="sl">Assurance<br>OK</div></div>'
+  +'</div>'
   +'</div>'
 
   // FILTERS
@@ -183,11 +190,12 @@
   +'document.getElementById("sT").textContent=DATA.length;document.getElementById("sT").className="sn b";'
   +'document.getElementById("sO").textContent=ok;document.getElementById("sO").className="sn"+(ok>0?" g":" x");'
   +'document.getElementById("sA").textContent=DATA.length-ok;document.getElementById("sA").className="sn"+((DATA.length-ok)>0?" r":" x");'
-  +'document.getElementById("sP").textContent=pOk;document.getElementById("sP").className="sn"+(pOk>0?" b":" x");'
-  +'document.getElementById("sOTG").textContent=oOk;document.getElementById("sOTG").className="sn"+(oOk>0?" b":" x");'
-  +'document.getElementById("sPl").textContent=plOk;document.getElementById("sPl").className="sn"+(plOk>0?" b":" x");'
-  +'document.getElementById("sTI").textContent=tiOk;document.getElementById("sTI").className="sn"+(tiOk>0?" w":" x");'
-  +'document.getElementById("sAs").textContent=asOk;document.getElementById("sAs").className="sn"+(asOk>0?" b":" x");'
+  +'var N=DATA.length;'
+  +'document.getElementById("sP").textContent=pOk+"/"+N;document.getElementById("sP").className="sn k";'
+  +'document.getElementById("sOTG").textContent=oOk+"/"+N;document.getElementById("sOTG").className="sn k";'
+  +'document.getElementById("sPl").textContent=plOk+"/"+N;document.getElementById("sPl").className="sn k";'
+  +'document.getElementById("sTI").textContent=tiOk+"/"+N;document.getElementById("sTI").className="sn k";'
+  +'document.getElementById("sAs").textContent=asOk+"/"+N;document.getElementById("sAs").className="sn k";'
   +'lg.style.display="none";tbl.style.display="";document.getElementById("gn").style.display="";document.getElementById("disp").style.display="";TR();'
   +'document.getElementById("sa").checked=true;'
   +'}catch(err){lg.innerHTML="<div style=padding:60px;text-align:center;color:#c00>Erreur: "+err.message+"</div>"}}'
