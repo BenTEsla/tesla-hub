@@ -93,7 +93,7 @@
   +'<button class="pill on" onclick="F(\'all\')">Tous</button>'
   +CES.map(function(c){return'<button class="pill" onclick="F(\''+c+'\')">'+c.split(' ')[0]+'</button>'}).join('')
   +'<span class="s2"></span>'
-  +'<input type="date" id="dt" value="'+iD(now)+'" style="padding:6px 12px;border:1px solid #d0d0d0;border-radius:4px;font-size:13px;font-family:inherit;color:#333">'
+  +'<select id="dt" style="padding:6px 12px;border:1px solid #d0d0d0;border-radius:4px;font-size:13px;font-family:inherit;color:#333">'+dates.join('')+'</select>'
   +'<button class="btn bp" onclick="L()">Charger</button>'
   +'<button class="btn bk" id="gn" style="display:none" onclick="G()">Generer PDFs</button>'
   +'<button class="btn" id="disp" style="display:none;background:#171a20;color:#fff;border:none" onclick="DISPATCH()">Dispatcher</button>'
