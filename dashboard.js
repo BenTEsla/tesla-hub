@@ -15,7 +15,6 @@
     droToken=droToken.replace(/^"|"$/g,'');
   }
   if(!droUserId)droUserId=prompt('UserId?')||'428058';
-  }
 
   var CFG={trtId:28498,cc:'FR'};
   var CES=['Ben Daubin','Sacha Villa','Sophie MACE'];
