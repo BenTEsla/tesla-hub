@@ -1,12 +1,19 @@
-// Tesla Delivery Hub v11 â€” Dashboard running on Intrepid
-// Paste this in the console of the Intrepid tab
+// Tesla Delivery Hub v12 â€” Dashboard on Intrepid
+// Paste on Intrepid console. First time: paste your DRO token when asked.
 (function(){
-  // Read DRO token from URL hash
-  var hash=location.hash.substring(1);
-  var params={};hash.split('&').forEach(function(p){var kv=p.split('=');params[kv[0]]=decodeURIComponent(kv[1]||'')});
-  var droToken=params.tdh;
-  var droUserId=params.uid;
-  if(!droToken){alert('Token DRO manquant dans l\'URL!');return}
+  // Get DRO token (saved in sessionStorage after first use)
+  var droToken=sessionStorage.getItem('tdh_token');
+  var droUserId=sessionStorage.getItem('tdh_uid');
+  if(!droToken){
+    droToken=prompt('Colle ton token DRO ici.\n\nPour le copier, sur DRO (F12 console) tape:\ncopy(localStorage.getItem("delops_id_token"))');
+    if(!droToken){alert('Token requis!');return}
+    droToken=droToken.replace(/^"|"$/g,'');
+    sessionStorage.setItem('tdh_token',droToken);
+  }
+  if(!droUserId){
+    droUserId=prompt('UserId? (ex: 428058)')||'428058';
+    sessionStorage.setItem('tdh_uid',droUserId);
+  }
 
   var CFG={trtId:28498,cc:'FR'};
   var CES=['Ben Daubin','Sacha Villa','Sophie MACE'];
