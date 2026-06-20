@@ -37,11 +37,11 @@
   // TITLE
   +'.ttl{font-size:24px;font-weight:700;color:#171a20;padding:20px 24px 14px}'
 
-  // STATS BOXES â€” 2 blocs carrÃ©s avec ombre + sÃ©parateur
+  // STATS BOXES â€” 2 blocs carrÃ©s avec ombre + sÃ©parateur visible
   +'.srow{display:flex;align-items:stretch;margin:0 24px 16px;border:1px solid #e0e0e0;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}'
   +'.sb{display:flex}'
-  +'.ssep{width:1px;background:#e0e0e0;align-self:stretch}'
-  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px;border-right:1px solid #e0e0e0;cursor:pointer;transition:background .1s;min-width:70px}'
+  +'.ssep{width:3px;background:#e0e0e0;align-self:stretch;margin:8px 0}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px;border-right:1px solid #f0f0f0;cursor:pointer;transition:background .1s;min-width:70px}'
   +'.si:last-child{border-right:none}'
   +'.si:hover{background:#f8f8f8}'
   +'.si.on{background:#f0f4ff}'
@@ -59,6 +59,11 @@
   +'.bt-p{background:#e8523a;color:#fff}.bt-p:hover{background:#d44430}'
   +'.bt-s{background:#fff;color:#393c41;border:1px solid #ddd}.bt-s:hover{background:#f5f5f5}'
   +'.bt-d{background:#171a20;color:#fff}.bt-d:hover{background:#333}'
+  +'.bt-q{background:#fff;color:#393c41;border:1px solid #ddd;padding:6px 10px;font-size:11px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:500}'
+  +'.bt-q:hover{background:#f0f0f0}'
+  +'.bt-q.on{background:#171a20;color:#fff;border-color:#171a20}'
+  +'.bt-nav{background:#fff;color:#393c41;border:1px solid #ddd;padding:6px 8px;font-size:14px;border-radius:4px;cursor:pointer;font-family:inherit;line-height:1}'
+  +'.bt-nav:hover{background:#f0f0f0}'
 
   // PILLS
   +'.pb{padding:0 24px 12px;display:flex;gap:6px}'
@@ -126,6 +131,10 @@
   // FILTERS
   +'<div class="fb">'
   +'<div class="fg"><div class="fl">Scheduled Date</div><select id="dt" class="fi2">'+dates.join('')+'</select></div>'
+  +'<button class="bt-nav" onclick="ND(-1)" title="Jour precedent">&#8249;</button>'
+  +'<button class="bt-nav" onclick="ND(1)" title="Jour suivant">&#8250;</button>'
+  +'<button class="bt-q on" onclick="QD(0,this)">Today</button>'
+  +'<button class="bt-q" onclick="QD(1,this)">Tomorrow</button>'
   +'<button class="bt bt-p" onclick="L()">Search</button>'
   +'<div style="flex:1"></div>'
   +'<button class="bt bt-s" id="gn" style="display:none" onclick="G()">Generer PDFs</button>'
@@ -164,6 +173,12 @@
   +'var DATA=[];'
 
   +'function PF(f,el){document.querySelectorAll(".pi").forEach(function(p){p.classList.remove("on")});el.classList.add("on");document.querySelectorAll("#tb tr").forEach(function(r){if(f==="all"){r.style.display="";return}r.style.display=(r.dataset.host||"").toLowerCase().indexOf(f.split(" ")[0].toLowerCase())>=0?"":"none"});US();TR()}'
+
+  // QD - Quick date (0=today, 1=tomorrow)
+  +'function QD(offset,el){var sel=document.getElementById("dt");var opts=sel.options;var d=new Date(Date.now()+offset*864e5);var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");var v=y+"-"+m+"-"+dd;for(var i=0;i<opts.length;i++){if(opts[i].value===v){sel.selectedIndex=i;break}}document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});el.classList.add("on");L()}'
+
+  // ND - Navigate date (prev/next in dropdown)
+  +'function ND(dir){var sel=document.getElementById("dt");var ni=sel.selectedIndex+dir;if(ni>=0&&ni<sel.options.length){sel.selectedIndex=ni;document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});L()}}'
 
   +'function SA(el){document.querySelectorAll(".rc").forEach(function(c){if(c.closest("tr").style.display!=="none")c.checked=el.checked})}'
 
