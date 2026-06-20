@@ -37,12 +37,11 @@
   // TITLE
   +'.ttl{font-size:24px;font-weight:700;color:#171a20;padding:20px 24px 14px}'
 
-  // STATS BOXES â€” 2 blocs carrÃ©s avec ombre
-  +'.srow{display:flex;gap:16px;margin:0 24px 16px}'
-  +'.sb{border:1px solid #e0e0e0;border-radius:0;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}'
-  +'.sb1{flex:0 0 auto}'
-  +'.sb2{flex:1}'
-  +'.si{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;border-right:1px solid #e0e0e0;cursor:pointer;transition:background .1s;min-width:80px}'
+  // STATS BOXES â€” 2 blocs carrÃ©s avec ombre + sÃ©parateur
+  +'.srow{display:flex;align-items:stretch;margin:0 24px 16px;border:1px solid #e0e0e0;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}'
+  +'.sb{display:flex}'
+  +'.ssep{width:1px;background:#e0e0e0;align-self:stretch}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px;border-right:1px solid #e0e0e0;cursor:pointer;transition:background .1s;min-width:70px}'
   +'.si:last-child{border-right:none}'
   +'.si:hover{background:#f8f8f8}'
   +'.si.on{background:#f0f4ff}'
@@ -109,12 +108,13 @@
 
   // STATS BOXES
   +'<div class="srow">'
-  +'<div class="sb sb1">'
+  +'<div class="sb">'
   +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn b" id="sT">-</div><div class="sl">Delivery<br>Today</div></div>'
   +'<div class="si" onclick="SF(\'ok\',this)"><div class="sn g" id="sO">-</div><div class="sl">Pretes</div></div>'
   +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Alertes</div></div>'
   +'</div>'
-  +'<div class="sb sb2">'
+  +'<div class="ssep"></div>'
+  +'<div class="sb">'
   +'<div class="si"><div class="sn k" id="sP">0</div><div class="sl">Paiement<br>OK</div></div>'
   +'<div class="si"><div class="sn k" id="sOTG">0</div><div class="sl">OTG</div></div>'
   +'<div class="si"><div class="sn k" id="sPl">0</div><div class="sl">Plaques<br>OK</div></div>'
