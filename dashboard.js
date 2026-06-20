@@ -1,18 +1,20 @@
-// Tesla Delivery Hub v12 â€” Dashboard on Intrepid
-// Paste on Intrepid console. First time: paste your DRO token when asked.
+// Tesla Delivery Hub v13 â€” Dashboard on Intrepid (reads DRO token from cookie)
+// Launch from DRO with the launcher, then paste this on Intrepid.
 (function(){
-  // Get DRO token (saved in sessionStorage after first use)
-  var droToken=sessionStorage.getItem('tdh_token');
-  var droUserId=sessionStorage.getItem('tdh_uid');
+  // Read DRO token from .tesla.com cookie (set by launcher on DRO)
+  var cookies=document.cookie;
+  var droToken='';var droUserId='';
+  cookies.split(';').forEach(function(c){
+    var kv=c.trim().split('=');
+    if(kv[0]==='tdh_tk')droToken=decodeURIComponent(kv[1]);
+    if(kv[0]==='tdh_uid')droUserId=kv[1];
+  });
   if(!droToken){
-    droToken=prompt('Colle ton token DRO ici.\n\nPour le copier, sur DRO (F12 console) tape:\ncopy(localStorage.getItem("delops_id_token"))');
+    droToken=prompt('Token DRO non trouve dans le cookie.\nColle-le ici (sur DRO: copy(localStorage.getItem("delops_id_token")))');
     if(!droToken){alert('Token requis!');return}
     droToken=droToken.replace(/^"|"$/g,'');
-    sessionStorage.setItem('tdh_token',droToken);
   }
-  if(!droUserId){
-    droUserId=prompt('UserId? (ex: 428058)')||'428058';
-    sessionStorage.setItem('tdh_uid',droUserId);
+  if(!droUserId)droUserId=prompt('UserId?')||'428058';
   }
 
   var CFG={trtId:28498,cc:'FR'};
