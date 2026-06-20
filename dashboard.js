@@ -113,7 +113,7 @@
   +'function SA(el){document.querySelectorAll(".rc").forEach(function(c){if(c.closest("tr").style.display!=="none")c.checked=el.checked})}'
   +'async function L(){'
   +'var lg=document.getElementById("lg"),tbl=document.getElementById("tbl"),tb=document.getElementById("tb");'
-  +'lg.style.display="";tbl.style.display="none";lg.innerHTML=\'<span class="spin"></span> Chargement...\';'
+  +'lg.style.display="";tbl.style.display="none";lg.innerHTML=\'<div style="text-align:center;padding:80px"><div class="ldbar"></div><div style="font-size:14px;color:#999;margin-top:16px">Chargement des livraisons...</div></div>\';'
   +'var h={"Authorization":AUTH.token,"Content-Type":"application/json","userid":AUTH.userId};'
   +'var ds=document.getElementById("dt").value;'
   +'try{'
