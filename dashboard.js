@@ -40,8 +40,9 @@
   // STATS - Two separate Intrepid-style boxes
   +'.srow{display:flex;justify-content:space-between;gap:20px;margin:0 24px 20px}'
   +'.sb{display:flex;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;background:#fff}'
-  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 32px;border-right:1px solid #ebebeb;cursor:pointer;transition:all .12s}'
-  +'.si:last-child{border-right:none}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 32px;cursor:pointer;transition:all .12s;position:relative}'
+  +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:#e0e0e0}'
+  +'.si:last-child::after{display:none}'
   +'.si:hover{background:#fafafa}'
   +'.si.on{background:#f0f4ff}'
   +'.sn{font-size:28px;font-weight:700;line-height:1}'
