@@ -75,10 +75,10 @@
   // TABLE â€” Intrepid exact
   +'.tw{padding:0 32px 24px}'
   +'.tcard{background:#fff;border:1px solid #e8e8e8;border-radius:0;overflow:hidden}'
-  +'table{width:100%;border-collapse:collapse;table-layout:fixed}'
+  +'table{width:100%;border-collapse:collapse}'
   +'th{padding:10px 12px;text-align:left;font-size:12px;color:#393c41;font-weight:600;border-bottom:1px solid #e0e0e0;background:#fff;cursor:pointer;user-select:none;white-space:nowrap;overflow:hidden;position:sticky;top:0;z-index:5}'
   +'th:hover{color:#171a20}'
-  +'td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;vertical-align:middle;color:#393c41;height:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+  +'td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;vertical-align:middle;color:#393c41;height:44px;white-space:nowrap}'
   +'tr:hover td{background:#fafafa}'
   +'tr.w td{background:#fef8f8}'
   +'tr.w:hover td{background:#fef0f0}'
@@ -107,7 +107,7 @@
   +'</style></head><body>'
 
   // HEADER â€” Intrepid dark bar
-  +'<div class="hd"><div class="hd-logo"><svg viewBox="0 0 342 35" fill="#fff" height="16"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5-.1V15l-6-6-2 2 8 8 8-8-2-2-6 6V7h11a9.8 9.8 0 0 0 7-7H0zm36 0v3h5v12h3V3h5V0H36zM67.6 0v3h-4v3h4v4.5c0 2.5 1.4 4.5 4.5 4.5H76v-3h-2.5c-1 0-2-.5-2-2V6h4.5V3H71.5V0h-3.9zm14 3v12h3V3h-3zm0-3v3h3V0h-3zm19 0c-5 0-8 3.5-8 7.5s3 7.5 8 7.5 8-3.5 8-7.5S105.6 0 100.6 0zm0 3c3 0 5 2 5 4.5S103.6 12 100.6 12s-5-2-5-4.5S97.6 3 100.6 3zm27-3v3h-6v12h-3V3h-6V0h15zm8 0v15h-3V0h3zm12 0c-5 0-8 3.5-8 7.5s3 7.5 8 7.5 8-3.5 8-7.5S152.6 0 147.6 0zm0 3c3 0 5 2 5 4.5s-2 4.5-5 4.5-5-2-5-4.5 2-4.5 5-4.5z"/></svg><span class="hd-site">| Delivery Hub &mdash; Rennes</span></div><div class="hd-r"><input type="text" id="srch" class="hd-search" placeholder="Search by VIN, RN, LP or Name"><span class="hd-user">Ben Daubin</span></div></div>'
+  +'<div class="hd"><div class="hd-logo"><svg viewBox="0 0 160 160" fill="#e12528" width="22" height="22"><path d="m80 129.8 14-78.7c13.3 0 17.5 1.5 18.1 7.4 0 0 8.9-3.3 13.5-10.1-17.6-8.1-35.3-8.5-35.3-8.5L80 52.5 69.7 39.9s-17.7.4-35.3 8.5c4.5 6.8 13.5 10.1 13.5 10.1.6-6 4.8-7.4 18.1-7.4z"/><path d="M80 36.3c14.2-.1 30.5 2.2 47.2 9.5 2.2-4 2.8-5.8 2.8-5.8-18.2-7.3-35.3-9.7-50-9.8-14.7.1-31.8 2.5-50 9.8 0 0 .8 2.2 2.8 5.8 16.7-7.3 33-9.6 47.2-9.5"/></svg><span class="hd-site">Delivery Hub &mdash; Rennes</span></div><div class="hd-r"><input type="text" id="srch" class="hd-search" placeholder="Search by VIN, RN, LP or Name"><span class="hd-user">Ben Daubin</span></div></div>'
 
   // TITLE
   +'<div class="ttl">Delivery Dashboard</div>'
@@ -153,15 +153,15 @@
   +'<div class="tw"><div class="tcard"><div id="lg" style="display:none;text-align:center;padding:80px 0"><div class="spinner"></div><div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div></div>'
   +'<table id="tbl" style="display:none"><thead><tr>'
   +'<th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
-  +'<th style="width:120px" id="thDate" class="hid" onclick="SO(\'sdd\')">Scheduled Delivery Date<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
-  +'<th style="width:55px" onclick="SO(\'t\')">Time<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
-  +'<th onclick="SO(\'name\')" style="min-width:140px">Customer<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
+  +'<th id="thDate" class="hid" onclick="SO(\'sdd\')">Scheduled Delivery Date<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
+  +'<th onclick="SO(\'t\')" style="width:50px">Time<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
+  +'<th onclick="SO(\'name\')">Customer<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
   +'<th style="width:110px">RN<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>'
-  +'<th style="width:80px" onclick="SO(\'model\')">Vehicle<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Model 3">M3</option><option value="Model Y">MY</option></select></th>'
+  +'<th onclick="SO(\'model\')" style="width:75px">Vehicle<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Model 3">M3</option><option value="Model Y">MY</option></select></th>'
   +'<th style="width:90px">Registration<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="Hold">Hold</option><option value="Pending">Pending</option></select></th>'
   +'<th style="width:75px">Payment<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>'
   +'<th style="width:80px">Trade-In<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Accepted">Yes</option><option value="No">No</option></select></th>'
-  +'<th style="width:90px">Vehicle<br>Status<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Finished">FG</option><option value="Transit">Transit</option></select></th>'
+  +'<th style="width:100px">Vehicle<br>Status<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Finished">FG</option><option value="Transit">Transit</option></select></th>'
   +'<th style="width:55px">Hold<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Hold">Hold</option><option value="OK">OK</option></select></th>'
   +'<th style="width:75px">Insurance<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>'
   +'</tr></thead><tbody id="tb"></tbody></table>'
