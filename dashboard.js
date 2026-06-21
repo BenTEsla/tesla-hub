@@ -37,21 +37,19 @@
   +'.card{background:#fff;margin:20px 24px 0;border-radius:8px;border:1px solid #e8e8e8;box-shadow:0 1px 4px rgba(0,0,0,.06)}'
   +'.ttl{font-size:22px;font-weight:700;color:#171a20;padding:20px 24px 16px}'
 
-  // STATS ROW
-  +'.srow{display:flex;align-items:stretch;margin:0 24px 20px;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;background:#fff}'
-  +'.sb{display:flex;flex:1}'
-  +'.sb:first-child{flex:0 0 auto}'
-  +'.ssep{width:2px;background:linear-gradient(180deg,transparent 10%,#e0e0e0 10%,#e0e0e0 90%,transparent 90%);align-self:stretch}'
-  +'.si{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 18px;border-right:1px solid #f0f0f0;cursor:pointer;transition:all .12s;min-width:80px}'
+  // STATS - Two separate Intrepid-style boxes
+  +'.srow{display:flex;gap:16px;margin:0 24px 20px}'
+  +'.sb{display:flex;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;background:#fff}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 24px;border-right:1px solid #e8e8e8;cursor:pointer;transition:all .12s;min-width:90px}'
   +'.si:last-child{border-right:none}'
   +'.si:hover{background:#fafafa}'
   +'.si.on{background:#f0f4ff}'
-  +'.sn{font-size:22px;font-weight:700;line-height:1.1}'
+  +'.sn{font-size:24px;font-weight:700;line-height:1}'
   +'.sn.b{color:#3e6ae1}.sn.g{color:#28a745}.sn.r{color:#dc3545}.sn.x{color:#bbb}'
-  +'.sl{font-size:9px;color:#999;margin-top:4px;text-align:center;line-height:1.2;text-transform:uppercase;letter-spacing:.5px}'
+  +'.sl{font-size:10px;color:#999;margin-top:6px;text-align:center;line-height:1.2}'
   +'.sf{text-align:center;font-weight:700;line-height:1}'
-  +'.sf .top{font-size:22px;color:#171a20}'
-  +'.sf .div{border-top:1.5px solid #e0e0e0;font-size:14px;color:#aaa;margin-top:3px;padding-top:3px}'
+  +'.sf .top{font-size:24px;color:#171a20}'
+  +'.sf .div{border-top:1.5px solid #e0e0e0;font-size:15px;color:#bbb;margin-top:4px;padding-top:4px}'
 
   // TOOLBAR
   +'.toolbar{padding:16px 24px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}'
@@ -114,17 +112,16 @@
   // TITLE
   +'<div class="ttl">Delivery Dashboard</div>'
 
-  // STATS
+  // STATS - Block 1: Overview | Block 2: Readiness
   +'<div class="srow">'
-  +'<div class="sb" style="flex:0 0 auto">'
+  +'<div class="sb">'
   +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn b" id="sT">-</div><div class="sl">Deliveries</div></div>'
   +'<div class="si" onclick="SF(\'ok\',this)"><div class="sn g" id="sO">-</div><div class="sl">Ready</div></div>'
   +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Alerts</div></div>'
   +'</div>'
-  +'<div class="ssep"></div>'
   +'<div class="sb">'
   +'<div class="si"><div id="sP" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Payment</div></div>'
-  +'<div class="si"><div id="sOTG" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">OTG</div></div>'
+  +'<div class="si"><div id="sOTG" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Car On The<br>Ground</div></div>'
   +'<div class="si"><div id="sPl" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Registration</div></div>'
   +'<div class="si"><div id="sTI" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Trade-In</div></div>'
   +'<div class="si"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
