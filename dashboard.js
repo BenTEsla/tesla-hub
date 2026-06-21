@@ -37,19 +37,19 @@
   // TITLE
   +'.ttl{font-size:28px;font-weight:700;color:#171a20;padding:24px 32px 16px}'
 
-  // STATS â€” Intrepid exact: one box per group
+  // STATS â€” Intrepid EXACT from computed styles
   +'.srow{display:flex;gap:16px;margin:0 32px 24px;flex-wrap:wrap}'
-  +'.sb{display:inline-flex;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}'
-  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px;cursor:pointer;transition:background .1s;position:relative}'
-  +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:10px;bottom:10px;width:1px;background:#e0e0e0}'
+  +'.sb{display:inline-flex;height:102px;border-radius:4px;box-shadow:rgba(0,0,0,.12) 0 8px 16px;overflow:hidden;background:#fff}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;cursor:pointer;transition:background .1s;position:relative;min-width:100px}'
+  +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:16px;bottom:16px;width:1px;background:#e0e0e0}'
   +'.si:hover{background:#f8f8f8}'
   +'.si.on{background:#f0f4ff}'
-  +'.sn{font-size:20px;font-weight:700;line-height:1}'
-  +'.sn.b{color:#3e6ae1}.sn.g{color:#28a745}.sn.r{color:#dc3545}.sn.x{color:#bbb}'
-  +'.sl{font-size:10px;color:#888;margin-top:5px;text-align:center;line-height:1.2}'
-  +'.sf{text-align:center;font-weight:700;line-height:1}'
-  +'.sf .top{font-size:20px;color:#171a20}'
-  +'.sf .div{border-top:1px solid #e0e0e0;font-size:20px;color:#ccc;margin-top:2px;padding-top:2px}'
+  +'.sn{font-size:20px;font-weight:400;line-height:28px;color:#3e6ae1}'
+  +'.sn.g{color:#28a745}.sn.r{color:#dc3545}'
+  +'.sl{font-size:14px;color:#393c41;margin-top:4px;text-align:center;line-height:1.2}'
+  +'.sf{text-align:center;line-height:1}'
+  +'.sf .top{font-size:20px;font-weight:700;color:#171a20;line-height:24px}'
+  +'.sf .div{font-size:20px;font-weight:400;color:#ccc;line-height:24px}'
 
   // FILTERS â€” Intrepid exact
   +'.toolbar{padding:0 32px 12px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}'
@@ -115,7 +115,7 @@
   // STATS - Block 1: Overview | Block 2: Readiness
   +'<div class="srow">'
   +'<div class="sb">'
-  +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn b" id="sT">-</div><div class="sl">Deliveries</div></div>'
+  +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn" id="sT">-</div><div class="sl">Deliveries</div></div>'
   +'<div class="si" onclick="SF(\'ok\',this)"><div class="sn g" id="sO">-</div><div class="sl">Ready</div></div>'
   +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Alerts</div></div>'
   +'</div>'
