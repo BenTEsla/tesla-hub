@@ -24,33 +24,33 @@
   +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
   // TITLE + Updated at
-  +'.title-row{display:flex;align-items:baseline;padding:32px 32px 8px}'
+  +'.title-row{display:flex;align-items:baseline;padding:32px 32px 12px}'
   +'.ttl{font-size:32px;font-weight:700;color:#171a20;letter-spacing:-.5px}'
   +'.title-actions{margin-left:24px;display:flex;gap:8px}'
   +'.updated{margin-left:auto;font-size:12px;color:#999}'
 
   // TABS like Intrepid
-  +'.tabs{display:flex;padding:0 32px 16px;gap:0;border-bottom:1px solid #e0e0e0}'
+  +'.tabs{display:flex;padding:0 32px 20px;gap:0;border-bottom:1px solid #e0e0e0}'
   +'.tab{padding:10px 24px;font-size:14px;color:#666;cursor:pointer;border-bottom:2px solid transparent;font-weight:500}'
   +'.tab:hover{color:#171a20}'
   +'.tab.on{color:#171a20;border-bottom-color:#171a20}'
 
   // STATS
-  +'.srow{display:flex;gap:16px;margin:16px 32px 20px;align-items:stretch}'
+  +'.srow{display:flex;gap:16px;margin:20px 32px 24px;align-items:stretch}'
   +'.sb{display:inline-flex;border-radius:4px;box-shadow:rgba(0,0,0,.12) 0 8px 16px;background:#fff}'
-  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 24px;cursor:pointer;transition:background .1s;position:relative;min-width:100px}'
-  +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:14px;bottom:14px;width:1px;background:#e0e0e0}'
+  +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 28px;cursor:pointer;transition:background .1s;position:relative;min-width:110px}'
+  +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:16px;bottom:16px;width:1px;background:#e0e0e0}'
   +'.si:hover{background:#f8f8f8}'
   +'.si.on{background:#f0f4ff}'
-  +'.sn{font-size:20px;font-weight:400;line-height:1;color:#3e6ae1}'
+  +'.sn{font-size:22px;font-weight:400;line-height:1;color:#3e6ae1}'
   +'.sn.g{color:#28a745}.sn.r{color:#dc3545}'
-  +'.sl{font-size:12px;color:#393c41;margin-top:6px;text-align:center;line-height:1.2}'
+  +'.sl{font-size:12px;color:#5c5e62;margin-top:8px;text-align:center;line-height:1.2}'
   +'.sf{text-align:center;line-height:1}'
-  +'.sf .top{font-size:20px;font-weight:700;color:#171a20}'
-  +'.sf .div{font-size:18px;font-weight:400;color:#ccc;border-top:1px solid #e0e0e0;margin-top:2px;padding-top:2px}'
+  +'.sf .top{font-size:22px;font-weight:700;color:#171a20}'
+  +'.sf .div{font-size:20px;font-weight:400;color:#ccc;border-top:1px solid #e0e0e0;margin-top:3px;padding-top:3px}'
 
   // FILTERS
-  +'.toolbar{padding:0 32px 12px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}'
+  +'.toolbar{padding:0 32px 16px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}'
   +'.fg{display:flex;flex-direction:column;gap:3px}'
   +'.fl{font-size:11px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px}'
   +'.fi2{padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;font-family:inherit;color:#333;outline:none;background:#fff}'
@@ -129,8 +129,8 @@
   +'<div class="si"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
   +'</div>'
   +'<div class="sb" style="margin-left:auto">'
-  +'<div class="si on" onclick="PF(\'all\',this)"><div class="sn" id="cAll" style="font-size:14px">-</div><div class="sl">All</div></div>'
-  +CES.map(function(c,i){return'<div class="si" onclick="PF(\''+c+'\',this)"><div class="sn" id="c'+i+'" style="font-size:14px">-</div><div class="sl">'+c.split(' ')[0]+'</div></div>'}).join('')
+  +'<div class="si on" onclick="PF(\'all\',this)"><div class="sn" id="cAll">-</div><div class="sl">All</div></div>'
+  +CES.map(function(c,i){return'<div class="si" onclick="PF(\''+c+'\',this)"><div class="sn" id="c'+i+'">-</div><div class="sl">'+c.split(' ')[0]+'</div></div>'}).join('')
   +'</div>'
   +'</div>'
 
