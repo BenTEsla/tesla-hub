@@ -49,7 +49,8 @@ app.get('/api/config', (req, res) => {
 app.all('/api/dro/*', async (req, res) => {
   try {
     const droPath = req.params[0];
-    const url = `${config.apis.dro}/${droPath}`;
+    const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : '';
+    const url = `${config.apis.dro}/${droPath}${qs}`;
     const headers = {
       'Authorization': `Bearer ${tokens.dro}`,
       'Content-Type': 'application/json',
@@ -73,7 +74,8 @@ app.all('/api/dro/*', async (req, res) => {
 app.all('/api/docgen/*', async (req, res) => {
   try {
     const docPath = req.params[0];
-    const url = `${config.apis.docgen}/${docPath}`;
+    const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?').slice(1).join('?') : '';
+    const url = `${config.apis.docgen}/${docPath}${qs}`;
     const headers = {
       'authorization': `Bearer ${tokens.docgen}`,
       'token': tokens.docgen,
@@ -108,7 +110,8 @@ app.all('/api/docgen/*', async (req, res) => {
 app.all('/api/intrepid/*', async (req, res) => {
   try {
     const intPath = req.params[0];
-    const url = `${config.apis.intrepid}/${intPath}`;
+    const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : '';
+    const url = `${config.apis.intrepid}/${intPath}${qs}`;
     const r = await fetch(url, {
       headers: { 'Authorization': `Bearer ${tokens.dro}` }
     });
