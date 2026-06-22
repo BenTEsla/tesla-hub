@@ -2,248 +2,51 @@
 <html><head>
 <meta charset="utf-8">
 <title>Tesla Delivery Hub</title>
-<style>
-@font-face{font-family:UST;font-weight:400;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}
-@font-face{font-family:UST;font-weight:700;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:UST,sans-serif;color:#171a20;background:#fff;font-size:13px}
-.ttl{font-size:40px;font-weight:500;color:#171a20;padding:20px 32px;line-height:48px;margin-top:10px}
-.updated{font-size:12px;color:#999;text-align:right;padding:4px 32px}
-.tabs{display:inline-flex;margin:20px 32px;padding:4px;gap:4px;background:rgba(0,0,0,.05);border-radius:4px}
-.tab{padding:4px 24px;font-size:14px;color:#5c5e62;cursor:pointer;font-weight:500;border-radius:2px;height:32px;display:flex;align-items:center;border:none;background:none;font-family:inherit}
-.tab.on{color:#171a20;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.toolbar{padding:16px 32px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.btn{padding:8px 20px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ddd;background:#fff;color:#393c41}
-.btn:hover{background:#f5f5f5}
-.btn-blue{background:#3e6ae1;color:#fff;border-color:#3e6ae1}
-.btn-red{background:#e8523a;color:#fff;border-color:#e8523a}
-.spinner{width:44px;height:44px;border:3px solid #f0f0f0;border-top-color:#e8523a;border-radius:50%;animation:spin .7s linear infinite;margin:20px auto}
-@keyframes spin{to{transform:rotate(360deg)}}
-table{width:100%;border-collapse:collapse}
-th{padding:10px 12px;text-align:left;font-size:12px;color:#393c41;font-weight:600;border-bottom:1px solid #e0e0e0;background:#fafafa}
-td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;height:44px}
-tr:hover td{background:#fafafa}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.green{background:#28a745}.red{background:#dc3545}.orange{background:#f0ad4e}
-#loading{text-align:center;padding:60px;display:none}
-#table-wrap{padding:0 32px 24px}
-</style>
 </head>
 <body>
-
-<div class="ttl">Delivery Dashboard</div>
-<div class="updated" id="upd"></div>
-<div style="padding:0 32px"><div class="tabs">
-  <button class="tab on">Customer Delivery</button>
-  <button class="tab" onclick="dispatch()">Dispatch</button>
-</div></div>
-
-<div class="toolbar">
-  <select id="dt" class="btn" onchange="load()"></select>
-  <button class="btn" onclick="load()">Search</button>
-  <button class="btn-blue btn" onclick="printAll()">Print</button>
-  <div style="flex:1"></div>
-  <span id="count" style="color:#999"></span>
-</div>
-
-<div id="loading"><div class="spinner"></div><div style="color:#999;margin-top:12px">Loading...</div></div>
-
-<div id="table-wrap">
-  <table id="tbl" style="display:none">
-    <thead><tr>
-      <th>Time</th><th>Customer</th><th>RN</th><th>Vehicle</th>
-      <th>Registration</th><th>Payment</th><th>Trade-In</th>
-      <th>Vehicle Status</th><th>Hold</th><th>Insurance</th>
-    </tr></thead>
-    <tbody id="tb"></tbody>
-  </table>
-</div>
-
 <script>
-// ============================================================
-// CONFIG - loaded from server
-// ============================================================
-var HUB = null;
-var DATA = [];
-
-async function init() {
-  var cfg = await fetch('/api/config').then(r => r.json());
-  HUB = cfg.hub;
-  document.title = 'Delivery Hub - ' + HUB.name;
-  
-  // Build date picker
-  var sel = document.getElementById('dt');
-  for (var i = 0; i < 7; i++) {
-    var d = new Date(Date.now() + i * 864e5);
-    if (d.getDay() === 0) continue;
-    var opt = document.createElement('option');
-    opt.value = d.toISOString().split('T')[0];
-    opt.text = (i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : 'D+' + i) + ' - ' + d.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-    sel.appendChild(opt);
-  }
-  
+// Load the full bookmarklet dashboard and patch it for standalone server
+(async function(){
   // Check auth
-  var auth = await fetch('/api/auth/status').then(r => r.json());
-  if (!auth.hasDro) { window.location = '/'; return; }
+  var auth = await fetch('/api/auth/status').then(r=>r.json());
+  if(!auth.hasDro){window.location='/';return}
   
-  load();
-}
-
-// ============================================================
-// LOAD DELIVERIES (via proxy - no CORS!)
-// ============================================================
-async function load() {
-  var lg = document.getElementById('loading');
-  var tbl = document.getElementById('tbl');
-  lg.style.display = 'block';
-  tbl.style.display = 'none';
+  // Load config
+  var cfg = await fetch('/api/config').then(r=>r.json());
   
-  var ds = document.getElementById('dt').value;
+  // Load the bookmarklet script from GitHub
+  var script = await fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js',{headers:{'Accept':'application/vnd.github.v3.raw'}}).then(r=>r.text());
   
-  try {
-    // DRO Customer Dashboard (via proxy!)
-    var dash = await fetch('/api/dro/deliveryops/Customers/Dashboard', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({fromDeliveryDate:ds, trtId:HUB.trtId, customerHasNoHost:false, skip:0, take:200, fromTime:"00:00", toTime:"23:59", countryCode:HUB.country, onlyMyLocation:true, sort:{}, stage:[], status:[], deliveryType:[], paperwork:[], customerDeliveryStatus:[], inboundStatus:[], VehicleTypes:[], pdcFilter:[], dmvDocumentStages:[]})
-    }).then(r => r.json());
-    
-    var rns = dash.Data.map(d => d.ReferenceNumber);
-    var cm = {}; dash.Data.forEach(d => { cm[d.ReferenceNumber] = d; });
-    
-    // DRO Advisor Dashboard (via proxy!)
-    var adv = await fetch('/api/dro/advisor/Dashboard?isSidePanelFullScreen=true', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({condition:"and", rules:[{condition:"and", ReferenceNumbers:rns, Countries:[]}], Skip:0, Take:200, SortOrder:[], SelectedColumns:[]})
-    }).then(r => r.json());
-    
-    // Build data
-    DATA = adv.Data.Dashboard.map(function(a) {
-      var c = cm[a.ReferenceNumber] || {};
-      var dt = c.ScheduledDeliveryStartDateString || '';
-      var t = '?';
-      var m = dt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (m) { var hr=parseInt(m[1]); if(m[3].toUpperCase()==='PM'&&hr<12)hr+=12; if(m[3].toUpperCase()==='AM'&&hr===12)hr=0; t=String(hr).padStart(2,'0')+':'+m[2]; }
-      
-      var otg = a.VehicleStage==='Finished Goods'||a.VehicleStage==='Arrived at VRL';
-      var amtOk = a.AmountDueActionStatus==='Yes'||a.PaymentMethodActionStatus==='COMPLETE';
-      var io = a.InsuranceActionStatus==='COMPLETE';
-      var hold = !!a.HasHold;
-      
-      return {
-        rn: a.ReferenceNumber, name: a.CustomerName, t: t,
-        model: a.VehicleModel, plate: (a.LicensePlate||'').trim(),
-        host: c.HostName||'?', otg: otg, amtOk: amtOk, io: io, hold: hold,
-        vs: a.VehicleStage||'', tims: '', b2b: a.IsEnterpriseOrder,
-        pay: a.OrderType||'', vin: a.Vin||''
-      };
-    }).sort((a,b) => a.t.localeCompare(b.t));
-    
-    renderTable();
-    document.getElementById('count').textContent = DATA.length + ' deliveries';
-    document.getElementById('upd').textContent = 'Updated at: ' + new Date().toLocaleTimeString();
-    
-  } catch(e) {
-    lg.innerHTML = '<div style="color:#c00">Error: ' + e.message + '</div>';
-    return;
-  }
+  // Patch 1: Remove the token check at the beginning - server handles auth
+  script = script.replace(
+    /var tk=.*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/s,
+    'var at="proxy";var ui="'+auth.userId+'";var CES='+JSON.stringify(cfg.hub.ces.map(function(c){return c.name}))
+  );
   
-  lg.style.display = 'none';
-  tbl.style.display = '';
-}
-
-function renderTable() {
-  var html = '';
-  DATA.forEach(function(d) {
-    var vc = d.otg ? 'green' : (d.vs.indexOf('Transit')>=0 ? 'orange' : 'red');
-    html += '<tr>'
-      + '<td>' + d.t + '</td>'
-      + '<td><b>' + d.name + '</b></td>'
-      + '<td><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank" style="color:#3e6ae1">' + d.rn + '</a></td>'
-      + '<td>' + d.model + '</td>'
-      + '<td>' + (d.plate ? '<span class="dot green"></span>' + d.plate : '<span style="color:#aaa">Pending</span>') + '</td>'
-      + '<td>' + (d.amtOk ? '<span class="dot green"></span>OK' : '<span class="dot red"></span>No') + '</td>'
-      + '<td>' + (d.tims || '<span style="color:#aaa">-</span>') + '</td>'
-      + '<td><span class="dot ' + vc + '"></span>' + d.vs + '</td>'
-      + '<td>' + (d.hold ? '<span class="dot red"></span><b style="color:#c00">Hold</b>' : '<span class="dot green"></span>OK') + '</td>'
-      + '<td>' + (d.io ? '<span class="dot green"></span>OK' : '<span style="color:#aaa">No</span>') + '</td>'
-      + '</tr>';
-  });
-  document.getElementById('tb').innerHTML = html;
-}
-
-// ============================================================
-// PRINT (via proxy - 1 click!)
-// ============================================================
-async function printAll() {
-  if (!DATA.length) { alert('No deliveries!'); return; }
+  // Patch 2: Replace DRO API base URL with proxy
+  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
   
-  // Step 1: Generate pages de garde (HTML)
-  // ... (todo: generate cover pages)
+  // Patch 3: Replace DocGen API with proxy
+  script = script.replace(/https:\/\/documentautomation-processapi\.tesla\.com/g, '/api/docgen');
   
-  // Step 2: Generate DocGen documents (via proxy - no CORS!)
-  var tiRNs = DATA.filter(d => d.tims).map(d => d.rn);
-  var pvlRNs = DATA.filter(d => d.b2b || d.pay === 'THIRD_PARTY_LEASING').map(d => d.rn);
+  // Patch 4: Remove Authorization headers (proxy handles them)
+  script = script.replace(/"Authorization":AUTH\.token/g, '"X-Proxy":"true"');
+  script = script.replace(/"Authorization":"Bearer "\+AUTH\.token/g, '"X-Proxy":"true"');
+  script = script.replace(/AUTH\.token\?BASE/g, 'true?"/api/dro"');
   
-  var status = document.getElementById('count');
-  status.textContent = 'Generating documents...';
+  // Patch 5: Replace window.open for the dashboard (we're already in the page)
+  script = script.replace(
+    /var w=window\.open\('','_blank'\);.*?w\.document\.write\('/s,
+    'document.open();document.write(\''
+  );
+  script = script.replace(/w\.document\.close\(\)/, 'document.close()');
   
-  // Generate Trade-In Annex
-  for (var rn of tiRNs) {
-    await fetch('/api/docgen/DocumentAutomation/GeneratePacket', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({documentCodes:[{documentCode:"TRADE_IN_ANNEX",defaultSignType:"N/A"}], referenceNumber:rn, triggerRelatedDocumentsCall:true, forceGenerate:true})
-    });
-  }
+  // Patch 6: Replace trtId with config
+  script = script.replace(/trtId:28498/g, 'trtId:'+cfg.hub.trtId);
   
-  // Generate PVL
-  for (var rn of pvlRNs) {
-    await fetch('/api/docgen/DocumentAutomation/GeneratePacket', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({documentCodes:[{documentCode:"DELIVERY_ACCEPTANCE",defaultSignType:"N/A"}], referenceNumber:rn, triggerRelatedDocumentsCall:true, forceGenerate:true})
-    });
-  }
-  
-  status.textContent = 'Downloading ' + (tiRNs.length + pvlRNs.length) + ' document sets...';
-  await new Promise(r => setTimeout(r, 5000));
-  
-  // Download all
-  var dl = 0;
-  var allRNs = [...new Set([...tiRNs, ...pvlRNs])];
-  for (var rn of allRNs) {
-    var list = await fetch('/api/docgen/Invoices/' + rn + '/Document/list').then(r => r.json());
-    var docs = (list.responseObject?.documentList || []).filter(d => {
-      var n = d.name || '';
-      return n.includes('CERFA') || n.includes('Trade-In Annex FR') || n.includes('Confirmation de livraison');
-    });
-    for (var d of docs) {
-      var id = d.cgsContentId || d.dmsContentId;
-      if (!id) continue;
-      var r = await fetch('/api/docgen/Invoices/Automation/' + rn + '/Document/Download?documentName=' + id + '&vin=null&version=1&countryCode=FR');
-      if (r.ok) {
-        var blob = await r.blob();
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url; a.download = rn + '_' + d.name.replace(/[^a-zA-Z0-9-]/g, '_') + '.pdf';
-        a.click(); dl++;
-      }
-    }
-  }
-  
-  status.textContent = dl + ' documents downloaded!';
-  alert('Print complete! ' + dl + ' documents downloaded.');
-}
-
-// ============================================================
-// DISPATCH
-// ============================================================
-function dispatch() {
-  alert('Dispatch coming soon!');
-}
-
-init();
+  // Execute
+  eval(script);
+})();
 </script>
-</body></html>
+</body>
+</html>
