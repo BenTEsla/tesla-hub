@@ -120,11 +120,11 @@
   +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Alerts</div></div>'
   +'</div>'
   +'<div class="sb">'
-  +'<div class="si"><div id="sP" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Payment</div></div>'
-  +'<div class="si"><div id="sOTG" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Car On The<br>Ground</div></div>'
-  +'<div class="si"><div id="sPl" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Registration</div></div>'
-  +'<div class="si"><div id="sTI" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Approved<br>for Intake</div></div>'
-  +'<div class="si"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
+  +'<div class="si" onclick="SFR(\'pay\',this)"><div id="sP" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Payment</div></div>'
+  +'<div class="si" onclick="SFR(\'otg\',this)"><div id="sOTG" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Car On The<br>Ground</div></div>'
+  +'<div class="si" onclick="SFR(\'reg\',this)"><div id="sPl" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Registration</div></div>'
+  +'<div class="si" onclick="SFR(\'ti\',this)"><div id="sTI" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Approved<br>for Intake</div></div>'
+  +'<div class="si" onclick="SFR(\'ins\',this)"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
   +'</div>'
   +'<div class="sb" style="margin-left:auto">'
   +'<div class="si on" onclick="PF(\'all\',this)"><div class="sn" id="cAll">-</div><div class="sl">All</div></div>'
@@ -237,6 +237,9 @@
   +'document.getElementById("srch").oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?"":"none"});TR()};'
 
   +'function SF(t,el){document.querySelectorAll(".si").forEach(function(s){s.classList.remove("on")});el.classList.add("on");document.querySelectorAll("#tb tr").forEach(function(r){if(t==="all"){r.style.display=""}else if(t==="ok"){r.style.display=r.classList.contains("w")?"none":""}else{r.style.display=r.classList.contains("w")?"":"none"}});TR()}'
+
+  +'var activeFilter=null;'
+  +'function SFR(f,el){document.querySelectorAll(".si").forEach(function(s){s.classList.remove("on")});if(activeFilter===f){activeFilter=null;document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=""});el.parentElement.parentElement.querySelector(".si").classList.add("on");TR();return}activeFilter=f;el.classList.add("on");document.querySelectorAll("#tb tr").forEach(function(r){var i=parseInt(r.querySelector(".rc")?.dataset.i);if(isNaN(i))return;var d=DATA[i];var show=false;if(f==="pay")show=!d.amtOk;else if(f==="otg")show=!d.otg;else if(f==="reg")show=!d.regOk;else if(f==="ti")show=d.tims&&!(d.tims.indexOf("Approved")>=0||d.tims.indexOf("Received")>=0);else if(f==="ins")show=!d.io;r.style.display=show?"":"none"});TR()}'
 
   +'function CF(){var fils=document.querySelectorAll(".fi");document.querySelectorAll("#tb tr").forEach(function(r){var cells=r.querySelectorAll("td");var show=true;fils.forEach(function(f,i){var v=f.value.toLowerCase();if(!v)return;var cell=cells[i+1];if(!cell)return;var txt=cell.textContent.toLowerCase();if(txt.indexOf(v)<0)show=false});r.style.display=show?"":"none"});TR()}'
 
