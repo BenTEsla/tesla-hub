@@ -108,11 +108,13 @@
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
   +'</style></head><body>'
 
-  // TITLE + Dispatch + Generate PDFs
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div class="title-actions"><button class="bt bt-s" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button><button class="bt bt-s" id="gn" style="display:none" onclick="G()">Generate PDFs</button></div><div class="updated" id="upd"></div></div>'
-  +'<div class="tabs"><div class="tab on">Customer Delivery</div></div>'
+  // TITLE
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div class="updated" id="upd"></div></div>'
 
-  // STATS - Block 1: Overview | Block 2: Readiness
+  // TABS + Dispatch
+  +'<div class="tabs"><div class="tab on">Customer Delivery</div><div class="tab" onclick="DISPATCH()" id="disp" style="display:none">Dispatch</div></div>'
+
+  // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
   +'<div class="sb">'
   +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn" id="sT">-</div><div class="sl">Deliveries</div></div>'
@@ -126,11 +128,15 @@
   +'<div class="si"><div id="sTI" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Trade-In</div></div>'
   +'<div class="si"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
   +'</div>'
+  +'<div class="sb">'
+  +'<div class="si on" onclick="PF(\'all\',this)"><div class="sn" style="font-size:14px">All</div></div>'
+  +CES.map(function(c){return'<div class="si" onclick="PF(\''+c+'\',this)"><div class="sn" style="font-size:14px">'+c.split(' ')[0]+'</div></div>'}).join('')
+  +'</div>'
   +'</div>'
 
   // TOOLBAR
   +'<div class="toolbar">'
-  +'<input type="text" id="srch" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:180px;font-family:inherit;color:#333;outline:none" placeholder="Search...">'
+  +'<div style="position:relative"><svg style="position:absolute;left:10px;top:9px;width:14px;height:14px;fill:none;stroke:#999;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg><input type="text" id="srch" style="padding:8px 12px 8px 32px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:180px;font-family:inherit;color:#333;outline:none" placeholder="Search"></div>'
   +'<div class="fg"><div class="fl">SCHEDULED DATE</div><select id="dt" class="fi2">'+dates.join('')+'</select></div>'
   +'<button class="bt-nav" onclick="ND(-1)" title="Previous day">&#8249;</button>'
   +'<button class="bt-nav" onclick="ND(1)" title="Next day">&#8250;</button>'
@@ -139,12 +145,8 @@
   +'<button class="bt-q" onclick="QP(this)" style="border-color:#28a745;color:#28a745">Pull-Up</button>'
   +'<button class="bt bt-p" onclick="L()">Search</button>'
   +'<button class="bt bt-s" onclick="RST()">Reset</button>'
-  +'</div>'
-
-  // HOST CES PILLS
-  +'<div class="hostbar">'
-  +'<span class="pill on" onclick="PF(\'all\',this)">All</span>'
-  +CES.map(function(c){return'<span class="pill" onclick="PF(\''+c+'\',this)">'+c.split(' ')[0]+'</span>'}).join('')
+  +'<div style="flex:1"></div>'
+  +'<button class="bt bt-s" id="gn" style="display:none" onclick="G()">Generate PDFs</button>'
   +'</div>'
 
   // TABLE
@@ -172,7 +174,7 @@
   +'var CES='+JSON.stringify(CES)+';'
   +'var DATA=[];'
 
-  +'function PF(f,el){document.querySelectorAll(".hostbar .pill").forEach(function(p){p.classList.remove("on")});el.classList.add("on");document.querySelectorAll("#tb tr").forEach(function(r){if(f==="all"){r.style.display="";return}r.style.display=(r.dataset.host||"").toLowerCase().indexOf(f.split(" ")[0].toLowerCase())>=0?"":"none"});US();TR()}'
+  +'function PF(f,el){document.querySelectorAll(".sb:last-child .si").forEach(function(p){p.classList.remove("on")});el.classList.add("on");document.querySelectorAll("#tb tr").forEach(function(r){if(f==="all"){r.style.display="";return}r.style.display=(r.dataset.host||"").toLowerCase().indexOf(f.split(" ")[0].toLowerCase())>=0?"":"none"});US();TR()}'
 
   +'function QD(offset,el){var sel=document.getElementById("dt");var opts=sel.options;var d=new Date(Date.now()+offset*864e5);var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");var v=y+"-"+m+"-"+dd;for(var i=0;i<opts.length;i++){if(opts[i].value===v){sel.selectedIndex=i;break}}document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});el.classList.add("on");WKMODE=false;showDateCol(false);L()}'
 
