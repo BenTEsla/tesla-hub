@@ -23,20 +23,10 @@
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
   +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
-  // HEADER â€” Intrepid dark, sticky
-  +'.hd{height:48px;background:#171a20;display:flex;align-items:center;padding:0 20px;font-size:13px;position:sticky;top:0;z-index:20}'
-  +'.hd-logo{display:flex;align-items:center;gap:10px}'
-  +'.hd-logo svg{width:90px;height:20px}'
-  +'.hd-site{font-weight:500;color:#fff;font-size:13px;margin-left:8px}'
-  +'.hd-r{margin-left:auto;display:flex;align-items:center;gap:16px}'
-  +'.hd-search{padding:6px 12px;border:1px solid #555;border-radius:4px;font-size:12px;width:260px;font-family:inherit;color:#fff;outline:none;background:#333}'
-  +'.hd-search:focus{border-color:#3e6ae1;background:#444}'
-  +'.hd-search::placeholder{color:#999}'
-  +'.hd-user{font-size:12px;color:#ccc}'
-
   // TITLE + Updated at
-  +'.title-row{display:flex;align-items:baseline;padding:24px 32px 8px}'
-  +'.ttl{font-size:28px;font-weight:700;color:#171a20}'
+  +'.title-row{display:flex;align-items:baseline;padding:32px 32px 8px}'
+  +'.ttl{font-size:32px;font-weight:700;color:#171a20;letter-spacing:-.5px}'
+  +'.title-actions{margin-left:24px;display:flex;gap:8px}'
   +'.updated{margin-left:auto;font-size:12px;color:#999}'
 
   // TABS like Intrepid
@@ -66,14 +56,15 @@
   +'.fi2{padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;font-family:inherit;color:#333;outline:none;background:#fff}'
   +'.fi2:focus{border-color:#3e6ae1}'
 
-  // BUTTONS
-  +'.bt{padding:8px 20px;border-radius:4px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;border:none;transition:all .1s}'
-  +'.bt-p{background:#3e6ae1;color:#fff}.bt-p:hover{background:#2d5bd0}'
-  +'.bt-s{background:#fff;color:#393c41;border:1px solid #ddd}.bt-s:hover{background:#f5f5f5}'
-  +'.bt-d{background:#171a20;color:#fff}.bt-d:hover{background:#333}'
+  // BUTTONS â€” Intrepid grey on white
+  +'.bt{padding:8px 20px;border-radius:4px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;border:1px solid #ddd;transition:all .1s;background:#f5f5f5;color:#393c41}'
+  +'.bt:hover{background:#e8e8e8}'
+  +'.bt-p{background:#3e6ae1;color:#fff;border-color:#3e6ae1}.bt-p:hover{background:#2d5bd0}'
+  +'.bt-s{background:#f5f5f5;color:#393c41;border:1px solid #ddd}.bt-s:hover{background:#e8e8e8}'
+  +'.bt-d{background:#f5f5f5;color:#393c41;border:1px solid #ddd}.bt-d:hover{background:#e8e8e8}'
   +'.bt-q{background:#fff;color:#393c41;border:1px solid #ddd;padding:8px 16px;font-size:12px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .1s}'
   +'.bt-q:hover{background:#f5f5f5}'
-  +'.bt-q.on{background:#171a20;color:#fff;border-color:#171a20}'
+  +'.bt-q.on{background:#393c41;color:#fff;border-color:#393c41}'
   +'.bt-nav{background:#fff;color:#393c41;border:1px solid #ddd;padding:8px 10px;font-size:14px;border-radius:4px;cursor:pointer;font-family:inherit;line-height:1}'
   +'.bt-nav:hover{background:#f5f5f5}'
 
@@ -81,13 +72,13 @@
   +'.hostbar{padding:0 32px 16px;display:flex;gap:8px}'
   +'.pill{padding:6px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;color:#666;font-family:inherit;font-weight:500;transition:all .1s}'
   +'.pill:hover{background:#f5f5f5;border-color:#aaa}'
-  +'.pill.on{background:#171a20;color:#fff;border-color:#171a20}'
+  +'.pill.on{background:#393c41;color:#fff;border-color:#393c41}'
 
   // TABLE
   +'.tw{padding:0 32px 24px}'
   +'.tcard{background:#fff;border:1px solid #e0e0e0;overflow:hidden}'
   +'table{width:100%;border-collapse:collapse}'
-  +'th{padding:10px 12px;text-align:left;font-size:12px;color:#393c41;font-weight:600;border-bottom:1px solid #e0e0e0;background:#fafafa;cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:48px;z-index:10}'
+  +'th{padding:10px 12px;text-align:left;font-size:12px;color:#393c41;font-weight:600;border-bottom:1px solid #e0e0e0;background:#fafafa;cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0;z-index:10}'
   +'th:hover{color:#171a20}'
   +'td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;vertical-align:middle;color:#393c41;height:44px;white-space:nowrap}'
   +'tr:hover td{background:#fafafa}'
@@ -100,7 +91,7 @@
 
   // ELEMENTS
   +'.ck{width:16px;height:16px;cursor:pointer;-webkit-appearance:none;appearance:none;border:1.5px solid #ccc;border-radius:3px;background:#fff;position:relative;vertical-align:middle}'
-  +'.ck:checked{background:#3e6ae1;border-color:#3e6ae1}'
+  +'.ck:checked{background:#393c41;border-color:#393c41}'
   +'.ck:checked::after{content:"";position:absolute;left:4px;top:1px;width:5px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}'
   +'.dt{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}'
   +'.dg{background:#28a745}.dr{background:#dc3545}.do{background:#f0ad4e}'
@@ -117,11 +108,8 @@
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
   +'</style></head><body>'
 
-  // HEADER â€” Intrepid dark bar
-  +'<div class="hd"><div class="hd-logo"><svg viewBox="0 0 160 160" fill="#e12528" width="22" height="22"><path d="m80 129.8 14-78.7c13.3 0 17.5 1.5 18.1 7.4 0 0 8.9-3.3 13.5-10.1-17.6-8.1-35.3-8.5-35.3-8.5L80 52.5 69.7 39.9s-17.7.4-35.3 8.5c4.5 6.8 13.5 10.1 13.5 10.1.6-6 4.8-7.4 18.1-7.4z"/><path d="M80 36.3c14.2-.1 30.5 2.2 47.2 9.5 2.2-4 2.8-5.8 2.8-5.8-18.2-7.3-35.3-9.7-50-9.8-14.7.1-31.8 2.5-50 9.8 0 0 .8 2.2 2.8 5.8 16.7-7.3 33-9.6 47.2-9.5"/></svg><span class="hd-site">Delivery Hub &mdash; Rennes</span></div><div class="hd-r"><input type="text" id="srch" class="hd-search" placeholder="Search by VIN, RN, LP or Name"><span class="hd-user">Ben Daubin</span></div></div>'
-
-  // TITLE + TABS
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div class="updated" id="upd"></div></div>'
+  // TITLE + Dispatch + Generate PDFs
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div class="title-actions"><button class="bt bt-s" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button><button class="bt bt-s" id="gn" style="display:none" onclick="G()">Generate PDFs</button></div><div class="updated" id="upd"></div></div>'
   +'<div class="tabs"><div class="tab on">Customer Delivery</div></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness
@@ -142,20 +130,18 @@
 
   // TOOLBAR
   +'<div class="toolbar">'
-  +'<div class="fg"><div class="fl">Scheduled Date</div><select id="dt" class="fi2">'+dates.join('')+'</select></div>'
+  +'<input type="text" id="srch" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:180px;font-family:inherit;color:#333;outline:none" placeholder="Search...">'
+  +'<div class="fg"><div class="fl">SCHEDULED DATE</div><select id="dt" class="fi2">'+dates.join('')+'</select></div>'
   +'<button class="bt-nav" onclick="ND(-1)" title="Previous day">&#8249;</button>'
   +'<button class="bt-nav" onclick="ND(1)" title="Next day">&#8250;</button>'
-  +'<button class="bt-q on" onclick="QD(0,this)">Today</button>'
   +'<button class="bt-q" onclick="QW(0,this)">This Week</button>'
   +'<button class="bt-q" onclick="QW(1,this)">Next Week</button>'
   +'<button class="bt-q" onclick="QP(this)" style="border-color:#28a745;color:#28a745">Pull-Up</button>'
   +'<button class="bt bt-p" onclick="L()">Search</button>'
-  +'<div style="flex:1"></div>'
-  +'<button class="bt bt-s" id="gn" style="display:none" onclick="G()">Generate PDFs</button>'
-  +'<button class="bt bt-d" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button>'
+  +'<button class="bt bt-s" onclick="RST()">Reset</button>'
   +'</div>'
 
-  // HOST FILTER
+  // HOST CES PILLS
   +'<div class="hostbar">'
   +'<span class="pill on" onclick="PF(\'all\',this)">All</span>'
   +CES.map(function(c){return'<span class="pill" onclick="PF(\''+c+'\',this)">'+c.split(' ')[0]+'</span>'}).join('')
@@ -196,6 +182,7 @@
   +'async function QP(el){document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});el.classList.add("on");WKMODE=true;showDateCol(true);var lg=document.getElementById("lg"),tbl=document.getElementById("tbl");lg.style.display="block";tbl.style.display="none";var h={"Authorization":AUTH.token,"Content-Type":"application/json","userid":AUTH.userId};try{var rule={condition:"and",extraHeaders:null,Countries:[{Abbreviation:"FR",Region:"EU"}],TrtIds:[CFG.trtId],ReferenceNumbers:[],Vins:[],IsScheduled:true,OrderStatus:["ORDER_PLACED","BOOKED"],VehicleStages:null,DeliveryStatus:null,IsContainmentHold:null,IsAmountDueComplete:null,IsInsuranceComplete:null,IsTradeInComplete:null,IsRegistrationComplete:null,IsPaymentComplete:null,MatchStatus:null,DeliveryTypes:null,VehicleType:null,VehicleModels:null,HasOpenCommunication:null,IsEnterpriseOrder:null,VehicleTitles:null,VehicleContainmentHoldTitle:[],VesselNames:[],OpenCaseTypes:[]};var body={condition:"and",rules:[rule],Skip:0,Take:500,SortOrder:[],SelectedColumns:[]};var adv=await fetch(BASE+"/advisor/Dashboard?isSidePanelFullScreen=false",{method:"POST",headers:h,body:JSON.stringify(body)}).then(function(r){return r.json()});var allAdv=adv.Data.Dashboard||[];var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var tomorrow=new Date(today.getTime()+864e5);allAdv=allAdv.filter(function(a){if(!a.ScheduledDeliveryDate)return false;var sd=new Date(a.ScheduledDeliveryDate);if(sd<tomorrow||sd.getDay()===0)return false;if(a.IsEnterpriseOrder)return false;if(a.HasHold)return false;var otg=a.VehicleStage==="Finished Goods"||a.VehicleStage==="Arrived at VRL"||(a.VehicleStage&&a.VehicleStage.indexOf("Arrived")>=0);if(!otg)return false;var amtOk=a.AmountDueActionStatus==="Yes"||a.PaymentMethodActionStatus==="COMPLETE";if(!amtOk)return false;var hp=!!(a.LicensePlate&&a.LicensePlate.trim()&&a.LicensePlate.indexOf("-")>=0);if(!hp)return false;if(a.TradeInActionStatus==="COMPLETE_TRADE_IN"||a.TradeInActionStatus==="NO_TRADE_IN"||!a.TradeInActionStatus)return true;return false});if(!allAdv.length){lg.innerHTML="<div style=padding:60px;text-align:center;color:#aaa>No pull-up candidates found.</div>";return}var tiR={};allAdv.forEach(function(a){if(a.TradeInActionStatus==="COMPLETE_TRADE_IN")tiR[a.ReferenceNumber]={ms:"Accepted"}});DATA=allAdv.map(function(a){var sddRaw=a.ScheduledDeliveryDate||"";var sddShort="";var sortKey="";if(sddRaw){var sp=new Date(sddRaw);if(!isNaN(sp)){var fmtSDD=function(sp){var mm=String(sp.getMonth()+1).padStart(2,"0");var dd=String(sp.getDate()).padStart(2,"0");var yy=sp.getFullYear();var hh=sp.getHours();var mi=String(sp.getMinutes()).padStart(2,"0");var ampm=hh>=12?"PM":"AM";var h12=hh%12||12;return mm+"-"+dd+"-"+yy+" "+h12+":"+mi+" "+ampm};sddShort=fmtSDD(sp);sortKey=sp.toISOString()}}var t="?";if(sddRaw){var sp2=new Date(sddRaw);if(!isNaN(sp2)){t=String(sp2.getHours()).padStart(2,"0")+":"+String(sp2.getMinutes()).padStart(2,"0")}}var r=tiR[a.ReferenceNumber];var tms=r?r.ms:"";if(tms.indexOf(" - ")>=0)tms=tms.split(" - ")[0];var clientName=a.CustomerName;var di=a.DriverInfo;if(a.IsEnterpriseOrder&&di&&di.first_name)clientName=di.first_name+" "+di.last_name+" ("+a.CustomerName+")";var vsShort=a.VehicleStage||"";if(vsShort==="Finished Goods")vsShort="Finished Goods";else if(vsShort.indexOf("Arrived")>=0)vsShort="Arrived at VRL";return{rn:a.ReferenceNumber,name:clientName,t:t,date:sortKey,sdd:sddShort,sddRaw:sddRaw,model:a.VehicleModel,color:a.VehicleColor||"",plate:(a.LicensePlate||"").trim(),regTxt:"OK",regOk:true,host:a.DeliverySpecialist||"?",b2b:false,hp:true,hold:false,io:a.InsuranceActionStatus==="COMPLETE",otg:true,vs:vsShort,al:[],tims:tms,amtOk:true}}).sort(function(a,b){return(a.date+a.t).localeCompare(b.date+b.t)});RW();var N=DATA.length;var asOk=DATA.filter(function(d){return d.io}).length;document.getElementById("sT").textContent=N;document.getElementById("sT").className="sn b";document.getElementById("sO").textContent=N;document.getElementById("sO").className="sn g";document.getElementById("sA").textContent=0;document.getElementById("sA").className="sn x";document.getElementById("sP").innerHTML="<div class=top>"+N+"</div><div class=div>"+N+"</div>";document.getElementById("sOTG").innerHTML="<div class=top>"+N+"</div><div class=div>"+N+"</div>";document.getElementById("sPl").innerHTML="<div class=top>"+N+"</div><div class=div>"+N+"</div>";document.getElementById("sTI").innerHTML="<div class=top>"+DATA.filter(function(d){return d.tims}).length+"</div><div class=div>"+N+"</div>";document.getElementById("sAs").innerHTML="<div class=top>"+asOk+"</div><div class=div>"+N+"</div>";lg.style.display="none";tbl.style.display="";document.getElementById("gn").style.display="";document.getElementById("disp").style.display="";TR();document.getElementById("sa").checked=true}catch(err){lg.innerHTML="<div style=padding:60px;text-align:center;color:#c00>Error: "+err.message+"</div>"}}'
 
   +'function ND(dir){var sel=document.getElementById("dt");var ni=sel.selectedIndex+dir;if(ni>=0&&ni<sel.options.length){sel.selectedIndex=ni;document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});WKMODE=false;showDateCol(false);L()}}'
+  +'function RST(){document.querySelectorAll(".fi").forEach(function(f){if(f.tagName==="SELECT")f.selectedIndex=0;else f.value=""});document.getElementById("srch").value="";document.querySelectorAll(".bt-q").forEach(function(b){b.classList.remove("on")});document.querySelectorAll(".pill").forEach(function(p){p.classList.remove("on")});document.querySelector(".pill").classList.add("on");document.getElementById("dt").selectedIndex=0;WKMODE=false;showDateCol(false);L()}'
 
   +'var WKMODE=false;'
   +'function showDateCol(show){document.getElementById("thDate").style.display=show?"table-cell":"none";document.querySelectorAll(".dtc").forEach(function(c){c.style.display=show?"table-cell":"none"})}'
@@ -253,6 +240,7 @@
 
   +'function TR(){var v=0;document.querySelectorAll("#tb tr").forEach(function(r){if(r.style.display!=="none")v++});document.getElementById("trec").textContent="Total Records: "+v}'
   +'function US(){var tot=0,ok=0,al=0;document.querySelectorAll("#tb tr").forEach(function(r){if(r.style.display==="none")return;tot++;if(r.classList.contains("w"))al++;else ok++});document.getElementById("sT").textContent=tot;document.getElementById("sO").textContent=ok;document.getElementById("sA").textContent=al}'
+  +'L();'
 
   +'</scr'+'ipt></body></html>');
   w.document.close();
