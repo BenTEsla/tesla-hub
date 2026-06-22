@@ -111,7 +111,7 @@
   // TITLE
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div></div>'
   +'<div class="updated" id="upd"></div>'
-  +'<div style="padding:0 32px"><div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button></div></div>'
+  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
