@@ -1,0 +1,39 @@
+{
+  "hubs": {
+    "rennes": {
+      "name": "Rennes Saint-Jacques",
+      "trtId": 28498,
+      "country": "FR",
+      "location": "EU-FR-Saint-Jacques de la Lande-Rue de la Pitardiere",
+      "printer": "RSN03-Printer 2",
+      "printerIP": "10.86.16.32",
+      "ces": [
+        {"name": "Ben Daubin", "id": "428058", "username": "bdaubin"},
+        {"name": "Sacha Villa", "id": "399921", "username": "sacvilla"},
+        {"name": "Sophie MACE", "id": "444287", "username": "smace"}
+      ]
+    },
+    "nantes": {
+      "name": "Nantes",
+      "trtId": 0,
+      "country": "FR",
+      "location": "",
+      "printer": "",
+      "printerIP": "",
+      "ces": []
+    }
+  },
+  "defaultHub": "rennes",
+  "sso": {
+    "adfsUrl": "https://sso.tesla.com/adfs/oauth2",
+    "droClientId": "44490dec-da63-422d-92ca-8856c19aae7d",
+    "billingClientId": "3d46b5c5-6a01-423a-a4b8-c16dca7e6a92"
+  },
+  "apis": {
+    "dro": "https://mytdeliveryopsapi.tesla.com/api",
+    "docgen": "https://documentautomation-processapi.tesla.com",
+    "billing": "https://billingengine.tesla.com/invoiceengineprocessapi/api",
+    "intrepid": "https://intrepidapi.tesla.com",
+    "reggie": "https://reggie.tesla.com/api"
+  }
+}
