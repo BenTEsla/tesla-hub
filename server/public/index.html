@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Tesla Delivery Hub</title>
+<style>
+body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5}
+.card{background:#fff;border-radius:8px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center;max-width:400px}
+h1{font-size:24px;color:#171a20;margin-bottom:8px}
+p{color:#888;margin-bottom:24px}
+.btn{display:block;width:100%;padding:12px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px}
+.btn-primary{background:#e8523a;color:#fff}
+.btn-secondary{background:#f5f5f5;color:#393c41;border:1px solid #ddd}
+.status{font-size:12px;color:#28a745;margin-top:16px}
+.status.error{color:#dc3545}
+</style>
+</head><body>
+<div class="card">
+  <h1>Tesla Delivery Hub</h1>
+  <p>Connect with your Tesla SSO to start</p>
+  <button class="btn btn-primary" onclick="login()">Login with Tesla SSO</button>
+  <button class="btn btn-secondary" onclick="manual()">Manual Token Entry</button>
+  <div id="status"></div>
+</div>
+<script>
+async function checkAuth(){
+  var r=await fetch('/api/auth/status').then(r=>r.json());
+  if(r.hasDro){
+    document.getElementById('status').className='status';
+    document.getElementById('status').textContent='Connected as '+r.userId;
+    setTimeout(function(){window.location='/dashboard.html'},1000);
+  }
+}
+function login(){
+  // Open DRO to grab token, then warpbilling for DocGen token
+  var w=window.open('https://dro.tesla.com/advisor','_blank');
+  document.getElementById('status').textContent='Login to DRO, then paste this in the DRO console:';
+  // For now, manual token entry
+  manual();
+}
+function manual(){
+  var dro=prompt('DRO Token (from localStorage delops_id_token):');
+  if(!dro)return;
+  dro=dro.replace(/^"|"$/g,'');
+  var uid=prompt('User ID:','428058');
+  fetch('/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({droToken:dro,userId:uid})}).then(function(){
+    document.getElementById('status').className='status';
+    document.getElementById('status').textContent='DRO Connected! Redirecting...';
+    setTimeout(function(){window.location='/dashboard.html'},1000);
+  });
+}
+checkAuth();
+</script>
+</body></html>
