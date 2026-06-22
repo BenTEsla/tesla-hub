@@ -47,7 +47,7 @@
   +'.sl{font-size:12px;color:#393c41;margin-top:6px;text-align:center;line-height:1.2}'
   +'.sf{text-align:center;line-height:1}'
   +'.sf .top{font-size:20px;font-weight:700;color:#171a20}'
-  +'.sf .div{font-size:18px;font-weight:400;color:#ccc}'
+  +'.sf .div{font-size:18px;font-weight:400;color:#ccc;border-top:1px solid #e0e0e0;margin-top:2px;padding-top:2px}'
 
   // FILTERS
   +'.toolbar{padding:0 32px 12px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}'
@@ -220,7 +220,7 @@
   +'document.getElementById("sP").innerHTML="<div class=top>"+pOk+"</div><div class=div>"+N+"</div>";'
   +'document.getElementById("sOTG").innerHTML="<div class=top>"+oOk+"</div><div class=div>"+N+"</div>";'
   +'document.getElementById("sPl").innerHTML="<div class=top>"+plOk+"</div><div class=div>"+N+"</div>";'
-  +'document.getElementById("sTI").innerHTML="<div class=top>"+tiOk+"</div><div class=div>"+tiTotal+"</div>";'
+  +'document.getElementById("sTI").innerHTML="<div class=top>"+tiOk+"</div><div class=div>"+N+"</div>";'
   +'document.getElementById("sAs").innerHTML="<div class=top>"+asOk+"</div><div class=div>"+N+"</div>";'
   +'lg.style.display="none";tbl.style.display="";document.getElementById("gn").style.display="";document.getElementById("disp").style.display="";TR();'
   +'document.getElementById("sa").checked=true;'
