@@ -1,0 +1,12 @@
+{
+  "name": "tesla-delivery-hub",
+  "version": "1.0.0",
+  "description": "Tesla Delivery Hub - Multi-site dashboard",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "node-fetch": "^2.7.0"
+  }
+}
