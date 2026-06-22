@@ -23,20 +23,20 @@
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
   +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
-  // TITLE + Updated at
-  +'.title-row{display:flex;align-items:baseline;padding:32px 32px 12px}'
-  +'.ttl{font-size:32px;font-weight:700;color:#171a20;letter-spacing:-.5px}'
+  // TITLE â€” Intrepid exact: 40px, weight 500, padding 20px
+  +'.title-row{padding:20px 32px 0}'
+  +'.ttl{font-size:40px;font-weight:500;color:#171a20;line-height:48px;margin-top:10px}'
   +'.title-actions{margin-left:24px;display:flex;gap:8px}'
-  +'.updated{margin-left:auto;font-size:12px;color:#999}'
+  +'.updated{font-size:12px;color:#999;text-align:right;padding:4px 32px 0}'
 
-  // TABS like Intrepid
-  +'.tabs{display:flex;padding:0 32px 20px;gap:0;border-bottom:1px solid #e0e0e0}'
-  +'.tab{padding:10px 24px;font-size:14px;color:#666;cursor:pointer;border-bottom:2px solid transparent;font-weight:500}'
+  // TABS â€” Intrepid exact: grey bg container, toggle style
+  +'.tabs{display:inline-flex;margin:20px 32px;padding:4px;gap:4px;background:rgba(0,0,0,.05);border-radius:4px}'
+  +'.tab{padding:4px 24px;font-size:14px;color:#5c5e62;cursor:pointer;font-weight:500;border-radius:2px;height:32px;display:flex;align-items:center;border:none;background:none;font-family:inherit;transition:all .1s}'
   +'.tab:hover{color:#171a20}'
-  +'.tab.on{color:#171a20;border-bottom-color:#171a20}'
+  +'.tab.on{color:#171a20;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}'
 
   // STATS
-  +'.srow{display:flex;gap:16px;margin:20px 32px 24px;align-items:stretch}'
+  +'.srow{display:flex;gap:16px;margin:24px 32px 24px;align-items:stretch}'
   +'.sb{display:inline-flex;border-radius:4px;box-shadow:rgba(0,0,0,.12) 0 8px 16px;background:#fff}'
   +'.si{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 28px;cursor:pointer;transition:background .1s;position:relative;min-width:110px}'
   +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:16px;bottom:16px;width:1px;background:#e0e0e0}'
@@ -109,10 +109,9 @@
   +'</style></head><body>'
 
   // TITLE
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div class="updated" id="upd"></div></div>'
-
-  // TABS + Dispatch
-  +'<div class="tabs"><div class="tab on">Customer Delivery</div><div class="tab" onclick="DISPATCH()" id="disp" style="display:none">Dispatch</div></div>'
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div></div>'
+  +'<div class="updated" id="upd"></div>'
+  +'<div style="padding:0 32px"><div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" id="disp" style="display:none" onclick="DISPATCH()">Dispatch</button></div></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
