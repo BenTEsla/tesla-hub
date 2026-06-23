@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>{{NAME}} - {{RN}}</title>
+<style>
+@page{size:A4 portrait;margin:10mm 14mm}
+@font-face{font-family:UST;font-weight:400;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}
+@font-face{font-family:UST;font-weight:500;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2) format(woff2)}
+@font-face{font-family:UST;font-weight:700;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}
+@font-face{font-family:USD;font-weight:500;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/display/Universal-Sans-Display-Medium.woff2) format(woff2)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:UST,sans-serif;color:#171a20;font-size:14px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* HEADER */
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px}
+.name{font-family:USD,UST,sans-serif;font-size:28px;font-weight:500;color:#171a20;letter-spacing:-.5px}
+.rn{font-size:12px;color:#999;margin-top:1px;font-weight:500}
+.time{font-family:USD,UST,sans-serif;font-size:46px;font-weight:500;text-align:right;line-height:1;color:#171a20}
+.date{font-size:12px;color:#999;text-align:right;margin-top:2px}
+
+/* MODEL TITLE + IMAGE */
+.model-title{text-align:center;font-size:10px;letter-spacing:6px;color:#aaa;margin:6px 0 0;font-weight:400}
+.car-img{text-align:center;margin-bottom:8px}
+.car-img img{max-width:650px;height:auto}
+
+/* BOXES */
+.row{display:flex;gap:8px;margin-bottom:6px}
+.box{border:1px solid #e8e8e8;border-radius:10px;padding:10px 12px;flex:1}
+.bt{font-size:8px;letter-spacing:3px;color:#aaa;font-weight:500;margin-bottom:5px}
+
+/* VEHICLE */
+.model-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.detail{font-size:11px;color:#5c5e62;margin:1px 0}
+.battery{font-size:12px;color:#28a745;font-weight:600;float:right}
+
+/* IDENTIFICATION */
+.lb{font-size:7px;letter-spacing:2.5px;color:#bbb;margin-top:6px;margin-bottom:1px}
+.plate{font-size:26px;font-weight:700;font-family:SFMono-Regular,Consolas,monospace;letter-spacing:2px;color:#171a20}
+.vin{font-size:15px;font-weight:700;font-family:SFMono-Regular,Consolas,monospace;color:#171a20}
+
+/* CONTACT */
+.phone{font-size:14px;font-weight:700;margin-bottom:2px}
+.email{font-size:11px;color:#5c5e62;margin-bottom:4px}
+.addr{font-size:10px;color:#999;border-top:1px solid #f0f0f0;padding-top:4px}
+
+/* TRADE-IN */
+.ti-box{border-color:#c8e6c9;background:#fafff9}
+.ti-car{font-size:16px;font-weight:700;margin-bottom:6px;text-transform:uppercase}
+.ti-plate{font-size:18px;font-weight:700;font-family:SFMono-Regular,Consolas,monospace;letter-spacing:1px}
+.ti-status{font-size:14px;color:#28a745;font-weight:700;margin-top:6px}
+
+/* PAIEMENT */
+.pay-box{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pay-label{font-size:28px;font-weight:700}
+.pay-bg{padding:8px 24px;border-radius:8px;min-width:130px;text-align:center}
+.pay-cash{background:#e6f4ea;color:#1e7e34}
+.pay-leasing{background:#e3f2fd;color:#1565c0}
+.pay-credit{background:#ede7f6;color:#6a1b9a}
+.pay-lld{background:#fff3e0;color:#e65100}
+
+/* OPTIONS */
+.opt-tag{display:inline-block;padding:3px 12px;border:1px solid #ddd;border-radius:20px;font-size:12px;margin:2px 4px 2px 0}
+.fsd-tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.fsd-no{background:#fce4ec;color:#c62828}
+.fsd-yes{background:#e8f5e9;color:#2e7d32}
+
+/* EQUIPE + STATUS */
+.team-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.sr{display:flex;align-items:center;font-size:11px;color:#666;margin:3px 0;letter-spacing:.5px}
+.sv{margin-left:auto;font-weight:700;color:#171a20;font-size:11px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:10px;flex-shrink:0}
+.blue{background:#3e6ae1}.purple{background:#9c27b0}.green{background:#28a745}.orange{background:#f0ad4e}
+
+/* NOTES */
+.notes{border:1px solid #e8e8e8;border-radius:10px;padding:10px 12px;margin-bottom:4px}
+.notes-space{height:35px}
+
+/* PARCOURS */
+.parcours{margin-top:2px}
+.parcours-title{font-size:8px;letter-spacing:3px;color:#aaa;margin-bottom:2px}
+.parcours-text{font-size:9px;color:#888;font-style:italic;line-height:1.4}
+
+/* FOOTER */
+.footer{display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid #e0e0e0;position:fixed;bottom:10mm;left:14mm;right:14mm}
+.footer-ces{font-size:11px;color:#999}
+.footer-tesla{font-size:11px;letter-spacing:8px;color:#ddd;font-weight:500}
+</style></head><body>
+
+<div class="header">
+  <div><div class="name">{{NAME}}</div><div class="rn">{{RN}}</div></div>
+  <div><div class="time">{{TIME}}</div><div class="date">{{DATE_FR}}</div></div>
+</div>
+
+<div class="model-title">{{CONFIG_TITLE}}</div>
+<div class="car-img"><img src="{{IMG_URL}}" onerror="this.style.display='none'"></div>
+
+<div class="row">
+  <div class="box" style="flex:1">
+    <div class="bt">V&eacute;hicule &middot; {{IS_NEW}}</div>
+    {{BATTERY}}
+    <div class="model-name">{{MODEL_SHORT}}</div>
+    <div class="detail">&middot; {{COLOR}}</div>
+    <div class="detail">&middot; Int&eacute;rieur {{INTERIOR}}</div>
+    <div class="detail">&middot; {{WHEEL}}</div>
+    <div class="detail">&middot; Habitacle 5 si&egrave;ges</div>
+  </div>
+  <div class="box" style="flex:1">
+    <div class="bt">Identification</div>
+    <div class="plate">{{PLATE}}</div>
+    <div style="height:8px"></div>
+    <div class="plate" style="font-size:22px">{{VIN}}</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="box">
+    <div class="bt">Contact</div>
+    <div class="phone">{{PHONE}}</div>
+    <div class="email">{{EMAIL}}</div>
+    <div class="addr">{{ADDRESS}}</div>
+  </div>
+  {{TRADE_IN_BLOCK}}
+  <div class="box">
+    <div class="bt">Paiement</div>
+    <div style="display:flex;align-items:center;justify-content:center;flex:1;min-height:60px">
+      <div class="pay-bg {{PAY_CLASS}}"><div class="pay-label">{{PAY}}</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="box">
+    <div class="bt">Options &amp; Accessoires</div>
+    <div>{{ACCESSORIES}}</div>
+    <div style="margin-top:6px">FSD {{FSD_TAG}}</div>
+  </div>
+  <div class="box">
+    <div class="bt">&Eacute;quipe</div>
+    <div class="lb">DELIVERY ADVISOR</div>
+    <div class="team-name">{{DA}}</div>
+    <div class="lb">SALES ADVISOR</div>
+    <div class="team-name">{{SA}}</div>
+  </div>
+  <div class="box">
+    <div class="bt">Status</div>
+    <div class="sr"><span class="dot blue"></span>CLIENT<span class="sv">{{CLIENT_TYPE}}</span></div>
+    <div class="sr"><span class="dot purple"></span>PARRAINAGE<span class="sv">{{REFERRAL}}</span></div>
+    <div class="sr"><span class="dot {{INS_DOT}}"></span>ASSURANCE<span class="sv">{{INSURANCE}}</span></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="notes" style="flex:1">
+    <div class="bt">Notes</div>
+    <div class="notes-space"></div>
+  </div>
+  <div class="notes" style="flex:1">
+    <div class="bt">Incentive</div>
+    <div style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" style="width:16px;height:16px;accent-color:#393c41"> To Sign
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" style="width:16px;height:16px;accent-color:#393c41"> OK
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="parcours">
+  <div class="parcours-title">PARCOURS CLIENT</div>
+  <div class="parcours-text">{{PARCOURS}}</div>
+</div>
+
+<div class="footer">
+  <span class="footer-ces">{{CES_NAME}}</span>
+  <span class="footer-tesla">T E S L A</span>
+</div>
+
+</body></html>
