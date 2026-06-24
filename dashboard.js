@@ -114,9 +114,8 @@
   +'</style></head><body>'
 
   // TITLE
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div></div>'
-  +'<div class="updated" id="upd"></div>'
-  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" id="docgenBtn" onclick="LOGINDG()" style="margin-left:auto;font-size:12px;display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:6px;cursor:pointer;border:1px solid #ddd;background:#fff"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO <span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button></div>'
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;text-align:right"><button id="docgenBtn" onclick="LOGINDG()" style="font-size:11px;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#393c41;margin-bottom:4px"><span id="dotDro" style="width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div class="updated" id="upd"></div></div></div>'
+  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
