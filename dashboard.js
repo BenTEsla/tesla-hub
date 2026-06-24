@@ -114,7 +114,7 @@
   +'</style></head><body>'
 
   // TITLE
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div class="updated" id="upd"></div></div></div>'
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
   +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
