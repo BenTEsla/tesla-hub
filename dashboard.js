@@ -356,7 +356,7 @@
 +'</table>'
 +'</div>' 
 +'<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:20px;">'
-+'<div style="font-size:15px;font-weight:700;color:#171a20;margin-bottom:16px;">Score Hebdomadaire</div>'
++'<div style="font-size:15px;font-weight:700;color:#171a20;margin-bottom:16px;">Delivery Day Score</div>'
 +'<div id="csatWeeklyChart" style="display:flex;align-items:flex-end;gap:12px;height:140px;padding:0 8px;">'
 +'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">'
 +'<div style="font-size:12px;font-weight:600;color:#171a20;">3.9</div>'
