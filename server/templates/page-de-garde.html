@@ -80,6 +80,8 @@ body{font-family:UST,sans-serif;color:#171a20;font-size:14px;line-height:1.5;-we
 
 /* FOOTER */
 .footer{display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid #e0e0e0;position:fixed;bottom:10mm;left:14mm;right:14mm}
+
+.parcours{margin-bottom:50px}
 .footer-ces{font-size:11px;color:#999}
 .footer-tesla{font-size:11px;letter-spacing:8px;color:#ddd;font-weight:500}
 </style></head><body>
@@ -118,9 +120,9 @@ body{font-family:UST,sans-serif;color:#171a20;font-size:14px;line-height:1.5;-we
     <div class="addr">{{ADDRESS}}</div>
   </div>
   {{TRADE_IN_BLOCK}}
-  <div class="box">
+  <div class="box" style="display:flex;flex-direction:column">
     <div class="bt">Paiement</div>
-    <div style="display:flex;align-items:center;justify-content:center;flex:1;min-height:60px">
+    <div style="display:flex;align-items:center;justify-content:center;flex:1">
       <div class="pay-bg {{PAY_CLASS}}"><div class="pay-label">{{PAY}}</div></div>
     </div>
   </div>
@@ -150,6 +152,7 @@ body{font-family:UST,sans-serif;color:#171a20;font-size:14px;line-height:1.5;-we
 <div class="row">
   <div class="notes" style="flex:1">
     <div class="bt">Notes</div>
+    {{MISS_PVL_ALERT}}
     <div class="notes-space"></div>
   </div>
   <div class="notes" style="flex:1">
@@ -166,8 +169,7 @@ body{font-family:UST,sans-serif;color:#171a20;font-size:14px;line-height:1.5;-we
 </div>
 
 <div class="parcours">
-  <div class="parcours-title">PARCOURS CLIENT</div>
-  <div class="parcours-text">{{PARCOURS}}</div>
+  {{GAUGE}}
 </div>
 
 <div class="footer">
