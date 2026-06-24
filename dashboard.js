@@ -115,7 +115,8 @@
 
   // TITLE
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
-  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button></div>'
+  +'<div class="tabs"><button class="tab on" onclick="STAB(0,this)">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" onclick="STAB(1,this)">CSAT</button><button class="tab" onclick="STAB(2,this)">Arrivals</button></div>'
+  +'<div id="mainView">'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
@@ -258,8 +259,14 @@
   +'function US(){var tot=0,ok=0,al=0;document.querySelectorAll("#tb tr").forEach(function(r){if(r.style.display==="none")return;tot++;if(r.classList.contains("w"))al++;else ok++});document.getElementById("sT").textContent=tot;document.getElementById("sO").textContent=ok;document.getElementById("sA").textContent=al}'
   +'function UC(){document.getElementById("cAll").textContent=DATA.length;CES.forEach(function(c,i){var n=DATA.filter(function(d){return(d.host||"").toLowerCase().indexOf(c.split(" ")[0].toLowerCase())>=0}).length;document.getElementById("c"+i).textContent=n})}'
   
+  +'function STAB(idx,btn){document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on")});btn.classList.add("on");document.getElementById("mainView").style.display=idx===0?"":"none";document.getElementById("csatView").style.display=idx===1?"":"none";document.getElementById("arrView").style.display=idx===2?"":"none";if(idx===1&&!document.getElementById("csatFrame").src){document.getElementById("csatFrame").src="https://bi.teslamotors.com/views/EMEA-CSATSurveyDashboard/CSATDashboard?:embed=y&:showVizHome=no"}if(idx===2&&!document.getElementById("arrFrame").src){document.getElementById("arrFrame").src="https://bi.teslamotors.com/views/EMEA-ETA2SC/VehicleArrival?:embed=y&:showVizHome=no"}}'
+
   +'L();'
 
-  +'</scr'+'ipt></body></html>');
+  +'</scr'+'ipt>'
+  +'</div>' // close mainView
+  +'<div id="csatView" style="display:none"><iframe id="csatFrame" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px" src=""></iframe></div>'
+  +'<div id="arrView" style="display:none"><iframe id="arrFrame" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px" src=""></iframe></div>'
+  +'</body></html>');
   w.document.close();
 })();
