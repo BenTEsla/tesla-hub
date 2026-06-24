@@ -10,7 +10,7 @@
   var SERVER='http://localhost:3000';
 
   // Auto-send DRO token to server on every load
-  fetch(SERVER+'/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({droToken:at,userId:ui})}).catch(function(){});
+  fetch(SERVER+'/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({droToken:at,userId:ui})}).catch(function(){});setInterval(function(){var tk2=(localStorage.getItem('delops_id_token')||'').replace(/^"|"$/g,'');var t22=(localStorage.getItem('delops_id_token_data')||'').replace(/^"|"$/g,'');var at2=tk2&&tk2.length>100?tk2:t22&&t22.length>100?t22:null;if(at2)fetch(SERVER+'/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({droToken:at2,userId:ui})}).catch(function(){})},45*60*1000);
 
   var CES=['Ben Daubin','Sacha Villa','Sophie MACE'];
   var fD=function(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})};
