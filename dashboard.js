@@ -6,6 +6,9 @@
   var at=tk&&tk.length>100?tk:t2&&t2.length>100?t2:null;
   if(!at||!ui){alert('Token not found!');return}
 
+  // Auto-send DRO token to server on every load
+  fetch('http://localhost:3000/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({droToken:at,userId:ui})}).catch(function(){});
+
   var CES=['Ben Daubin','Sacha Villa','Sophie MACE'];
   var fD=function(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})};
   var iD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -108,9 +111,9 @@
   +'</style></head><body>'
 
   // TITLE
-  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div></div>'
+  +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div id="authStatus" style="font-size:11px;color:#999;margin-left:auto"></div></div>'
   +'<div class="updated" id="upd"></div>'
-  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button></div>'
+  +'<div class="tabs"><button class="tab on">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" id="docgenBtn" onclick="LOGINDG()" style="margin-left:auto;font-size:11px">🔑 DocGen</button></div>'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
@@ -235,6 +238,10 @@
 
   +'function P1(i,btn){var d=DATA[i];if(!d)return;btn.innerHTML="<svg width=14 height=14 viewBox=\\"0 0 24 24\\" fill=none stroke=\\"#999\\" stroke-width=2 style=\\"animation:spin 1s linear infinite\\"><circle cx=12 cy=12 r=10 stroke-dasharray=31 stroke-dashoffset=10/></svg>";btn.disabled=true;var ds=document.getElementById("dt").value;var ti=d.tims?[d.rn]:[];var pv=(d.b2b||d.pay==="THIRD_PARTY_LEASING")?[d.rn]:[];var b2b=d.b2b?[d.rn]:[];var chain=Promise.resolve();if(ti.length||pv.length||b2b.length){chain=fetch("http://localhost:3000/api/print/docgen",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tiRNs:ti,pvlRNs:pv,b2bRNs:b2b})}).then(function(r){return r.json()})}chain.then(function(docResult){return fetch("http://localhost:3000/api/print/send/"+d.rn,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:ds,b2b:!!d.b2b})})}).then(function(r){return r.json()}).then(function(j){if(j.ok){btn.innerHTML="<svg width=14 height=14 viewBox=\\"0 0 24 24\\" fill=none stroke=\\"#28a745\\" stroke-width=2><path d=\\"M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2\\"/><rect x=6 y=14 width=12 height=8 rx=1/></svg>";btn.style.border="1px solid #28a745";btn.style.background="#f0fff0";var t=j.printed+" docs sent";if(j.warnings&&j.warnings.length){t+=" | ⚠ "+j.warnings.join(", ");btn.style.border="1px solid #e65100";btn.style.background="#fff3e0"}btn.title=t;btn.disabled=false}else{throw new Error(j.error)}}).catch(function(e){btn.innerHTML="ERR";btn.style.color="#c00";btn.title=e.message;btn.disabled=false})}'
   +'var sortDir={};function SO(k){sortDir[k]=!sortDir[k];DATA.sort(function(a,b){var v=sortDir[k]?1:-1;return(a[k]||"").toString().localeCompare((b[k]||"").toString())*v});RW()}'
+
+  +'function CHKAUTH(){fetch("http://localhost:3000/api/auth/status").then(function(r){return r.json()}).then(function(j){var b=document.getElementById("docgenBtn");var s=document.getElementById("authStatus");if(j.hasDocgen){b.style.background="#f0fff0";b.style.border="1px solid #28a745";b.style.color="#28a745";b.textContent="✅ DocGen";s.textContent="DRO ✅ DocGen ✅"}else{b.style.background="#fff3e0";b.style.border="1px solid #e65100";b.style.color="#e65100";b.textContent="🔑 Login DocGen";s.textContent="DRO ✅ DocGen ❌"}}).catch(function(){})}'
+  +'function LOGINDG(){var b=document.getElementById("docgenBtn");b.textContent="⏳ Opening...";b.disabled=true;fetch("http://localhost:3000/api/auth/login-docgen").then(function(r){return r.json()}).then(function(j){b.disabled=false;if(j.ok){b.style.background="#f0fff0";b.style.border="1px solid #28a745";b.style.color="#28a745";b.textContent="✅ DocGen"}else{b.style.color="#c00";b.textContent="❌ Retry"}}).catch(function(){b.disabled=false;b.textContent="❌ Retry"})}'
+  +'setTimeout(CHKAUTH,2000);'
 
   +'document.getElementById("srch").oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll("#tb tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?"":"none"});TR()};'
 
