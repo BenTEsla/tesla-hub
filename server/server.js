@@ -3,9 +3,20 @@ const fetch = require('node-fetch');
 const path = require('path');
 const config = require('./config.json');
 const { execFile } = require('child_process');
+const puppeteer = require('puppeteer-core');
 
 const app = express();
 const PORT = 3000;
+
+// Keep a warm Puppeteer browser for fast PDF generation
+let pdfBrowser = null;
+async function getPdfBrowser() {
+  if (!pdfBrowser || !pdfBrowser.isConnected()) {
+    pdfBrowser = await puppeteer.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true });
+    console.log('🔥 Puppeteer browser warmed up');
+  }
+  return pdfBrowser;
+}
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -20,9 +31,15 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// Token storage (in-memory, per session)
+// Token storage (persisted to file)
 // ============================================================
+const tokenFile = path.join(__dirname, 'tokens.json');
 let tokens = { dro: null, docgen: null, docgenAuth: null, userId: null };
+try { tokens = { ...tokens, ...JSON.parse(require('fs').readFileSync(tokenFile, 'utf8')) }; } catch(e) {}
+
+function saveTokens() {
+  require('fs').writeFileSync(tokenFile, JSON.stringify(tokens, null, 2));
+}
 
 // Print tracking (persisted to file)
 const printTrackFile = path.join(__dirname, 'print-status.json');
@@ -58,6 +75,7 @@ app.post('/api/auth/tokens', (req, res) => {
   if (req.body.docgenToken) tokens.docgen = req.body.docgenToken;
   if (req.body.docgenAuth) tokens.docgenAuth = req.body.docgenAuth;
   if (req.body.userId) tokens.userId = req.body.userId.replace(/^"|"$/g, '');
+  saveTokens();
   res.json({ ok: true });
 });
 
@@ -70,9 +88,107 @@ app.get('/auth/callback', (req, res) => {
   if (req.query.token) {
     tokens.dro = req.query.token.replace(/^"|"$/g, '');
     tokens.userId = (req.query.userId || '').replace(/^"|"$/g, '');
+    saveTokens();
     res.redirect('/dashboard.html');
   } else {
     res.redirect('/');
+  }
+});
+
+// ============================================================
+// AUTO LOGIN DOCGEN: Puppeteer opens warpbilling, captures tokens
+// ============================================================
+app.get('/api/auth/login-docgen', async (req, res) => {
+  try {
+    const puppeteer = require('puppeteer-core');
+    const fs = require('fs');
+    const profileDir = path.join(__dirname, 'chrome-profile');
+    if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
+    
+    const browser = await puppeteer.launch({
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      headless: false,
+      userDataDir: profileDir,
+      args: ['--window-size=500,700', '--no-first-run', '--no-default-browser-check']
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 480, height: 650 });
+    
+    // Intercept requests to capture DocGen tokens
+    let captured = false;
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const url = request.url();
+      const headers = request.headers();
+      if (url.includes('documentautomation-processapi.tesla.com') && headers.authorization && headers.token) {
+        tokens.docgenAuth = headers.authorization;
+        tokens.docgen = headers.token;
+        saveTokens();
+        captured = true;
+        console.log('✅ DocGen tokens captured via Puppeteer!');
+      }
+      request.continue();
+    });
+    
+    // Navigate to warpbilling
+    await page.goto('https://warpbilling.tesla.com', { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // If on SSO page, click "Tesla"
+    try {
+      const ssoBtn = await page.$('a[href*="Tesla"], div[class*="idp"] a, a:has-text("Tesla")');
+      if (ssoBtn) {
+        await ssoBtn.click();
+        console.log('Clicked Tesla SSO button');
+      }
+    } catch(e) {}
+    
+    // Wait for user to complete SSO login (up to 3 min)
+    console.log('Waiting for SSO login...');
+    try {
+      await page.waitForFunction(() => window.location.hostname === 'warpbilling.tesla.com' && !window.location.href.includes('sso.tesla.com'), { timeout: 180000 });
+    } catch(e) {}
+    
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // If on warpbilling, search for an RN to trigger DocGen call
+    if (page.url().includes('warpbilling.tesla.com')) {
+      try {
+        await page.waitForSelector('input[placeholder*="Search"]', { timeout: 10000 });
+        await page.type('input[placeholder*="Search"]', 'RN128188598');
+        await page.keyboard.press('Enter');
+        await new Promise(r => setTimeout(r, 4000));
+        
+        // Click on result
+        const row = await page.$('tr.mat-row, tr[class*="row"], a[href*="invoice"]');
+        if (row) {
+          await row.click();
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      } catch(e) { console.log('Search failed:', e.message); }
+      
+      // Try direct document page
+      if (!captured) {
+        try {
+          await page.goto('https://warpbilling.tesla.com/invoice/RN128188598/documents', { waitUntil: 'networkidle2', timeout: 15000 });
+        } catch(e) {}
+      }
+      
+      // Wait for capture
+      await new Promise(r => { 
+        const c = setInterval(() => { if (captured) { clearInterval(c); r(); } }, 500);
+        setTimeout(() => { clearInterval(c); r(); }, 15000);
+      });
+    }
+    
+    await browser.close();
+    
+    if (captured) {
+      res.json({ ok: true, message: 'DocGen tokens captured!' });
+    } else {
+      res.json({ ok: false, message: 'Tokens not captured. Log in and try again — your session is now saved.' });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -82,16 +198,19 @@ app.get('/auth/callback', (req, res) => {
 app.post('/api/print/docgen', async (req, res) => {
   try {
     if (!tokens.docgen || !tokens.docgenAuth) {
-      return res.status(401).json({ error: 'DocGen tokens not set. Send them via POST /api/auth/tokens {docgenToken, docgenAuth}' });
+      return res.status(401).json({ error: 'DocGen tokens not set. Click 🔑 Login DocGen.' });
     }
     
-    const { tiRNs, pvlRNs } = req.body;
+    const { tiRNs, b2bRNs } = req.body;
     const API = config.apis.docgen;
     const h = { 'authorization': tokens.docgenAuth, 'token': tokens.docgen, 'Content-Type': 'application/json', 'accept': 'application/json' };
+    const fs = require('fs');
+    const dlDir = path.join(__dirname, 'downloads');
+    if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir);
     
-    const results = { generated: 0, downloaded: 0, files: [], errors: [] };
+    const results = { generated: 0, downloaded: 0, files: [], errors: [], missingThirdPartyPVL: [] };
     
-    // Generate Trade-In Annex
+    // Generate Trade-In Annex packet
     for (const rn of (tiRNs || [])) {
       try {
         await fetch(API + '/DocumentAutomation/GeneratePacket', {
@@ -99,53 +218,61 @@ app.post('/api/print/docgen', async (req, res) => {
           body: JSON.stringify({ documentCodes: [{ documentCode: "TRADE_IN_ANNEX", defaultSignType: "N/A" }], referenceNumber: rn, triggerRelatedDocumentsCall: true, forceGenerate: true })
         });
         results.generated++;
+        console.log('Generated TRADE_IN_ANNEX for', rn);
       } catch (e) { results.errors.push(rn + ':gen:' + e.message); }
     }
     
-    // Generate PVL
-    for (const rn of (pvlRNs || [])) {
+    // Wait for generation (shorter — packet is usually ready fast)
+    if ((tiRNs || []).length) await new Promise(r => setTimeout(r, 3000));
+    
+    // Download Trade-In Annex PACKET (single PDF with all trade-in docs)
+    for (const rn of (tiRNs || [])) {
       try {
-        await fetch(API + '/DocumentAutomation/GeneratePacket', {
-          method: 'POST', headers: h,
-          body: JSON.stringify({ documentCodes: [{ documentCode: "DELIVERY_ACCEPTANCE", defaultSignType: "N/A" }], referenceNumber: rn, triggerRelatedDocumentsCall: true, forceGenerate: true })
+        // Clean old trade-in files for this RN
+        fs.readdirSync(dlDir).filter(f => f.startsWith(rn) && !f.includes('PAGE_DE_GARDE') && !f.includes('ThirdParty')).forEach(f => {
+          fs.unlinkSync(path.join(dlDir, f));
         });
-        results.generated++;
-      } catch (e) { results.errors.push(rn + ':gen:' + e.message); }
+        
+        const dlResp = await fetch(API + '/Invoices/Automation/' + rn + '/Packet/Download?documentName=TRADE_IN_ANNEX&vin=undefined&version=1', { headers: h });
+        if (dlResp.ok) {
+          const buffer = await dlResp.buffer();
+          const fileName = rn + '_TRADE_IN_ANNEX_PACKET.pdf';
+          fs.writeFileSync(path.join(dlDir, fileName), buffer);
+          results.downloaded++;
+          results.files.push({ rn, name: 'Trade-In Annex Packet', fileName });
+          console.log('Downloaded PACKET for', rn, '- size:', buffer.length);
+        } else {
+          console.log('Packet download failed:', dlResp.status, await dlResp.text());
+          results.errors.push(rn + ':packet:' + dlResp.status);
+        }
+      } catch (e) { results.errors.push(rn + ':dl:' + e.message); }
     }
     
-    // Wait for generation
-    await new Promise(r => setTimeout(r, 5000));
-    
-    // Download all documents
-    const allRNs = [...new Set([...(tiRNs || []), ...(pvlRNs || [])])];
-    for (const rn of allRNs) {
+    // For B2B: check for ThirdPartyDeliveryDeclaration
+    for (const rn of (b2bRNs || [])) {
       try {
         const listResp = await fetch(API + '/Invoices/' + rn + '/Document/list', { headers: h });
         const list = await listResp.json();
-        const docs = (list.responseObject?.documentList || []).filter(d => {
-          const n = d.name || '';
-          return n.includes('CERFA') || n.includes('Trade-In Annex FR') || n.includes('Confirmation de livraison');
-        });
+        const allDocs = list.responseObject?.documentList || [];
+        const thirdPartyDoc = allDocs.find(d => (d.name || '').toLowerCase().includes('thirdpartydeliverydeclaration'));
         
-        for (const d of docs) {
-          const id = d.cgsContentId || d.dmsContentId;
-          if (!id) continue;
-          const dlResp = await fetch(API + '/Invoices/Automation/' + rn + '/Document/Download?documentName=' + id + '&vin=null&version=1&countryCode=FR', { headers: h });
-          if (dlResp.ok) {
-            const buffer = await dlResp.buffer();
-            const fileName = rn + '_' + d.name.replace(/[^a-zA-Z0-9-]/g, '_') + '.pdf';
-            const filePath = path.join(__dirname, 'downloads', fileName);
-            
-            // Ensure downloads directory exists
-            const fs = require('fs');
-            if (!fs.existsSync(path.join(__dirname, 'downloads'))) fs.mkdirSync(path.join(__dirname, 'downloads'));
-            
-            fs.writeFileSync(filePath, buffer);
-            results.downloaded++;
-            results.files.push({ rn, name: d.name, path: filePath, fileName });
+        if (thirdPartyDoc) {
+          const id = thirdPartyDoc.cgsContentId || thirdPartyDoc.dmsContentId;
+          if (id) {
+            const dlResp = await fetch(API + '/Invoices/Automation/' + rn + '/Document/Download?documentName=' + id + '&vin=null&version=1&countryCode=FR', { headers: h });
+            if (dlResp.ok) {
+              const buffer = await dlResp.buffer();
+              const fileName = rn + '_ThirdPartyDeliveryDeclaration.pdf';
+              fs.writeFileSync(path.join(dlDir, fileName), buffer);
+              results.downloaded++;
+              results.files.push({ rn, name: 'ThirdPartyDeliveryDeclaration', fileName });
+            }
           }
+        } else {
+          results.missingThirdPartyPVL.push(rn);
+          console.log('MISSING ThirdPartyDeliveryDeclaration for B2B:', rn);
         }
-      } catch (e) { results.errors.push(rn + ':dl:' + e.message); }
+      } catch (e) { results.errors.push(rn + ':b2b:' + e.message); }
     }
     
     res.json(results);
@@ -161,12 +288,86 @@ app.get('/api/print/download/:fileName', (req, res) => {
 });
 
 // ============================================================
+// DIRECT PRINT: Generate PDF + send to printer (no user action)
+// ============================================================
+app.post('/api/print/send/:rn', async (req, res) => {
+  try {
+    const rn = req.params.rn;
+    const date = req.body.date || new Date(Date.now() + 864e5).toISOString().split('T')[0];
+    const isB2B = req.body.b2b || false;
+    const printer = req.body.printer || config.hubs[config.defaultHub]?.printer || '';
+    const fs = require('fs');
+    const dlDir = path.join(__dirname, 'downloads');
+    if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir);
+    
+    const results = { printed: 0, files: [], warnings: [] };
+    
+    // Step 0: For B2B, check if ThirdPartyDeliveryDeclaration was downloaded
+    let missPVL = false;
+    if (isB2B) {
+      const b2bFiles = fs.readdirSync(dlDir).filter(f => f.startsWith(rn) && f.toLowerCase().includes('thirdparty'));
+      if (b2bFiles.length === 0) {
+        missPVL = true;
+        results.warnings.push('ThirdPartyDeliveryDeclaration missing — DA must upload it');
+      }
+    }
+    
+    // Step 1: Generate page de garde PDF via warm Puppeteer
+    const browser = await getPdfBrowser();
+    const page = await browser.newPage();
+    const pdgUrl = 'http://localhost:' + (process.env.PORT || 3000) + '/api/print/page-de-garde/' + rn + '?date=' + date + (missPVL ? '&missPVL=1' : '');
+    await page.goto(pdgUrl, { waitUntil: 'networkidle0', timeout: 15000 });
+    const pdgPath = path.join(dlDir, rn + '_PAGE_DE_GARDE.pdf');
+    await page.pdf({ path: pdgPath, format: 'A4', printBackground: true });
+    await page.close();
+    results.files.push(pdgPath);
+    
+    // Step 2: Print page de garde via pdf-to-printer (no Adobe needed)
+    const ptp = require('pdf-to-printer');
+    try {
+      await ptp.print(pdgPath, { printer: printer });
+      results.printed++;
+    } catch(e) { console.error('Print error:', e.message); }
+    
+    // Step 3: Print Trade-In Annex PACKET (pages 6-11 only) or B2B docs
+    const packetFile = fs.readdirSync(dlDir).find(f => f.startsWith(rn) && f.includes('TRADE_IN_ANNEX_PACKET'));
+    if (packetFile) {
+      try {
+        await ptp.print(path.join(dlDir, packetFile), { printer: printer, pages: '6-11' });
+        results.printed++;
+        results.files.push(packetFile);
+        console.log('Printed PACKET pages 6-11:', packetFile);
+      } catch(e) { console.error('Packet print error:', e.message); }
+    }
+    
+    // Print ThirdPartyDeliveryDeclaration for B2B
+    const thirdPartyFile = fs.readdirSync(dlDir).find(f => f.startsWith(rn) && f.includes('ThirdParty'));
+    if (thirdPartyFile) {
+      try {
+        await ptp.print(path.join(dlDir, thirdPartyFile), { printer: printer });
+        results.printed++;
+        results.files.push(thirdPartyFile);
+      } catch(e) {}
+    }
+    
+    // Step 4: Mark as printed
+    printStatus[rn] = { printed: true, date: new Date().toISOString(), docs: results.printed };
+    savePrintStatus();
+    
+    res.json({ ok: true, printed: results.printed, files: results.files.length, warnings: results.warnings });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================
 // PAGE DE GARDE: Generate beautiful cover page for a delivery
 // ============================================================
 app.get('/api/print/page-de-garde/:rn', async (req, res) => {
   try {
     const rn = req.params.rn;
     const date = req.query.date || new Date().toISOString().split('T')[0];
+    const missPVL = req.query.missPVL === '1';
     
     // Get advisor data
     const advResp = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
@@ -239,6 +440,12 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
       clientName = a.DriverInfo.first_name + ' ' + a.DriverInfo.last_name + ' (' + name + ')';
     }
 
+    // Miss PVL alert for Enterprise orders
+    let missPVLAlert = '';
+    if (missPVL || (a.IsEnterpriseOrder && req.query.missPVL === '1')) {
+      missPVLAlert = '<div style="background:#fce4ec;border:1px solid #e57373;border-radius:6px;padding:6px 10px;margin-bottom:4px;font-size:12px;font-weight:700;color:#c62828">⚠ Miss PVL Tiers — DA doit uploader le ThirdPartyDeliveryDeclaration</div>';
+    }
+
     const templatePath = path.join(__dirname, 'templates', 'page-de-garde.html');
     let html = require('fs').readFileSync(templatePath, 'utf8');
     
@@ -257,7 +464,7 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
     const payClasses = { 'CASH': 'pay-cash', 'TESLA_LEASING': 'pay-leasing', 'TESLA_LENDING': 'pay-credit', 'THIRD_PARTY_LEASING': 'pay-lld' };
     
     // Trade-in block
-    let tiBlock = '<div class="box"><div class="bt">Trade-In</div><div style="display:flex;align-items:center;justify-content:center;height:50px"><div class="pay-bg" style="background:#fce4ec"><div class="pay-label" style="color:#c62828">NON</div></div></div></div>';
+    let tiBlock = '<div class="box" style="display:flex;flex-direction:column"><div class="bt">Trade-In</div><div style="display:flex;align-items:center;justify-content:center;flex:1"><div class="pay-bg" style="background:#fce4ec"><div class="pay-label" style="color:#c62828">NON</div></div></div></div>';
     if (ti && (ti.make || ti.model)) {
       tiBlock = `<div class="box ti-box"><div class="bt">Trade-In</div><div class="ti-car">${ti.make || ''} ${ti.model || ''}</div>${ti.plate ? '<div class="lb">IMMATRICULATION</div><div class="ti-plate">' + ti.plate + '</div>' : ''}${ti.status ? '<div class="ti-status">' + ti.status + '</div>' : ''}</div>`;
     }
@@ -290,6 +497,19 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
       if (a.HasHold) parcours += 'V\u00e9hicule en HOLD - r\u00e9paration n\u00e9cessaire avant livraison. ';
       parcours += a.IsEnterpriseOrder ? 'Commande entreprise.' : 'Client particulier.';
     }
+    
+    // Satisfaction gauge (1-5)
+    let score = 1;
+    if ((a.LicensePlate || '').trim()) score++; // plate OK
+    if (a.AmountDueActionStatus === 'Yes' || a.PaymentMethodActionStatus === 'COMPLETE') score++; // payment OK
+    if (a.InsuranceActionStatus === 'COMPLETE') score++; // insurance OK
+    const otg = a.VehicleStage === 'Finished Goods' || a.VehicleStage === 'Arrived at VRL';
+    if (otg) score++; // OTG
+    if (a.HasHold) score = Math.max(1, score - 2); // hold = penalty
+    
+    const pct = score * 20;
+    let gauge = '<div style="position:relative;width:100%;height:6px;background:linear-gradient(90deg,#ef9a9a,#ffcc80,#fff59d,#a5d6a7,#81c784);border-radius:3px"><div style="position:absolute;left:' + pct + '%;top:-4px;width:2px;height:14px;background:#171a20;border-radius:1px;transform:translateX(-1px)"></div></div>';
+    const parcoursShort = orderDate ? `Cmd ${orderDate}` : '';
     
     // Replace all placeholders
     const replacements = {
@@ -325,7 +545,10 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
       '{{INS_DOT}}': a.InsuranceActionStatus === 'COMPLETE' ? 'green' : 'orange',
       '{{INSURANCE}}': ins,
       '{{PARCOURS}}': parcours,
-      '{{CES_NAME}}': c.HostName || ''
+      '{{PARCOURS_SHORT}}': parcoursShort,
+      '{{GAUGE}}': gauge,
+      '{{CES_NAME}}': c.HostName || '',
+      '{{MISS_PVL_ALERT}}': missPVLAlert
     };
     
     for (const [key, value] of Object.entries(replacements)) {
@@ -449,15 +672,19 @@ app.post('/api/print', (req, res) => {
 // ============================================================
 // START
 // ============================================================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   const hubId = config.defaultHub;
   const hub = config.hubs[hubId];
+  const os = require('os');
+  const nets = os.networkInterfaces();
+  const ips = Object.values(nets).flat().filter(n => n.family === 'IPv4' && !n.internal).map(n => n.address);
   console.log('');
   console.log('  ========================================');
   console.log('  TESLA DELIVERY HUB');
   console.log(`  ${hub.name}`);
   console.log('  ========================================');
-  console.log(`  Dashboard:  http://localhost:${PORT}`);
+  console.log(`  Local:      http://localhost:${PORT}`);
+  console.log(`  Network:    ${ips.map(ip => 'http://' + ip + ':' + PORT).join('\n              ')}`);
   console.log(`  Hub:        ${hubId} (trtId: ${hub.trtId})`);
   console.log(`  CES:        ${hub.ces.map(c => c.name).join(', ')}`);
   console.log(`  Printer:    ${hub.printer}`);
