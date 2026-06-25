@@ -115,6 +115,7 @@
   +'</style></head><body>'
 
   // TITLE
+  +'<div style="position:sticky;top:0;background:#fff;z-index:20;padding-bottom:8px">'
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
   +'<div class="tabs"><button class="tab on" onclick="STAB(0,this)">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" onclick="STAB(1,this)">CSAT</button><button class="tab" onclick="STAB(2,this)">Arrivals</button></div>'
   +'<div id="mainView">'
@@ -161,6 +162,7 @@
   +'</div>'
 
   // TABLE
+  +'</div>'
   +'<div class="tw"><div class="tcard"><div id="lg" style="display:none;text-align:center;padding:80px 0"><div class="spinner"></div><div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div></div>'
   +'<table id="tbl" style="display:none"><thead><tr>'
   +'<th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
