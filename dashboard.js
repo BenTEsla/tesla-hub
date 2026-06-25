@@ -27,7 +27,7 @@
   +'@font-face{font-family:UST;font-weight:400;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:500;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
-  +'html,body{height:100%;margin:0}body{display:flex;flex-direction:column;font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
+  +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
   // TITLE â€” Intrepid exact: 40px, weight 500, padding 20px
   +'.title-row{padding:20px 32px 0}'
@@ -111,14 +111,14 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{flex:1;overflow-y:auto}'
+  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{}'
   +'</style></head><body>'
 
   // TITLE
-  +'<div style="flex-shrink:0;background:#fff;padding-bottom:8px">'
+  +'<div id="fixedHeader" style="position:fixed;top:0;left:0;right:0;background:#fff;z-index:20;padding:8px 24px 0 24px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
   +'<div class="tabs"><button class="tab on" onclick="STAB(0,this)">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" onclick="STAB(1,this)">CSAT</button><button class="tab" onclick="STAB(2,this)">Arrivals</button></div>'
-  +'<div id="mainView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">'
+  +'<div id="mainView" >'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
@@ -163,6 +163,7 @@
 
   // TABLE
   +'</div>'
+  +'<div id="headerSpacer"></div>'
   +'<div class="tw"><div class="tcard"><div id="lg" style="display:none;text-align:center;padding:80px 0"><div class="spinner"></div><div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div></div>'
   +'<table id="tbl" style="display:none"><thead><tr>'
   +'<th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
@@ -276,7 +277,7 @@
 
   +'function LOADARR(){fetch("http://localhost:3000/api/bi/arrivals").then(function(r){return r.json()}).then(function(j){if(j.error)return;var s=j.summary;var d=j.data;document.getElementById("arrTransit").textContent=s.inTransit;document.getElementById("arrToday").textContent=d.arrived[3]||0;document.getElementById("arrWeek").textContent=s.thisWeek;var dates=d.dates.slice(1);var totals=d.total.slice(1);var max=Math.max.apply(null,totals)||1;var ch=document.getElementById("arrDailyChart");if(ch){var html="";for(var i=0;i<Math.min(dates.length,7);i++){var pct=Math.round(totals[i]/max*100);var col=i===2?"#28a745":"#3e6ae1";var day=dates[i].split("/")[0]+"/"+dates[i].split("/")[1];html+="<div style=flex:1;display:flex;flex-direction:column;align-items:center;gap:6px><div style=font-size:13px;font-weight:700>"+totals[i]+"</div><div style=width:100%;height:"+pct+"%;border-radius:6px_6px_0_0;background:"+col+";min-height:8px></div><div style=font-size:12px;color:#5c5e62>"+day+"</div></div>"}ch.innerHTML=html}var det=document.getElementById("arrTodayDetail");if(det)det.textContent=d.arrived[3]+" arrived - "+d.confident[3]+" confident ETA";var wp=document.getElementById("arrWeekPct");if(wp)wp.innerHTML="Arrived: "+s.arrivedTotal+" | In Transit: "+s.inTransit}).catch(function(){})}'
   +'function LOADCSAT(){fetch("http://localhost:3000/api/bi/csat").then(function(r){return r.json()}).then(function(j){if(j.error)return;document.getElementById("csatScore").textContent=j.summary.avgScore.replace("%","");document.getElementById("csatSurveys").textContent=j.summary.totalSurveys;var adv=j.advisors;if(adv[0]){document.getElementById("csatScoreBen").textContent=adv[0].score;document.getElementById("csatSurveysBen").textContent=adv[0].count}if(adv[1]){document.getElementById("csatScoreSacha").textContent=adv[1].score;document.getElementById("csatSurveysSacha").textContent=adv[1].count}if(adv[2]){document.getElementById("csatScoreSophie").textContent=adv[2].score;document.getElementById("csatSurveysSophie").textContent=adv[2].count}var w=j.weekly;if(w&&w.weeks){var ch=document.getElementById("csatWeeklyChart");if(ch){var sc=w.scores||w.counts;var html="";for(var i=0;i<w.weeks.length;i++){if(!sc[i])continue;var pct=sc[i];var col=pct>=80?"#28a745":pct>=70?"#3e6ae1":"#f0ad4e";html+="<div style=flex:1;display:flex;flex-direction:column;align-items:center;gap:6px><div style=font-size:12px;font-weight:600>"+sc[i]+"%</div><div style=width:100%;height:"+pct+"%;border-radius:6px_6px_0_0;background:"+col+";min-height:8px></div><div style=font-size:11px;color:#5c5e62>"+w.weeks[i]+"</div></div>"}ch.innerHTML=html}}}).catch(function(){})}'
-  +'L();'
+  +'setTimeout(function(){var h=document.getElementById("fixedHeader");var s=document.getElementById("headerSpacer");if(h&&s)s.style.height=h.offsetHeight+"px"},500);L();'
 
   +'</scr'+'ipt>'
   +'</div>' // close mainView
