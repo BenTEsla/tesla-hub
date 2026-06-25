@@ -111,7 +111,7 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{}'
+  +''
   +'</style></head><body>'
 
   // TITLE
@@ -277,7 +277,7 @@
 
   +'function LOADARR(){fetch("http://localhost:3000/api/bi/arrivals").then(function(r){return r.json()}).then(function(j){if(j.error)return;var s=j.summary;var d=j.data;document.getElementById("arrTransit").textContent=s.inTransit;document.getElementById("arrToday").textContent=d.arrived[3]||0;document.getElementById("arrWeek").textContent=s.thisWeek;var dates=d.dates.slice(1);var totals=d.total.slice(1);var max=Math.max.apply(null,totals)||1;var ch=document.getElementById("arrDailyChart");if(ch){var html="";for(var i=0;i<Math.min(dates.length,7);i++){var pct=Math.round(totals[i]/max*100);var col=i===2?"#28a745":"#3e6ae1";var day=dates[i].split("/")[0]+"/"+dates[i].split("/")[1];html+="<div style=flex:1;display:flex;flex-direction:column;align-items:center;gap:6px><div style=font-size:13px;font-weight:700>"+totals[i]+"</div><div style=width:100%;height:"+pct+"%;border-radius:6px_6px_0_0;background:"+col+";min-height:8px></div><div style=font-size:12px;color:#5c5e62>"+day+"</div></div>"}ch.innerHTML=html}var det=document.getElementById("arrTodayDetail");if(det)det.textContent=d.arrived[3]+" arrived - "+d.confident[3]+" confident ETA";var wp=document.getElementById("arrWeekPct");if(wp)wp.innerHTML="Arrived: "+s.arrivedTotal+" | In Transit: "+s.inTransit}).catch(function(){})}'
   +'function LOADCSAT(){fetch("http://localhost:3000/api/bi/csat").then(function(r){return r.json()}).then(function(j){if(j.error)return;document.getElementById("csatScore").textContent=j.summary.avgScore.replace("%","");document.getElementById("csatSurveys").textContent=j.summary.totalSurveys;var adv=j.advisors;if(adv[0]){document.getElementById("csatScoreBen").textContent=adv[0].score;document.getElementById("csatSurveysBen").textContent=adv[0].count}if(adv[1]){document.getElementById("csatScoreSacha").textContent=adv[1].score;document.getElementById("csatSurveysSacha").textContent=adv[1].count}if(adv[2]){document.getElementById("csatScoreSophie").textContent=adv[2].score;document.getElementById("csatSurveysSophie").textContent=adv[2].count}var w=j.weekly;if(w&&w.weeks){var ch=document.getElementById("csatWeeklyChart");if(ch){var sc=w.scores||w.counts;var html="";for(var i=0;i<w.weeks.length;i++){if(!sc[i])continue;var pct=sc[i];var col=pct>=80?"#28a745":pct>=70?"#3e6ae1":"#f0ad4e";html+="<div style=flex:1;display:flex;flex-direction:column;align-items:center;gap:6px><div style=font-size:12px;font-weight:600>"+sc[i]+"%</div><div style=width:100%;height:"+pct+"%;border-radius:6px_6px_0_0;background:"+col+";min-height:8px></div><div style=font-size:11px;color:#5c5e62>"+w.weeks[i]+"</div></div>"}ch.innerHTML=html}}}).catch(function(){})}'
-  +'var fh=document.getElementById("fixedHeader");var sp=document.getElementById("headerSpacer");if(fh&&sp)sp.style.height=fh.offsetHeight+"px";L();'
+  +'L();'
 
   +'</scr'+'ipt>'
   +'</div>' // close mainView
