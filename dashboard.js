@@ -27,7 +27,7 @@
   +'@font-face{font-family:UST;font-weight:400;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:500;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
-  +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
+  +'html,body{height:100%;margin:0}body{display:flex;flex-direction:column;font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
   // TITLE â€” Intrepid exact: 40px, weight 500, padding 20px
   +'.title-row{padding:20px 32px 0}'
@@ -111,14 +111,14 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{}'
+  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{flex:1;overflow-y:auto}'
   +'</style></head><body>'
 
   // TITLE
-  +'<div style="position:sticky;top:0;background:#fff;z-index:20;padding-bottom:8px">'
+  +'<div style="flex-shrink:0;background:#fff;padding-bottom:8px">'
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
   +'<div class="tabs"><button class="tab on" onclick="STAB(0,this)">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" onclick="STAB(1,this)">CSAT</button><button class="tab" onclick="STAB(2,this)">Arrivals</button></div>'
-  +'<div id="mainView">'
+  +'<div id="mainView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">'
 
   // STATS - Block 1: Overview | Block 2: Readiness | Block 3: CES
   +'<div class="srow">'
