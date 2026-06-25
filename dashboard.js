@@ -162,8 +162,6 @@
   +'</div>'
 
   // TABLE
-  +'</div>'
-  +'<div id="headerSpacer" style="height:340px"></div>'
   +'<div class="tw"><div class="tcard"><div id="lg" style="display:none;text-align:center;padding:80px 0"><div class="spinner"></div><div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div></div>'
   +'<table id="tbl" style="display:none"><thead><tr>'
   +'<th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>'
