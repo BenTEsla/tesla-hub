@@ -27,7 +27,7 @@
   +'@font-face{font-family:UST;font-weight:400;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:500;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
-  +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
+  +'body{overflow:hidden;font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
   // TITLE â€” Intrepid exact: 40px, weight 500, padding 20px
   +'.title-row{padding:20px 32px 0}'
@@ -111,7 +111,7 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{max-height:calc(100vh - 360px);overflow-y:auto}'
+  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{max-height:calc(100vh - 380px);overflow-y:auto}'
   +'</style></head><body>'
 
   // TITLE
