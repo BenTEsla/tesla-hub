@@ -1,4 +1,4 @@
-// Tesla Delivery Hub v25
+// Tesla Delivery Hub v17
 (function(){
   var tk=(localStorage.getItem('delops_id_token')||'').replace(/^"|"$/g,'');
   var t2=(localStorage.getItem('delops_id_token_data')||'').replace(/^"|"$/g,'');
@@ -27,7 +27,7 @@
   +'@font-face{font-family:UST;font-weight:400;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:500;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2) format(woff2)}'
   +'@font-face{font-family:UST;font-weight:700;font-display:swap;src:url(https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2) format(woff2)}'
-  +'html{overflow-y:scroll!important}body{min-height:100vh}body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
+  +'body{font-family:UST,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#171a20;background:#fff;font-size:13px;line-height:1.4}'
 
   // TITLE â€” Intrepid exact: 40px, weight 500, padding 20px
   +'.title-row{padding:20px 32px 0}'
@@ -111,11 +111,9 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +''
   +'</style></head><body>'
 
   // TITLE
-  +'<div id="fixedHeader" style="position:fixed;top:0;left:0;right:0;background:#fff;z-index:20;padding:8px 24px 0 24px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
   +'<div class="title-row"><div class="ttl">Delivery Dashboard</div><div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px"><button id="docgenBtn" onclick="LOGINDG()" class="tab" style="font-size:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><span id="dotDro" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DRO<span id="dotDg" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>DocGen</button><div id="upd" style="font-size:12px;color:#999"></div></div></div>'
   +'<div class="tabs"><button class="tab on" onclick="STAB(0,this)">Customer Delivery</button><button class="tab" onclick="DISPATCH()">Dispatch</button><button class="tab" onclick="STAB(1,this)">CSAT</button><button class="tab" onclick="STAB(2,this)">Arrivals</button></div>'
   +'<div id="mainView">'
@@ -124,8 +122,8 @@
   +'<div class="srow">'
   +'<div class="sb">'
   +'<div class="si on" onclick="SF(\'all\',this)"><div class="sn" id="sT">-</div><div class="sl">Deliveries</div></div>'
-  +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Not Ready</div></div>'
   +'<div class="si" onclick="SF(\'ok\',this)"><div class="sn g" id="sO">-</div><div class="sl">Ready</div></div>'
+  +'<div class="si" onclick="SF(\'al\',this)"><div class="sn r" id="sA">-</div><div class="sl">Not Ready</div></div>'
   +'</div>'
   +'<div class="sb">'
   +'<div class="si" onclick="SFR(\'pay\',this)"><div id="sP" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Payment</div></div>'
@@ -135,9 +133,9 @@
   +'<div class="si" onclick="SFR(\'ins\',this)"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>'
   +'</div>'
   +'<div class="sb">'
-  +'<div class="si" onclick="SFV(\'cotg\',this)"><div class="sn" id="sCotg" style="color:#171a20">-</div><div class="sl">COTG</div></div>'
-  +'<div class="si" onclick="SFV(\'fg\',this)"><div class="sn" id="sFg" style="color:#171a20">-</div><div class="sl">Finished</div></div>'
-  +'<div class="si" onclick="SFV(\'del\',this)"><div class="sn" id="sDel" style="color:#171a20">-</div><div class="sl">Delivered</div></div>'
+  +'<div class="si" onclick="SFV(\'cotg\',this)"><div class="sn" id="sCotg">-</div><div class="sl">COTG</div></div>'
+  +'<div class="si" onclick="SFV(\'fg\',this)"><div class="sn" id="sFg">-</div><div class="sl">Finished</div></div>'
+  +'<div class="si" onclick="SFV(\'del\',this)"><div class="sn" id="sDel">-</div><div class="sl">Delivered</div></div>'
   +'</div>'
   +'<div class="sb" style="margin-left:auto">'
   +'<div class="si on" onclick="PF(\'all\',this)"><div class="sn" id="cAll">-</div><div class="sl">All</div></div>'
@@ -217,7 +215,7 @@
   +'var tiC=adv.Data.Dashboard.filter(function(a){return a.TradeInActionStatus==="COMPLETE_TRADE_IN"});'
   +'var tiR={};await Promise.all(tiC.map(function(a){return fetch(BASE+"/widget/GetTradeInWidgetInfo?referenceNumber="+a.ReferenceNumber+"&vehicleMapId="+a.VehicleMapId+"&deliveryState="+encodeURIComponent(a.DeliveryState||""),{headers:h}).then(function(r){return r.json()}).then(function(j){if(j.Data)tiR[a.ReferenceNumber]={ms:j.Data.AMPStatusFromC360||j.Data.AcquisitionMilestone||""}}).catch(function(){})}));'
   +'var regR={};var plated=adv.Data.Dashboard.filter(function(a){return a.LicensePlate&&a.LicensePlate.indexOf("-")>=0});await Promise.all(plated.map(function(a){return fetch(BASE+"/widget/GetGlobalRegistrationInfo?referenceNumber="+a.ReferenceNumber+"&vin="+(a.Vin||"")+"&countryCode=FR&registrationState="+encodeURIComponent(a.RegistrationState||""),{headers:h}).then(function(r){return r.json()}).then(function(j){if(j.Data)regR[a.ReferenceNumber]=j.Data.RegistrationStatusId}).catch(function(){})}));'
-  +'DATA=adv.Data.Dashboard.map(function(a){var d=dm[a.ReferenceNumber]||{};var dt=d.ScheduledDeliveryStartDateString||"";var t="?",m=dt.match(/(\\d{1,2}):(\\d{2})\\s*(AM|PM)/i);if(m){var hr=parseInt(m[1]);if(m[3].toUpperCase()==="PM"&&hr<12)hr+=12;if(m[3].toUpperCase()==="AM"&&hr===12)hr=0;t=String(hr).padStart(2,"0")+":"+m[2]}var hp=!!(a.LicensePlate&&a.LicensePlate.trim()&&a.LicensePlate.indexOf("-")>=0);var regId=regR[a.ReferenceNumber];var regOk=hp&&regId===4;var regTxt="Pending";if(hp){if(regId===4)regTxt="OK";else if(regId===8)regTxt="RTS";else if(regId===-1)regTxt="On Hold";else if(regId===1||regId===2||regId===3)regTxt="In Progress"}var hold=!!a.IsContainmentHold;var io=a.InsuranceActionStatus==="COMPLETE";var otg=a.VehicleStage==="Finished Goods"||a.VehicleStage==="Arrived at VRL"||(a.VehicleStage&&a.VehicleStage.indexOf("Arrived")>=0);var amtOk=a.AmountDueActionStatus==="Yes"||a.PaymentMethodActionStatus==="COMPLETE";var delivered=!!a.IsDelivered||!!(a.VehicleStage&&a.VehicleStage.toLowerCase().indexOf("delivered")>=0);var al=[];if(!delivered){if(!regOk)al.push("P");if(!otg)al.push("O");if(!amtOk)al.push("$");if(hold)al.push("H")};var r=tiR[a.ReferenceNumber];var tms=r?r.ms:"";;var clientName=a.CustomerName;var di=a.DriverInfo;if(a.IsEnterpriseOrder&&di&&di.first_name)clientName=di.first_name+" "+di.last_name+" ("+a.CustomerName+")";var vsShort=a.VehicleStage||"";if(vsShort==="Finished Goods")vsShort="Finished Goods";else if(vsShort.indexOf("Receiving")>=0)vsShort="Receiving Insp.";else if(vsShort.indexOf("Transit")>=0)vsShort="In Transit";else if(vsShort.indexOf("PDI")>=0)vsShort="PDI Pending";else if(vsShort.indexOf("Ready")>=0)vsShort="Ready for Prep";else if(vsShort.indexOf("Wash")>=0||vsShort.indexOf("Charge")>=0)vsShort="Wash/Charge";else if(vsShort.indexOf("Service")>=0)vsShort="In Service";else if(vsShort.indexOf("garage")>=0)vsShort="Delivered";return{rn:a.ReferenceNumber,name:clientName,t:t,date:ds,sdd:"",model:a.VehicleModel,color:a.VehicleColor||"",plate:(a.LicensePlate||"").trim(),regTxt:regTxt,regOk:regOk,host:d.HostName||"?",hostId:d.HostId||null,b2b:a.IsEnterpriseOrder,hp:hp,hold:hold,io:io,otg:otg,vs:vsShort,al:al,used:a.VehicleTitleStatus==="USED",tims:tms,hasTI:!!(a.TradeInActionStatus&&a.TradeInActionStatus!=="NO_TRADE_IN"),amtOk:amtOk,delivered:delivered,inc:a.IncentivesGate==="Complete"&&!a.IsEnterpriseOrder,vin:a.Vin||"",uid:a.AccountUid||""}}).sort(function(a,b){return a.t.localeCompare(b.t)});'
+  +'DATA=adv.Data.Dashboard.map(function(a){var d=dm[a.ReferenceNumber]||{};var dt=d.ScheduledDeliveryStartDateString||"";var t="?",m=dt.match(/(\\d{1,2}):(\\d{2})\\s*(AM|PM)/i);if(m){var hr=parseInt(m[1]);if(m[3].toUpperCase()==="PM"&&hr<12)hr+=12;if(m[3].toUpperCase()==="AM"&&hr===12)hr=0;t=String(hr).padStart(2,"0")+":"+m[2]}var hp=!!(a.LicensePlate&&a.LicensePlate.trim()&&a.LicensePlate.indexOf("-")>=0);var regId=regR[a.ReferenceNumber];var regOk=hp&&regId===4;var regTxt="Pending";if(hp){if(regId===4)regTxt="OK";else if(regId===8)regTxt="RTS";else if(regId===-1)regTxt="On Hold";else if(regId===1||regId===2||regId===3)regTxt="In Progress"}var hold=!!a.IsContainmentHold;var io=a.InsuranceActionStatus==="COMPLETE";var otg=a.VehicleStage==="Finished Goods"||a.VehicleStage==="Arrived at VRL"||(a.VehicleStage&&a.VehicleStage.indexOf("Arrived")>=0);var amtOk=a.AmountDueActionStatus==="Yes"||a.PaymentMethodActionStatus==="COMPLETE";var al=[];if(!regOk)al.push("P");if(!otg)al.push("O");if(!amtOk)al.push("$");if(hold)al.push("H");var r=tiR[a.ReferenceNumber];var tms=r?r.ms:"";;var clientName=a.CustomerName;var di=a.DriverInfo;if(a.IsEnterpriseOrder&&di&&di.first_name)clientName=di.first_name+" "+di.last_name+" ("+a.CustomerName+")";var vsShort=a.VehicleStage||"";if(vsShort==="Finished Goods")vsShort="Finished Goods";else if(vsShort.indexOf("Receiving")>=0)vsShort="Receiving Insp.";else if(vsShort.indexOf("Transit")>=0)vsShort="In Transit";else if(vsShort.indexOf("PDI")>=0)vsShort="PDI Pending";else if(vsShort.indexOf("Ready")>=0)vsShort="Ready for Prep";else if(vsShort.indexOf("Wash")>=0||vsShort.indexOf("Charge")>=0)vsShort="Wash/Charge";else if(vsShort.indexOf("Service")>=0)vsShort="In Service";else if(vsShort.indexOf("garage")>=0)vsShort="Delivered";return{rn:a.ReferenceNumber,name:clientName,t:t,date:ds,sdd:"",model:a.VehicleModel,color:a.VehicleColor||"",plate:(a.LicensePlate||"").trim(),regTxt:regTxt,regOk:regOk,host:d.HostName||"?",hostId:d.HostId||null,b2b:a.IsEnterpriseOrder,hp:hp,hold:hold,io:io,otg:otg,vs:vsShort,al:al,used:a.VehicleTitleStatus==="USED",tims:tms,hasTI:!!(a.TradeInActionStatus&&a.TradeInActionStatus!=="NO_TRADE_IN"),amtOk:amtOk,inc:a.IncentivesGate==="Complete"&&!a.IsEnterpriseOrder,vin:a.Vin||"",uid:a.AccountUid||""}}).sort(function(a,b){return a.t.localeCompare(b.t)});'
   +'RW();'
   +'var ok=DATA.filter(function(d){return d.al.length===0}).length;'
   +'var pOk=DATA.filter(function(d){return d.amtOk}).length;'
