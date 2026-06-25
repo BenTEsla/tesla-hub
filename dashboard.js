@@ -150,7 +150,7 @@
   +'<button class="bt bt-p" onclick="L()">Search</button>'
   +'<button class="bt" onclick="RST()">Reset</button>'
   +'<div style="flex:1"></div>'
-  +'<button class="bt" onclick="G()" style="background:#28a745;color:#fff;border:none;padding:8px 20px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer">Print</button><button class=""bt"" onclick=""CANCELP()"" style=""background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px"">Cancel</button>'
+  +'<button class="bt" onclick="G()" style="background:#28a745;color:#fff;border:none;padding:8px 20px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer">Print</button><button class="bt" onclick="CANCELP()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px">Cancel</button>'
   +'</div>'
 
   // TABLE
