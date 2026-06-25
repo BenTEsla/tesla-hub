@@ -111,7 +111,7 @@
   +'.ft{padding:10px 12px;font-size:12px;color:#999}'
   +'.hid{display:none}'
   +'.dtc{display:none;font-size:12px;font-weight:600;color:#3e6ae1}'
-  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{max-height:calc(100vh - 380px);overflow-y:auto}'
+  +'thead{position:sticky;top:0;background:#fff;z-index:10}thead tr{box-shadow:0 2px 4px rgba(0,0,0,.08)}.tcard{max-height:calc(100vh - 340px);overflow-y:auto}'
   +'</style></head><body>'
 
   // TITLE
