@@ -134,7 +134,7 @@
   +'</div>'
   +'<div class="sb">'
   +'<div class="si" onclick="SFV(\'cotg\',this)"><div class="sn" id="sCotg">-</div><div class="sl">COTG</div></div>'
-  +'<div class="si" onclick="SFV(\'fg\',this)"><div class="sn" id="sFg">-</div><div class="sl">Finished</div></div>'
+  +'<div class="si" onclick="SFV(\'fg\',this)"><div class="sn" id="sFg">-</div><div class="sl">Finished<br>Goods</div></div>'
   +'<div class="si" onclick="SFV(\'del\',this)"><div class="sn" id="sDel">-</div><div class="sl">Delivered</div></div>'
   +'</div>'
   +'<div class="sb" style="margin-left:auto">'
