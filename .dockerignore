@@ -1,0 +1,7 @@
+node_modules
+scans/*.pdf
+scans/processed
+downloads
+chrome-profile
+*.zip
+.git

@@ -168,6 +168,17 @@ function applyLight() {
     + '.bt-red{background:rgba(239,68,68,.1)!important;color:#dc2626!important;border-color:rgba(239,68,68,.3)!important}'
     + '::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15)!important}'
     + '::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25)!important}'
+    + '.sidebar{background:#f8f8fa!important;border-right-color:rgba(0,0,0,.08)!important}'
+    + '.sidebar-logo span{color:#171a20!important}'
+    + '.sidebar-logo{border-bottom-color:rgba(0,0,0,.08)!important}'
+    + '.sidebar-footer{color:#9ca3af!important}'
+    + '.nav-section{color:#9ca3af!important}'
+    + '.nav-item{color:#6b7280!important}'
+    + '.nav-item:hover{color:#171a20!important;background:rgba(0,0,0,.04)!important}'
+    + '.nav-item{border:none!important;outline:none!important}'
+    + '.nav-item.on{color:#171a20!important;background:rgba(0,0,0,.05)!important;font-weight:600!important}'
+    + '.sidebar-hbg{color:#9ca3af!important}'
+    + '.sidebar-hbg:hover{color:#171a20!important}'
   ;
   document.head.appendChild(s);
 }

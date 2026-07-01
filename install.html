@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tesla Delivery Hub - Installation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Segoe UI,sans-serif;background:#f5f5f5;padding:40px}
+.card{background:#fff;border-radius:16px;padding:40px;max-width:700px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+h1{font-size:24px;font-weight:300;letter-spacing:3px;margin-bottom:4px}
+h1 b{font-weight:700}
+.sub{color:#999;font-size:14px;margin-bottom:32px}
+.step{background:#f9f9f9;border-radius:12px;padding:20px;margin-bottom:16px;display:flex;align-items:flex-start;gap:16px}
+.num{width:32px;height:32px;border-radius:50%;background:#171a20;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.step p{font-size:14px;color:#333;line-height:1.6}
+.step code{background:#eee;padding:2px 8px;border-radius:4px;font-size:12px}
+.bookmark-link{display:inline-block;margin-top:24px;padding:16px 32px;background:#171a20;color:#fff;border-radius:30px;text-decoration:none;font-size:15px;letter-spacing:1px;cursor:grab;transition:transform 0.2s}
+.bookmark-link:hover{transform:scale(1.03)}
+.note{font-size:12px;color:#aaa;margin-top:24px;line-height:1.5}
+.config{margin-top:32px;border-top:1px solid #eee;padding-top:24px}
+.config h3{font-size:14px;font-weight:600;margin-bottom:12px}
+.config table{width:100%;font-size:13px;border-collapse:collapse}
+.config td{padding:6px 12px;border-bottom:1px solid #f0f0f0}
+.config td:first-child{font-weight:600;color:#555;width:40%}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>T E S L A <b>Delivery Hub</b></h1>
+<p class="sub">Dashboard de preparation des livraisons</p>
+
+<div class="step">
+<div class="num">1</div>
+<div><p>Glisse le bouton ci-dessous dans ta <strong>barre de favoris</strong> Chrome :</p></div>
+</div>
+
+<div style="text-align:center;padding:20px 0">
+<a class="bookmark-link" href="javascript:void(function(){var s=document.createElement('script');s.src='https://VOTRE_URL_ICI/dashboard.js';document.body.appendChild(s);}())">
+DELIVERY HUB
+</a>
+<p style="font-size:11px;color:#aaa;margin-top:8px">Glisse-moi dans ta barre de favoris !</p>
+</div>
+
+<div class="step">
+<div class="num">2</div>
+<div><p>Ouvre <a href="https://dro.tesla.com/advisor" target="_blank"><strong>dro.tesla.com</strong></a> et attends que la page charge</p></div>
+</div>
+
+<div class="step">
+<div class="num">3</div>
+<div><p>Clique sur le favori <strong>"DELIVERY HUB"</strong> dans ta barre</p></div>
+</div>
+
+<div class="step">
+<div class="num">4</div>
+<div><p>Le dashboard apparait ! Clique <strong>"Charger"</strong> puis <strong>"Generer PDFs"</strong></p></div>
+</div>
+
+<div class="config">
+<h3>Configuration du Hub</h3>
+<table>
+<tr><td>Hub</td><td>Rennes Saint-Jacques</td></tr>
+<tr><td>trtId</td><td>28498</td></tr>
+<tr><td>CES</td><td>Ben Daubin, Sacha Villa, Sophie MACE</td></tr>
+<tr><td>Imprimante</td><td>RSN03-Printer 2</td></tr>
+</table>
+</div>
+
+<p class="note">
+Tesla Delivery Hub v1.0 - Developpe par Ben Daubin, Rennes Saint-Jacques.<br>
+Pour adapter a un autre hub, modifiez le trtId et les CES dans le fichier dashboard.js.
+</p>
+</div>
+</body>
+</html>

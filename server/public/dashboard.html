@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
-<title>Tesla Delivery Hub</title>
+<title>DASH - Delivery Automation Smart Hub</title>
+<!-- TDS v9 CDN -->
+<link rel="stylesheet" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/design-system/9.x/index.css" />
 </head>
 <body>
 <script>
-// Load the full bookmarklet dashboard and patch it for standalone server
+// Load the full v18 Multi-CES bookmarklet and patch it for standalone server
 (async function(){
   // Check auth
   var auth = await fetch('/api/auth/status').then(r=>r.json());
@@ -14,35 +16,43 @@
   // Load config
   var cfg = await fetch('/api/config').then(r=>r.json());
   
-  // Load the bookmarklet script from GitHub
-  var script = await fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js',{headers:{'Accept':'application/vnd.github.v3.raw'}}).then(r=>r.text());
+  // Load the v18 bookmarklet script from LOCAL server
+  var script = await fetch('/api/bookmarklet.js?t='+Date.now()).then(r=>r.text());
   
-  // Patch 1: Remove the token check at the beginning - server handles auth
+  // Patch 1: Replace the localStorage token check with proxy token
+  // Original: var tk=...; var at=...; if(!at||!ui){alert(...);return}
   script = script.replace(
-    /var tk=.*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/s,
-    'var at="proxy";var ui="'+auth.userId+'";var CES='+JSON.stringify(cfg.hub.ces.map(function(c){return c.name}))
+    /var tk=\(localStorage[\s\S]*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/,
+    'var at="proxy";var ui="'+auth.userId+'"'
   );
   
-  // Patch 2: Replace DRO API base URL with proxy
-  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
-  
-  // Patch 3: Replace DocGen API with proxy
-  script = script.replace(/https:\/\/documentautomation-processapi\.tesla\.com/g, '/api/docgen');
-  
-  // Patch 4: Remove Authorization headers (proxy handles them)
-  script = script.replace(/"Authorization":AUTH\.token/g, '"X-Proxy":"true"');
-  script = script.replace(/"Authorization":"Bearer "\+AUTH\.token/g, '"X-Proxy":"true"');
-  script = script.replace(/AUTH\.token\?BASE/g, 'true?"/api/dro"');
-  
-  // Patch 5: Replace window.open for the dashboard (we're already in the page)
+  // Patch 2: Skip server auto-detect + sendToken — we ARE the server
+  // Replace the async IIFE that does server detection with direct startHub()
   script = script.replace(
-    /var w=window\.open\('','_blank'\);.*?w\.document\.write\('/s,
-    'document.open();document.write(\''
+    /\/\/ Server URL[\s\S]*?\(async function\(\)\{[\s\S]*?startHub\(\);\s*\}\)\(\);/,
+    'var SERVER="";startHub();'
+  );
+  
+  // Patch 3: Replace window.open popup with direct document write
+  script = script.replace(
+    /var w=window\.open\('','_blank'\);\s*if\(!w\)\{alert\('Popup blocked!'\);return\}\s*w\.document\.open\(\);\s*w\.document\.write\(/,
+    'document.open();document.write('
   );
   script = script.replace(/w\.document\.close\(\)/, 'document.close()');
   
-  // Patch 6: Replace trtId with config
+  // Patch 4: Replace DRO API base URL with proxy (inside the document.write string)
+  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
+  
+  // Patch 5: Replace trtId with config
   script = script.replace(/trtId:28498/g, 'trtId:'+cfg.hub.trtId);
+  
+  // Patch 6: Inject CES from config
+  if (cfg.hub && cfg.hub.ces) {
+    script = script.replace(
+      /var CES=\['Ben Daubin','Sacha Villa','Sophie MACE'\];/,
+      'var CES='+JSON.stringify(cfg.hub.ces.map(function(c){return c.name}))+';'
+    );
+  }
   
   // Execute
   eval(script);

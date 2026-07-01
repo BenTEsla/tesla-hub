@@ -15,10 +15,17 @@ const QRCode = require('qrcode');
 const config = require('./config.json');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DL_DIR = path.join(__dirname, 'downloads');
 if (!fs.existsSync(DL_DIR)) fs.mkdirSync(DL_DIR);
+
+// TDS v9 CDN assets
+const TDS_CSS = 'https://digitalassets.tesla.com/tesla-design-system/raw/upload/design-system/9.x/index.css';
+const TDS_FONT_TEXT_REG = 'https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2';
+const TDS_FONT_TEXT_MED = 'https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2';
+const TDS_FONT_DISP_MED = 'https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/display/Universal-Sans-Display-Medium.woff2';
+const TDS_HEAD = `<link rel="stylesheet" href="${TDS_CSS}" /><link rel="preload" href="${TDS_FONT_TEXT_REG}" as="font" type="font/woff2" crossorigin /><link rel="preload" href="${TDS_FONT_TEXT_MED}" as="font" type="font/woff2" crossorigin /><link rel="preload" href="${TDS_FONT_DISP_MED}" as="font" type="font/woff2" crossorigin />`;
 
 // ============================================================
 // PUPPETEER: Warm browser for fast PDF generation
@@ -35,7 +42,7 @@ async function getPdfBrowser() {
 // MIDDLEWARE
 // ============================================================
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0, setHeaders: (res) => { res.set('Cache-Control', 'no-store, no-cache'); } }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -914,7 +921,7 @@ app.post('/api/bi/stock/upload', express.text({ type: '*/*', limit: '5mb' }), (r
 // TAB FRAGMENTS: CSAT + Arrivals + Stock HTML served dynamically
 // ============================================================
 app.get('/api/tab/tradein', (req, res) => {
-  res.send('<div style="padding:24px;font-family:sans-serif;color:#171a20">'
+  res.send('<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20)">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
     + '<h2 style="margin:0;font-size:20px">Trade-In Tracking</h2>'
     + '<div style="display:flex;gap:8px">'
@@ -948,7 +955,7 @@ app.get('/api/tab/tradein', (req, res) => {
 
 app.get('/api/tab/csat', (req, res) => {
   var html = ''
-    + '<div style="padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#171a20;">'
+    + '<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20);">'
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">'
     // Score Moyen card
     + '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:20px;">'
@@ -1039,7 +1046,7 @@ app.get('/api/tab/csat', (req, res) => {
 
 app.get('/api/tab/arrivals', (req, res) => {
   var html = ''
-    + '<div style="padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#171a20;">'
+    + '<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20);">'
     + '<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">'
     + '<a href="https://bi.teslamotors.com/#/views/EMEA-ETA2SC/VehicleArrival/54408702-94de-4f36-9a24-ad381679f306/RennesDayConfident?:iid=1" target="_blank" style="padding:6px 14px;background:#9c27b0;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">BI Export</a>'
     + '<button onclick="this.textContent=\'Loading...\';fetch(\'http://localhost:3000/api/bi/arrivals\').then(function(r){return r.json()}).then(function(){this.textContent=\'OK!\';LOADARR()}.bind(this)).catch(function(){this.textContent=\'Error\'}.bind(this))" style="padding:6px 14px;background:#3e6ae1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Refresh</button>'
@@ -1111,7 +1118,7 @@ app.get('/api/tab/arrivals', (req, res) => {
 });
 
 app.get('/api/tab/stock', (req, res) => {
-  res.send('<div style="padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#171a20">'
+  res.send('<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20)">'
     + '<h2 style="margin:0 0 20px;font-size:20px">Stock</h2>'
     + '<div id="stockContent"><div style="text-align:center;padding:60px;color:#999">Loading...</div></div>'
     + '</div>');
@@ -1120,6 +1127,18 @@ app.get('/api/tab/stock', (req, res) => {
 // ============================================================
 // CONFIG
 // ============================================================
+// Serve the local bookmarklet script
+app.get('/api/bookmarklet.js', (req, res) => {
+  const scriptPath = path.join(__dirname, '..', 'content-v10.js');
+  if (fs.existsSync(scriptPath)) {
+    res.set('Content-Type', 'application/javascript');
+    res.set('Cache-Control', 'no-store, no-cache');
+    res.send(fs.readFileSync(scriptPath, 'utf8'));
+  } else {
+    res.status(404).send('// bookmarklet not found');
+  }
+});
+
 app.get('/api/config', (req, res) => {
   const hubId = req.query.hub || config.defaultHub;
   const hub = config.hubs[hubId];

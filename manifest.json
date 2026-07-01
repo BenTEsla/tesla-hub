@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Tesla Delivery Hub",
+  "version": "1.0",
+  "description": "Dashboard de livraison Tesla",
+  "permissions": [],
+  "host_permissions": [
+    "https://dro.tesla.com/*",
+    "https://mytdeliveryopsapi.tesla.com/*",
+    "https://amp.tesla.com/*",
+    "https://static-assets.tesla.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://dro.tesla.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "48": "icon.png"
+  }
+}
