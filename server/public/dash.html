@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DASH - Delivery Automation Smart Hub</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23171a20%22/><text x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22%23f4f4f5%22 font-family=%22sans-serif%22 font-weight=%22700%22>T</text></svg>" />
+  <link rel="stylesheet" href="/css/dash.css" />
+  <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2" as="font" type="font/woff2" crossorigin />
+
+  <script>
+  var SERVER = '';  // Will be set by config
+  var AUTH = { token: '', userId: '' };
+  var BASE = '/api/dro';
+  var CFG = { trtId: 28498, cc: 'FR' };
+  var CES = ['Ben Daubin', 'Sacha Villa', 'Sophie MACE'];
+  var DATA = [];
+
+  // Build date options
+  var dates = [];
+  for (var di = 0; di < 10 && dates.length < 7; di++) {
+    var dd = new Date(Date.now() + di * 864e5);
+    if (dd.getDay() === 0) continue;
+    var lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
+    var fD = dd.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    var iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+    dates.push('<option value="' + iD + '">' + lbl + ' - ' + fD + '</option>');
+  }
+
+  // Load auth from server
+  fetch('/api/auth/status').then(function(r) { return r.json(); }).then(function(j) {
+    AUTH = { token: 'Bearer proxy', userId: j.userId || '428058' };
+    document.getElementById('dt').innerHTML = dates.join('');
+    // Auto-load
+    L();
+  });
+  fetch('/api/config').then(function(r) { return r.json(); }).then(function(j) {
+    CFG = { trtId: j.hub.trtId, cc: 'FR' };
+    CES = j.hub.ces ? j.hub.ces.map(function(c) { return c.name; }) : CES;
+  });
+  </script>
+</head>
+<body>
+
+<!-- ============================================
+     SIDEBAR
+     ============================================ -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <button class="sidebar-hbg" id="hbg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
+      <path d="M12.0015 22L14.799 6.19695C17.4664 6.19695 18.3068 6.49097 18.4283 7.68905C18.4283 7.68905 20.218 7.019 21.1202 5.65891C17.5991 4.02014 14.0608 3.94613 14.0608 3.94613L11.9962 6.47097H12.0008L9.93623 3.94547C9.93623 3.94547 6.39787 4.0188 2.87744 5.65758C3.77896 7.01834 5.56938 7.68838 5.56938 7.68838C5.69086 6.48963 6.53197 6.19628 9.18076 6.19361L12.0015 22Z"/>
+      <path d="M12.0003 3.21675C14.8463 3.19475 18.1052 3.65878 21.4397 5.11887C21.8858 4.31349 22 3.95746 22 3.95746C18.3541 2.5087 14.9399 2.01267 11.9997 2C9.05945 2.01267 5.6459 2.5087 2 3.9568C2 3.9568 2.16264 4.39549 2.56029 5.11821C5.89485 3.65878 9.15438 3.19475 12.0003 3.21675Z"/>
+    </svg>
+    <span>DASH</span>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-item on" onclick="NAV(0,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 22V12h6v10M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      </svg>
+      <span class="nav-label">Customer Delivery</span>
+    </div>
+    <div class="nav-item" onclick="NAV(1,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 3h15v13H1z"/>
+        <path d="M16 8h4l3 3v5h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      <span class="nav-label">Arrivals</span>
+    </div>
+    <div class="nav-item" onclick="NAV(2,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/>
+      </svg>
+      <span class="nav-label">Stock</span>
+    </div>
+    <div class="nav-item" onclick="NAV(3,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 1l4 4-4 4"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      </svg>
+      <span class="nav-label">Trade-In</span>
+    </div>
+    <div class="nav-item" onclick="NAV(4,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      <span class="nav-label">CSAT</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span id="dotDro" style="width:7px;height:7px;border-radius:50%;background:#3f3f46;display:inline-block"></span>
+      <span class="sidebar-footer-text" style="color:#71717a;font-size:12px">DRO</span>
+      <span id="dotDg" style="width:7px;height:7px;border-radius:50%;background:#3f3f46;display:inline-block;margin-left:8px"></span>
+      <span class="sidebar-footer-text" style="color:#71717a;font-size:12px">DocGen</span>
+    </div>
+    <button id="docgenBtn" onclick="LOGINDG()" class="sidebar-footer-text" style="font-size:12px;cursor:pointer;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#a1a1aa;font-family:inherit;font-weight:500;width:100%;transition:all .15s">Login DocGen</button>
+    <div id="upd" class="sidebar-footer-text" style="font-size:11px;color:#52525b;margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- ============================================
+     MAIN CONTENT
+     ============================================ -->
+<div class="main-content">
+
+  <!-- TITLE -->
+  <div class="title-row">
+    <h1 id="pageTitle" class="ttl">Customer Delivery</h1>
+    <div style="flex:1"></div>
+    <div id="tabActions" style="position:relative"></div>
+    <div id="themeAnchor" style="margin-left:12px"></div>
+  </div>
+
+  <!-- TABS (hidden, controlled by sidebar) -->
+  <div class="tabs">
+    <button class="tab on" onclick="STAB(0,this)">Customer Delivery</button>
+    <button class="tab" onclick="STAB(1,this)">Arrivals</button>
+    <button class="tab" onclick="STAB(2,this)">Stock</button>
+    <button class="tab" onclick="STAB(3,this)">Trade-In</button>
+    <button class="tab" onclick="STAB(4,this)">CSAT</button>
+  </div>
+
+  <!-- ========== MAIN VIEW ========== -->
+  <div id="mainView">
+
+    <!-- STATS - Block 1: Overview | Block 2: Readiness | Block 3: Vehicle Status | Block 4: CES -->
+    <div class="srow">
+      <!-- Overview -->
+      <div class="sb">
+        <div class="si on" onclick="SF('all',this)"><div class="sn" id="sT">-</div><div class="sl">Deliveries</div></div>
+        <div class="si" onclick="SF('ok',this)"><div class="sn g" id="sO">-</div><div class="sl">Ready</div></div>
+        <div class="si" onclick="SF('al',this)"><div class="sn r" id="sA">-</div><div class="sl">Not Ready</div></div>
+      </div>
+      <!-- Readiness -->
+      <div class="sb">
+        <div class="si" onclick="SFR('pay',this)"><div id="sP" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Payment</div></div>
+        <div class="si" onclick="SFR('reg',this)"><div id="sPl" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Registration</div></div>
+        <div class="si" onclick="SFR('ti',this)"><div id="sTI" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Approved<br>for Intake</div></div>
+        <div class="si" onclick="SFR('ins',this)"><div id="sAs" class="sf"><div class="top">0</div><div class="div">0</div></div><div class="sl">Insurance</div></div>
+      </div>
+      <!-- Vehicle Status -->
+      <div class="sb">
+        <div class="si" onclick="SFV('transit',this)"><div class="sn" id="sTr">-</div><div class="sl">In Transit</div></div>
+        <div class="si" onclick="SFV('cotg',this)"><div class="sn" id="sCotg">-</div><div class="sl">COTG</div></div>
+        <div class="si" onclick="SFV('fg',this)"><div class="sn" id="sFg">-</div><div class="sl">Finished<br>Goods</div></div>
+        <div class="si" onclick="SFV('del',this)"><div class="sn" id="sDel">-</div><div class="sl">Delivered</div></div>
+      </div>
+      <!-- CES (dynamically populated) -->
+      <div class="sb" style="margin-left:auto" id="cesBlock"></div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div style="padding:0 32px 12px;display:flex;gap:8px">
+      <button onclick="DISPATCH()" style="padding:8px 20px;background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Dispatch</button>
+      <button onclick="QP(this)" style="padding:8px 20px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Pull-Up</button>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div style="position:relative">
+        <svg style="position:absolute;left:10px;top:9px;width:14px;height:14px;fill:none;stroke:#71717a;stroke-width:2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+        </svg>
+        <input type="text" id="srch" class="fi2" style="padding:8px 12px 8px 32px;width:180px" placeholder="Search">
+      </div>
+      <div class="fg">
+        <div class="fl">SCHEDULED DATE</div>
+        <select id="dt" class="fi2"></select>
+      </div>
+      <button class="bt-nav" onclick="ND(-1)" title="Previous day">&#8249;</button>
+      <button class="bt-nav" onclick="ND(1)" title="Next day">&#8250;</button>
+      <div style="width:1px;height:24px;background:rgba(255,255,255,.1);margin:0 4px"></div>
+      <button class="bt-q" onclick="QW(0,this)">This Week</button>
+      <button class="bt-q" onclick="QW(1,this)">Next Week</button>
+      <button class="bt bt-p" onclick="L()">Search</button>
+      <button class="bt" onclick="RST()">Reset</button>
+      <div style="flex:1"></div>
+      <button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="G()">Print</button>
+      <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);margin-left:4px" onclick="GPDG()">PDG</button>
+      <button class="bt bt-red" style="background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.3)" onclick="CANCELP()">Cancel</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="tw">
+      <div class="tcard">
+        <div id="lg" style="display:none;text-align:center;padding:80px 0">
+          <div class="spinner"></div>
+          <div style="font-size:13px;color:#999;margin-top:16px">Loading deliveries...</div>
+        </div>
+        <table id="tbl" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>
+              <th id="thDate" class="hid" onclick="SO('sdd')">Scheduled Delivery Date<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
+              <th onclick="SO('t')" style="width:50px">Time<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
+              <th onclick="SO('name')" style="width:220px">Customer<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
+              <th style="width:110px">RN<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
+              <th onclick="SO('model')" style="width:75px">Vehicle<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Model 3">M3</option><option value="Model Y">MY</option></select></th>
+              <th style="width:90px">Registration<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="Hold">Hold</option><option value="Pending">Pending</option></select></th>
+              <th style="width:75px">Payment<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>
+              <th style="width:80px">Trade-In<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Accepted">Yes</option><option value="No">No</option></select></th>
+              <th style="width:100px">Vehicle<br>Status<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Finished">FG</option><option value="Transit">Transit</option></select></th>
+              <th style="width:55px">Hold<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Hold">Hold</option><option value="OK">OK</option></select></th>
+              <th style="width:75px">Insurance<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>
+              <th style="width:45px"></th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+        <div class="ft" id="trec"></div>
+      </div>
+    </div>
+
+  </div><!-- /mainView -->
+
+  <!-- OTHER TAB VIEWS (loaded dynamically) -->
+  <div id="csatView" style="display:none"></div>
+  <div id="arrView" style="display:none"></div>
+  <div id="tiView" style="display:none"></div>
+  <div id="stockView" style="display:none"></div>
+
+</div><!-- /main-content -->
+
+<!-- ============================================
+     SCRIPTS
+     ============================================ -->
+<script src="/js/app.js"></script>
+<script src="/filters.js"></script>
+<script src="/tradein.js"></script>
+<script src="/dispatch.js"></script>
+<script src="/stock.js"></script>
+<script src="/theme.js"></script>
+<script src="/arrivals.js"></script>
+
+</body>
+</html>
