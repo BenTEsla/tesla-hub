@@ -73,8 +73,9 @@
   +'.main-content{flex:1;overflow-y:auto;height:100vh}'
 
   // TITLE
-  +'.title-row{padding:24px 32px 20px;display:flex;align-items:center}'
+  +'.title-row{padding:24px 32px 0;display:flex;align-items:center}'
   +'.ttl{font-size:32px;font-weight:500;color:#f4f4f5;line-height:40px}'
+  +'#mainView,#arrView,#stockView,#tiView,#csatView{padding-top:20px}'
 
   // TABS (hidden - replaced by sidebar)
   +'.tabs{display:none}'
