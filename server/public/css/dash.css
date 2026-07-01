@@ -213,7 +213,7 @@ body {
 .nav-group-header svg:first-child {
   width: 20px;
   height: 20px;
-  opacity: .9;
+  opacity: .8;
   flex-shrink: 0;
 }
 
@@ -909,7 +909,7 @@ tr:nth-child(even) td {
 
 .dash-card {
   background: rgba(255, 255, 255, .04);
-  border: 1px solid rgba(255, 255, 255, .06);
+  border: 1px solid rgba(128, 128, 128, .15);
   border-radius: 12px;
   padding: 20px;
   text-align: center;
@@ -951,7 +951,7 @@ tr:nth-child(even) td {
 
 .dash-chart-card {
   background: rgba(255, 255, 255, .04);
-  border: 1px solid rgba(255, 255, 255, .06);
+  border: 1px solid rgba(128, 128, 128, .15);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 16px;
