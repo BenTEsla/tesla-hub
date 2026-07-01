@@ -1171,20 +1171,23 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
-  if (el && el.classList.contains('nav-group-header')) {
-    el.style.color = '#f4f4f5';
-  }
   var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
   if (idx === 6) {
+    // Dispatch: show customer delivery view, then open dispatch modal
     STAB(1, null);
-    if (typeof SHOWDISPATCH === 'function') SHOWDISPATCH();
+    setTimeout(function() {
+      if (typeof DISPATCH === 'function') DISPATCH();
+    }, 300);
   } else if (idx === 7) {
+    // Pull-Up: show customer delivery view, then trigger pull-up
     STAB(1, null);
-    if (typeof QP === 'function') QP(el);
+    setTimeout(function() {
+      if (typeof QP === 'function') QP(el);
+    }, 300);
   } else {
     STAB(idx, null);
   }
