@@ -495,7 +495,22 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
+
+/* Column widths */
+th:nth-child(1)  { width: 32px; }   /* Checkbox */
+th:nth-child(2)  { width: 50px; }   /* Time */
+th:nth-child(3)  { width: 220px; }  /* Customer */
+th:nth-child(4)  { width: 110px; }  /* RN */
+th:nth-child(5)  { width: 75px; }   /* Vehicle */
+th:nth-child(6)  { width: 90px; }   /* Registration */
+th:nth-child(7)  { width: 75px; }   /* Payment */
+th:nth-child(8)  { width: 80px; }   /* Trade-In */
+th:nth-child(9)  { width: 100px; }  /* Vehicle Status */
+th:nth-child(10) { width: 55px; }   /* Hold */
+th:nth-child(11) { width: 75px; }   /* Insurance */
+th:nth-child(12) { width: 45px; }   /* Actions */
 
 th {
   padding: 12px 14px;
@@ -526,6 +541,8 @@ td {
   color: #d4d4d8;
   height: 48px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 tr:hover td {
