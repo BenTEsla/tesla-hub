@@ -1176,21 +1176,7 @@ function NAV(idx, el) {
   if (pt) pt.textContent = titles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
-  if (idx === 6) {
-    // Dispatch: show customer delivery view, then open dispatch modal
-    STAB(1, null);
-    setTimeout(function() {
-      if (typeof DISPATCH === 'function') DISPATCH();
-    }, 300);
-  } else if (idx === 7) {
-    // Pull-Up: show customer delivery view, then trigger pull-up
-    STAB(1, null);
-    setTimeout(function() {
-      if (typeof QP === 'function') QP(el);
-    }, 300);
-  } else {
-    STAB(idx, null);
-  }
+  STAB(idx, null);
 }
 
 /* ============================================
@@ -1208,6 +1194,8 @@ function STAB(idx, btn) {
   document.getElementById("stockView").style.display = idx === 3 ? "" : "none";
   document.getElementById("tiView").style.display = idx === 4 ? "" : "none";
   document.getElementById("csatView").style.display = idx === 5 ? "" : "none";
+  document.getElementById("dispatchView").style.display = idx === 6 ? "" : "none";
+  document.getElementById("pullupView").style.display = idx === 7 ? "" : "none";
 
   if (idx === 0 && typeof LOADDASH === 'function') {
     LOADDASH();
@@ -1240,8 +1228,178 @@ function STAB(idx, btn) {
     fetch(SERVER + "/api/tab/tradein").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
-    }).catch(function() {});
+  }).catch(function() {});
+}
+
+/* ============================================
+   DISPATCH PAGE: Auto-assign deliveries to CES
+   ============================================ */
+function RUNDISPATCH(mode) {
+  var container = document.getElementById('dispatchContent');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading deliveries...</div>';
+
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+  var ds = new Date();
+  var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
+
+  fetch(BASE + "/deliveryops/Customers/Dashboard", {
+    method: "POST", headers: h,
+    body: JSON.stringify({fromDeliveryDate: today, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+  }).then(function(r) { return r.json(); }).then(function(dash) {
+    var data = (dash.Data || []);
+    if (!data.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">No deliveries found for today.</div>';
+      return;
+    }
+
+    // Parse times and split AM/PM
+    var deliveries = data.map(function(d) {
+      var t = '?';
+      var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+      var isEnt = !!d.IsEnterpriseOrder;
+      var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+      var weight = isEnt ? 1.5 : hasTI ? 1.3 : 1.0;
+      var isPM = parseInt(t) >= 13;
+      return { name: d.CustomerName || '?', rn: d.ReferenceNumber, time: t, model: d.VehicleModel || '', host: d.HostName || '', isPM: isPM, weight: weight, isEnt: isEnt, hasTI: hasTI };
+    }).sort(function(a, b) { return a.time.localeCompare(b.time); });
+
+    // Auto-assign by weight balancing
+    var cesLoad = {};
+    CES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: 0, items: [] }; });
+    deliveries.forEach(function(d) {
+      // Find CES with lowest load for this slot
+      var slot = d.isPM ? 'pm' : 'am';
+      var minCES = CES[0], minLoad = Infinity;
+      CES.forEach(function(c) {
+        if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
+      });
+      d.assignedTo = minCES;
+      cesLoad[minCES][slot] += d.weight;
+      cesLoad[minCES].total += d.weight;
+      cesLoad[minCES].items.push(d);
+    });
+
+    // Render grid
+    var html = '<div style="display:grid;grid-template-columns:repeat(' + CES.length + ',1fr);gap:16px">';
+    CES.forEach(function(c) {
+      var load = cesLoad[c];
+      var firstName = c.split(' ')[0];
+      html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(128,128,128,.15);border-radius:12px;padding:16px">';
+      html += '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + firstName + '</div>';
+      html += '<div style="font-size:12px;color:#71717a;margin-bottom:12px">Load: ' + load.total.toFixed(1) + ' (' + load.items.length + ' deliveries)</div>';
+
+      // AM section
+      var amItems = load.items.filter(function(d) { return !d.isPM; });
+      html += '<div style="font-size:11px;color:#3b82f6;font-weight:600;text-transform:uppercase;margin-bottom:6px">AM (' + amItems.length + ')</div>';
+      amItems.forEach(function(d) {
+        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(59,130,246,.06);font-size:13px">';
+        html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
+        html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
+        html += '</div>';
+      });
+
+      // PM section
+      var pmItems = load.items.filter(function(d) { return d.isPM; });
+      html += '<div style="font-size:11px;color:#f59e0b;font-weight:600;text-transform:uppercase;margin:12px 0 6px">PM (' + pmItems.length + ')</div>';
+      pmItems.forEach(function(d) {
+        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,158,11,.06);font-size:13px">';
+        html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
+        html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
+        html += '</div>';
+      });
+
+      html += '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  }).catch(function(e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Error: ' + e.message + '</div>';
+  });
+}
+
+/* ============================================
+   PULL-UP PAGE: Find candidates to pull forward
+   ============================================ */
+function LOADPULLUP() {
+  var container = document.getElementById('pullupContent');
+  var range = parseInt(document.getElementById('pullupRange').value) || 7;
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Searching next ' + range + ' days...</div>';
+
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+  var ds = new Date();
+  var allCandidates = [];
+  var promises = [];
+
+  for (var i = 1; i <= range; i++) {
+    var d = new Date(Date.now() + i * 864e5);
+    if (d.getDay() === 0) continue;
+    var dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    var dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    (function(ds, label) {
+      promises.push(
+        fetch(BASE + "/deliveryops/Customers/Dashboard", {
+          method: "POST", headers: h,
+          body: JSON.stringify({fromDeliveryDate: ds, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+        }).then(function(r) { return r.json(); }).then(function(j) {
+          (j.Data || []).forEach(function(c) {
+            var hasPlate = !!(c.LicensePlate && c.LicensePlate.indexOf('-') >= 0);
+            var hasInsurance = c.InsuranceActionStatus === 'COMPLETE';
+            var hasPay = c.AmountDueActionStatus === 'Yes' || c.FinalPaymentGate === 'Complete';
+            var otg = c.VehicleStage === 'Finished Goods' || (c.VehicleStage && c.VehicleStage.indexOf('Arrived') >= 0);
+            var ready = hasPlate && hasInsurance && hasPay && otg;
+            allCandidates.push({ date: ds, dateLabel: label, name: c.CustomerName, rn: c.ReferenceNumber, model: c.VehicleModel, plate: hasPlate, insurance: hasInsurance, payment: hasPay, otg: otg, ready: ready });
+          });
+        }).catch(function() {})
+      );
+    })(dateStr, dayLabel);
   }
+
+  Promise.all(promises).then(function() {
+    if (!allCandidates.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">No candidates found.</div>';
+      return;
+    }
+
+    // Sort: ready first, then by date
+    allCandidates.sort(function(a, b) { return (b.ready ? 1 : 0) - (a.ready ? 1 : 0) || a.date.localeCompare(b.date); });
+    var readyCount = allCandidates.filter(function(c) { return c.ready; }).length;
+
+    var html = '<div style="margin-bottom:16px;font-size:14px"><span style="color:#22c55e;font-weight:600">' + readyCount + ' ready</span> out of ' + allCandidates.length + ' candidates</div>';
+    html += '<table style="width:100%;border-collapse:collapse"><thead><tr>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Date</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Vehicle</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Plate</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Payment</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">OTG</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Insurance</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Status</th>';
+    html += '</tr></thead><tbody>';
+
+    allCandidates.forEach(function(c) {
+      var dot = function(ok) { return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (ok ? '#22c55e' : '#ef4444') + '"></span>'; };
+      var rowBg = c.ready ? 'rgba(34,197,94,.04)' : 'transparent';
+      html += '<tr style="background:' + rowBg + '">';
+      html += '<td style="padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(128,128,128,.08)">' + c.dateLabel + '</td>';
+      html += '<td style="padding:10px 12px;font-size:14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.08)">' + c.name + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.08)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + c.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:13px">' + c.rn + '</a></td>';
+      html += '<td style="padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(128,128,128,.08)">' + (c.model || '') + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.plate) + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.payment) + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.otg) + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.insurance) + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.08);color:' + (c.ready ? '#22c55e' : '#71717a') + '">' + (c.ready ? 'READY' : 'Not ready') + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
+}
 
   if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {

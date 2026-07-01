@@ -287,6 +287,30 @@
   <div id="tiView" style="display:none"></div>
   <div id="stockView" style="display:none"></div>
 
+  <!-- ========== DISPATCH VIEW ========== -->
+  <div id="dispatchView" style="display:none;padding:0 32px 32px">
+    <p style="color:var(--tds-color--foreground-low-contrast, #71717a);margin-bottom:20px">Assign deliveries to CES team members with balanced workload distribution.</p>
+    <div style="display:flex;gap:12px;margin-bottom:24px">
+      <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="RUNDISPATCH()">Auto-Assign</button>
+      <button class="bt" onclick="RUNDISPATCH('preview')">Preview Only</button>
+    </div>
+    <div id="dispatchContent" style="color:var(--tds-color--foreground-low-contrast, #71717a);text-align:center;padding:40px">Select a date and click Auto-Assign to distribute deliveries.</div>
+  </div>
+
+  <!-- ========== PULL-UP VIEW ========== -->
+  <div id="pullupView" style="display:none;padding:0 32px 32px">
+    <p style="color:var(--tds-color--foreground-low-contrast, #71717a);margin-bottom:20px">Find deliveries from upcoming days that can be pulled forward.</p>
+    <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center">
+      <select id="pullupRange" class="fi2" style="padding:8px 14px">
+        <option value="3">Next 3 days</option>
+        <option value="5">Next 5 days</option>
+        <option value="7" selected>Next 7 days</option>
+      </select>
+      <button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="LOADPULLUP()">Search Candidates</button>
+    </div>
+    <div id="pullupContent" style="color:var(--tds-color--foreground-low-contrast, #71717a);text-align:center;padding:40px">Click Search to find pull-up candidates.</div>
+  </div>
+
 </div><!-- /main-content -->
 
 <!-- ============================================
