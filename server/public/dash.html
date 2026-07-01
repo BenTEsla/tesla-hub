@@ -327,31 +327,24 @@
   }
   document.getElementById('dt').innerHTML = dateOptions.join('');
 
-  // Live date/time clock
+  // Live date/time clock (US format)
   function updateClock() {
     var now = new Date();
     var h = now.getHours();
-    var m = now.getMinutes();
-    var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-    var dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-    var greeting = h < 6 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+    var h12 = h % 12 || 12;
+    var ampm = h < 12 ? 'AM' : 'PM';
+    var m = String(now.getMinutes()).padStart(2, '0');
+    var timeStr = h12 + ':' + m + ' ' + ampm;
+    var dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    var greeting = h < 6 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 
-    // Hero clock
     var clockEl = document.getElementById('dashClock');
     if (clockEl) clockEl.textContent = timeStr;
-    var dateEl = document.getElementById('dashDateHero');
-    if (dateEl) dateEl.textContent = dateStr;
 
-    // Title-row greeting (top right) - date only, no time
     var greetHeader = document.getElementById('dashGreetingHeader');
     if (greetHeader) greetHeader.textContent = greeting + ', Ben';
     var dateHeader = document.getElementById('dashDateHeader');
-    if (dateHeader) {
-      // Capitalize each word
-      var dateCapitalized = dateStr.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-      dateHeader.textContent = dateCapitalized;
-    }
+    if (dateHeader) dateHeader.textContent = dateStr;
   }
   updateClock();
   setInterval(updateClock, 10000);
