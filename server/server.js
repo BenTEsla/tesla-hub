@@ -130,36 +130,43 @@ app.get('/api/auth/login-docgen', async (req, res) => {
       request.continue();
     });
     
+    // Go directly to a documents page to trigger DocGen API call
+    console.log('DocGen login: navigating to WarpBilling...');
     await page.goto('https://warpbilling.tesla.com', { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // Wait for SSO if needed (user may need to log in manually)
     try {
-      const ssoBtn = await page.$('a[href*="Tesla"], div[class*="idp"] a');
-      if (ssoBtn) await ssoBtn.click();
-    } catch(e) {}
+      await page.waitForFunction(() => 
+        window.location.hostname === 'warpbilling.tesla.com' && 
+        !window.location.href.includes('sso.tesla.com'), 
+        { timeout: 120000 }
+      );
+    } catch(e) { console.log('DocGen login: SSO wait timeout'); }
     
-    try {
-      await page.waitForFunction(() => window.location.hostname === 'warpbilling.tesla.com' && !window.location.href.includes('sso.tesla.com'), { timeout: 180000 });
-    } catch(e) {}
+    await new Promise(r => setTimeout(r, 2000));
     
-    await new Promise(r => setTimeout(r, 3000));
-    
-    if (page.url().includes('warpbilling.tesla.com')) {
-      try {
-        await page.waitForSelector('input[placeholder*="Search"]', { timeout: 10000 });
-        await page.type('input[placeholder*="Search"]', 'RN128188598');
-        await page.keyboard.press('Enter');
-        await new Promise(r => setTimeout(r, 4000));
-        const row = await page.$('tr.mat-row, tr[class*="row"], a[href*="invoice"]');
-        if (row) { await row.click(); await new Promise(r => setTimeout(r, 3000)); }
-      } catch(e) {}
+    // Try to navigate to documents page to trigger DocGen API
+    if (!captured && page.url().includes('warpbilling.tesla.com')) {
+      console.log('DocGen login: searching for invoice...');
       
-      if (!captured) {
-        try { await page.goto('https://warpbilling.tesla.com/invoice/RN128188598/documents', { waitUntil: 'networkidle2', timeout: 15000 }); } catch(e) {}
+      // Try multiple approaches to trigger a DocGen API call
+      const testRNs = ['RN127990689', 'RN127612649', 'RN128188598'];
+      for (const rn of testRNs) {
+        if (captured) break;
+        try {
+          await page.goto('https://warpbilling.tesla.com/invoice/' + rn + '/documents', { waitUntil: 'networkidle2', timeout: 20000 });
+          console.log('DocGen login: tried ' + rn + ', captured=' + captured);
+          if (!captured) await new Promise(r => setTimeout(r, 3000));
+        } catch(e) { console.log('DocGen login: navigation error for ' + rn); }
       }
       
-      await new Promise(r => {
-        const c = setInterval(() => { if (captured) { clearInterval(c); r(); } }, 500);
-        setTimeout(() => { clearInterval(c); r(); }, 15000);
-      });
+      // Final wait
+      if (!captured) {
+        await new Promise(r => {
+          const c = setInterval(() => { if (captured) { clearInterval(c); r(); } }, 500);
+          setTimeout(() => { clearInterval(c); r(); }, 10000);
+        });
+      }
     }
     
     await browser.close();
