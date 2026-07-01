@@ -1,44 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DASH - Delivery Automation Smart Hub</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23171a20%22/><text x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22%23f4f4f5%22 font-family=%22sans-serif%22 font-weight=%22700%22>T</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/design-system/9.x/index.css" />
   <link rel="stylesheet" href="/css/dash.css" />
   <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Medium.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Bold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/display/Universal-Sans-Display-Medium.woff2" as="font" type="font/woff2" crossorigin />
 
   <script>
-  var SERVER = '';  // Will be set by config
+  // Global config - set before any module loads
+  var SERVER = '';
   var AUTH = { token: '', userId: '' };
   var BASE = '/api/dro';
   var CFG = { trtId: 28498, cc: 'FR' };
   var CES = ['Ben Daubin', 'Sacha Villa', 'Sophie MACE'];
   var DATA = [];
-
-  // Build date options
-  var dates = [];
-  for (var di = 0; di < 10 && dates.length < 7; di++) {
-    var dd = new Date(Date.now() + di * 864e5);
-    if (dd.getDay() === 0) continue;
-    var lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
-    var fD = dd.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-    var iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
-    dates.push('<option value="' + iD + '">' + lbl + ' - ' + fD + '</option>');
-  }
-
-  // Load auth from server
-  fetch('/api/auth/status').then(function(r) { return r.json(); }).then(function(j) {
-    AUTH = { token: 'Bearer proxy', userId: j.userId || '428058' };
-    document.getElementById('dt').innerHTML = dates.join('');
-    // Auto-load
-    L();
-  });
-  fetch('/api/config').then(function(r) { return r.json(); }).then(function(j) {
-    CFG = { trtId: j.hub.trtId, cc: 'FR' };
-    CES = j.hub.ces ? j.hub.ces.map(function(c) { return c.name; }) : CES;
-  });
   </script>
 </head>
 <body>
@@ -247,6 +227,50 @@
 <script src="/stock.js"></script>
 <script src="/theme.js"></script>
 <script src="/arrivals.js"></script>
+
+<!-- Init: load config + auth then auto-load data -->
+<script>
+(function(){
+  // Build date options
+  var dateOptions = [];
+  for (var di = 0; di < 10 && dateOptions.length < 7; di++) {
+    var dd = new Date(Date.now() + di * 864e5);
+    if (dd.getDay() === 0) continue;
+    var lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
+    var fD = dd.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    var iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+    dateOptions.push('<option value="' + iD + '">' + lbl + ' - ' + fD + '</option>');
+  }
+  document.getElementById('dt').innerHTML = dateOptions.join('');
+
+  // Load auth + config, then auto-load data
+  Promise.all([
+    fetch('/api/auth/status').then(function(r) { return r.json(); }),
+    fetch('/api/config').then(function(r) { return r.json(); })
+  ]).then(function(results) {
+    var authData = results[0];
+    var cfgData = results[1];
+
+    // Set globals
+    AUTH = { token: 'Bearer proxy', userId: authData.userId || '428058' };
+    if (cfgData.hub) {
+      CFG = { trtId: cfgData.hub.trtId, cc: 'FR' };
+      if (cfgData.hub.ces) CES = cfgData.hub.ces.map(function(c) { return c.name; });
+    }
+
+    // Check auth status
+    if (!authData.hasDro) {
+      window.location = '/';
+      return;
+    }
+
+    // Auto-load deliveries
+    L();
+  }).catch(function(e) {
+    console.error('Init error:', e);
+  });
+})();
+</script>
 
 </body>
 </html>
