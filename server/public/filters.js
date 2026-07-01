@@ -5,7 +5,7 @@ function initFilters(DATA) {
 }
 
 function applyFilters(DATA) {
-  var fils = document.querySelectorAll('.fi');
+  var fils = document.querySelectorAll('select.fi');
   var v = [];
   fils.forEach(function(f) { v.push(f.value); });
   

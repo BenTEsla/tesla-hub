@@ -2,7 +2,7 @@
 var _arrData = null;
 
 function LOADARR() {
-  fetch("http://localhost:3000/api/bi/arrivals").then(function(r) { return r.json(); }).then(function(j) {
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/bi/arrivals").then(function(r) { return r.json(); }).then(function(j) {
     if (j.error) return;
     _arrData = j;
     renderArrivals();

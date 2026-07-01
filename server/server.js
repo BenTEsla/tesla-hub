@@ -1049,7 +1049,7 @@ app.get('/api/tab/arrivals', (req, res) => {
     + '<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20);">'
     + '<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">'
     + '<a href="https://bi.teslamotors.com/#/views/EMEA-ETA2SC/VehicleArrival/54408702-94de-4f36-9a24-ad381679f306/RennesDayConfident?:iid=1" target="_blank" style="padding:6px 14px;background:#9c27b0;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">BI Export</a>'
-    + '<button onclick="this.textContent=\'Loading...\';fetch(\'http://localhost:3000/api/bi/arrivals\').then(function(r){return r.json()}).then(function(){this.textContent=\'OK!\';LOADARR()}.bind(this)).catch(function(){this.textContent=\'Error\'}.bind(this))" style="padding:6px 14px;background:#3e6ae1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Refresh</button>'
+    + '<button onclick="this.textContent=\'Loading...\';fetch(\'/api/bi/arrivals\').then(function(r){return r.json()}).then(function(){this.textContent=\'OK!\';LOADARR()}.bind(this)).catch(function(){this.textContent=\'Error\'}.bind(this))" style="padding:6px 14px;background:#3e6ae1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Refresh</button>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">'
     // En Transit card
@@ -1167,7 +1167,7 @@ app.all('/api/docgen/*', async (req, res) => {
   try {
     const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?').slice(1).join('?') : '';
     const url = config.apis.docgen + '/' + req.params[0] + qs;
-    const opts = { method: req.method, headers: { 'authorization': 'Bearer ' + tokens.docgen, 'token': tokens.docgen, 'Content-Type': 'application/json', 'accept': 'application/json' } };
+    const opts = { method: req.method, headers: { 'authorization': tokens.docgenAuth, 'token': tokens.docgen, 'Content-Type': 'application/json', 'accept': 'application/json' } };
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
     const ct = r.headers.get('content-type') || '';

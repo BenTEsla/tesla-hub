@@ -22,31 +22,37 @@ function renderToggle(theme) {
     btn = document.createElement('div');
     btn.id = 'themeToggle';
     btn.onclick = toggleTheme;
-    btn.style.cssText = 'width:44px;height:24px;border-radius:12px;cursor:pointer;position:relative;transition:background .2s';
+    btn.style.cssText = 'width:52px;height:28px;border-radius:14px;cursor:pointer;position:relative;transition:background .2s;display:flex;align-items:center;flex-shrink:0';
     var knob = document.createElement('div');
     knob.id = 'themeKnob';
-    knob.style.cssText = 'width:18px;height:18px;border-radius:50%;position:absolute;top:3px;transition:left .2s,background .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)';
+    knob.style.cssText = 'width:22px;height:22px;border-radius:50%;position:absolute;top:3px;transition:left .2s,background .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center';
     btn.appendChild(knob);
-    var docgenBtn = document.getElementById('docgenBtn');
-    if (docgenBtn) {
-      var wrapper = document.createElement('div');
-      wrapper.style.cssText = 'display:flex;align-items:center;gap:10px';
-      docgenBtn.parentNode.insertBefore(wrapper, docgenBtn);
-      wrapper.appendChild(docgenBtn);
-      wrapper.appendChild(btn);
+    // Try themeAnchor first (title-row), fallback to docgenBtn
+    var anchor = document.getElementById('themeAnchor');
+    if (anchor) {
+      anchor.appendChild(btn);
+    } else {
+      var docgenBtn = document.getElementById('docgenBtn');
+      if (docgenBtn) {
+        docgenBtn.parentNode.appendChild(btn);
+      }
     }
   }
   var knob = document.getElementById('themeKnob');
+  var sunSVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  var moonSVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   if (theme === 'dark') {
     btn.style.background = 'rgba(59,130,246,.3)';
     btn.title = 'Switch to Light';
-    knob.style.left = '23px';
-    knob.style.background = '#60a5fa';
+    knob.style.left = '27px';
+    knob.style.background = '#1e293b';
+    knob.innerHTML = moonSVG;
   } else {
-    btn.style.background = 'rgba(0,0,0,.15)';
+    btn.style.background = 'rgba(245,158,11,.2)';
     btn.title = 'Switch to Dark';
     knob.style.left = '3px';
     knob.style.background = '#fff';
+    knob.innerHTML = sunSVG;
   }
 }
 

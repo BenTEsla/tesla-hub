@@ -6,7 +6,7 @@ function DTC(dark, light) {
 }
 
 function LOADTI() {
-  fetch("http://localhost:3000/api/scan/status").then(function(r) { return r.json(); }).then(function(j) {
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/status").then(function(r) { return r.json(); }).then(function(j) {
     if (!j.tracking) return;
     _tiData = j.tracking;
     renderTI();
@@ -172,12 +172,12 @@ function SEARCHTI(val) {
 function MARKOUT(btn, rn) {
   if (!confirm("Mark " + rn + " as picked up?")) return;
   btn.textContent = "...";
-  fetch("http://localhost:3000/api/scan/out/" + rn, { method: "POST" }).then(function(r) { return r.json(); }).then(function() { LOADTI(); }).catch(function() { btn.textContent = "ERR"; });
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/out/" + rn, { method: "POST" }).then(function(r) { return r.json(); }).then(function() { LOADTI(); }).catch(function() { btn.textContent = "ERR"; });
 }
 
 function ENRICHTI() {
   if (!confirm("Enrich all entries with DRO data?")) return;
-  fetch("http://localhost:3000/api/scan/enrich", { method: "POST" }).then(function(r) { return r.json(); }).then(function(j) { alert("Enriched: " + j.enriched + " entries"); LOADTI(); }).catch(function(e) { alert("Error: " + e.message); });
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/enrich", { method: "POST" }).then(function(r) { return r.json(); }).then(function(j) { alert("Enriched: " + j.enriched + " entries"); LOADTI(); }).catch(function(e) { alert("Error: " + e.message); });
 }
 
 function TRIGGERSCAN(btn) {
@@ -186,7 +186,7 @@ function TRIGGERSCAN(btn) {
   btn.style.opacity = "0.7";
 
   function tryScan(source) {
-    return fetch("http://localhost:3000/api/scan/trigger", {
+    return fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/trigger", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source: source })
@@ -208,7 +208,7 @@ function TRIGGERSCAN(btn) {
     function poll() {
       attempts++;
       if (attempts > 30) { alert("Timeout"); resetBtn(btn); return; }
-      fetch("http://localhost:3000/api/scan/download/" + jobId)
+      fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/download/" + jobId)
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok) {
@@ -292,7 +292,7 @@ function showRNPicker(filename) {
 
 function assignScan(filename, rn, modal) {
   // Rename file to include RN and process
-  fetch("http://localhost:3000/api/scan/assign", {
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/assign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filename: filename, rn: rn })

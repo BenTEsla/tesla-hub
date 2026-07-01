@@ -9,7 +9,7 @@ function LOADSTOCK() {
   if (!container) return;
   container.innerHTML = '<div style="text-align:center;padding:60px;color:#999"><div class="spinner" style="width:32px;height:32px;border:3px solid rgba(255,255,255,.06);border-top-color:#60a5fa;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div><div style="margin-top:12px">Loading stock data...</div></div>';
 
-  fetch("http://localhost:3000/api/bi/stock").then(function(r) { return r.json(); }).then(function(j) {
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/bi/stock").then(function(r) { return r.json(); }).then(function(j) {
     if (j.error) { container.innerHTML = '<div style="text-align:center;padding:60px;color:#c00">' + j.error + '</div>'; return; }
     _stockData = j;
     renderStock();
