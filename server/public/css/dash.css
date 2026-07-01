@@ -261,7 +261,12 @@ a.nav-item {
   color: #71717a;
 }
 
-/* Collapsed sidebar: hide group items and labels */
+/* Collapsed sidebar: icon visibility fix */
+.sidebar.collapsed .nav-group-header svg:first-child,
+.sidebar.collapsed .nav-item svg {
+  opacity: 1;
+  color: inherit;
+}
 .sidebar.collapsed .nav-group-items,
 .sidebar.collapsed .nav-chevron {
   display: none;
@@ -927,7 +932,7 @@ tr:nth-child(even) td {
 .dash-card-value {
   font-size: 36px;
   font-weight: 700;
-  color: var(--tds-color--foreground-high-contrast, #f4f4f5);
+  color: inherit;
   line-height: 1;
 }
 
@@ -960,7 +965,7 @@ tr:nth-child(even) td {
 .dash-chart-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--tds-color--foreground-high-contrast, #f4f4f5);
+  color: inherit;
   margin-bottom: 16px;
 }
 
