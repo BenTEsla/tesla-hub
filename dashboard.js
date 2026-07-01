@@ -73,8 +73,8 @@
   +'.main-content{flex:1;overflow-y:auto;height:100vh}'
 
   // TITLE
-  +'.title-row{padding:20px 32px 0;display:flex;align-items:center}'
-  +'.ttl{font-size:32px;font-weight:500;color:#f4f4f5;line-height:40px;margin-top:10px}'
+  +'.title-row{padding:24px 32px 16px;display:flex;align-items:center}'
+  +'.ttl{font-size:32px;font-weight:500;color:#f4f4f5;line-height:40px}'
 
   // TABS (hidden - replaced by sidebar)
   +'.tabs{display:none}'
