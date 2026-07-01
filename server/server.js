@@ -929,7 +929,7 @@ app.post('/api/bi/stock/upload', express.text({ type: '*/*', limit: '5mb' }), (r
 // ============================================================
 app.get('/api/tab/tradein', (req, res) => {
   res.send('<div style="padding:0 32px 24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20)">'
-    + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px">'
+    + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:20px">'
     + '<button onclick="ENRICHTI()" style="padding:6px 14px;background:#f0ad4e;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Enrich</button>'
     + '<button onclick="TRIGGERSCAN(this)" style="padding:6px 14px;background:#9c27b0;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Scan</button>'
     + '<a href="/scan.html" target="_blank" style="padding:6px 14px;background:#3e6ae1;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Upload</a>'
