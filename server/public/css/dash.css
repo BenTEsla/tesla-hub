@@ -1169,3 +1169,31 @@ tr:nth-child(even) td {
 #csatView table td[style*="text-align:center"] {
   text-align: left !important;
 }
+
+/* ============================================
+   TOOLTIP FOR COLLAPSED SIDEBAR
+   ============================================ */
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .nav-group-header {
+  position: relative;
+}
+
+.sidebar.collapsed .nav-item[data-tooltip]:hover::after,
+.sidebar.collapsed .nav-group-header[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 6px 12px;
+  background: #1c1c22;
+  color: #f4f4f5;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  pointer-events: none;
+}
