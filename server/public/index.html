@@ -2,6 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <title>Tesla Delivery Hub — Setup</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <!-- TDS v9 CDN -->
 <link rel="stylesheet" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/design-system/9.x/index.css" />
 <link rel="preload" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/static/fonts/universal-sans-2/web/text/Universal-Sans-Text-Regular.woff2" as="font" type="font/woff2" crossorigin />
@@ -78,9 +79,9 @@ h1{text-align:center;font-size:26px;font-weight:700;margin-bottom:2px}
     <div class="drag-zone">
       <div class="arrow">⬆</div>
       <a class="bookmarklet-btn"
-         href="javascript:void(fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js?t='+Date.now()).then(r=>r.json()).then(j=>eval(atob(j.content))))"
+         href="javascript:void(fetch('https://raw.githubusercontent.com/BenTEsla/tesla-hub/master/dashboard.js?t='+Date.now()).then(r=>r.text()).then(s=>eval(s)))"
          onclick="event.preventDefault();alert('Ne cliquez pas ! Glissez-moi vers la barre de favoris ↑')">
-        🚗 Delivery Hub
+        Delivery Hub
       </a>
       <div class="drag-hint">
         Barre de favoris pas visible ? <b>Ctrl+Shift+B</b> pour l'afficher
