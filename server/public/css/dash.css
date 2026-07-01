@@ -834,3 +834,21 @@ tr:nth-child(even) td {
 #csatView [style*="font-size:13px"][style*="text-transform:uppercase"] {
   font-size: 13px !important;
 }
+
+/* Arrivals & CSAT detail tables: prevent over-stretching */
+#arrView table,
+#csatView table {
+  table-layout: auto !important;
+}
+
+#arrView table th,
+#arrView table td,
+#csatView table th,
+#csatView table td {
+  text-align: left !important;
+}
+
+#arrView table td[style*="text-align:center"],
+#csatView table td[style*="text-align:center"] {
+  text-align: left !important;
+}

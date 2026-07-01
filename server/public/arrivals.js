@@ -100,7 +100,7 @@ function renderArrDetail(filterDate) {
   var isDark = !document.getElementById("lightThemeCSS");
 
   if (!d.dates || d.dates.length <= 1) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:' + (isDark ? '#52525b' : '#ccc') + '">No detail data</td></tr>';
+    tb.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:' + (isDark ? '#52525b' : '#ccc') + '">No detail data</td></tr>';
     return;
   }
 
@@ -117,7 +117,7 @@ function renderArrDetail(filterDate) {
   });
 
   if (!rows.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:' + (isDark ? '#52525b' : '#ccc') + '">No data for this date</td></tr>';
+      tb.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:' + (isDark ? '#52525b' : '#ccc') + '">No data for this date</td></tr>';
     return;
   }
 
@@ -125,17 +125,15 @@ function renderArrDetail(filterDate) {
   rows.forEach(function(r) {
     var typeBg = r.type === 'Arrived' ? 'rgba(59,130,246,.12)' : r.type === 'Confident ETA' ? 'rgba(245,158,11,.12)' : 'rgba(239,68,68,.12)';
     html += '<tr style="border-bottom:1px solid ' + (isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)') + '">'
-      + '<td style="padding:10px;font-weight:600">' + r.date + '</td>'
-      + '<td style="padding:10px"><span style="background:' + typeBg + ';color:' + r.color + ';padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600">' + r.type + '</span></td>'
-      + '<td style="padding:10px;text-align:center;font-size:20px;font-weight:700;color:' + r.color + '">' + r.count + '</td>'
-      + '<td style="padding:10px;text-align:center;color:' + (isDark ? '#71717a' : '#999') + '">vehicles</td>'
-      + '<td style="padding:10px"></td>'
+      + '<td style="padding:10px 14px;font-weight:600">' + r.date + '</td>'
+      + '<td style="padding:10px 14px"><span style="background:' + typeBg + ';color:' + r.color + ';padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600">' + r.type + '</span></td>'
+      + '<td style="padding:10px 14px;font-size:16px;font-weight:700;color:' + r.color + '">' + r.count + '</td>'
       + '</tr>';
   });
 
   // Reset filter link
   if (filterDate) {
-    html += '<tr><td colspan="5" style="text-align:center;padding:10px"><button onclick="renderArrDetail(null);renderArrivals()" style="background:none;border:1px solid ' + (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)') + ';border-radius:6px;padding:6px 16px;color:' + (isDark ? '#60a5fa' : '#3b82f6') + ';font-size:12px;cursor:pointer;font-family:inherit">Show All</button></td></tr>';
+    html += '<tr><td colspan="3" style="text-align:center;padding:10px"><button onclick="renderArrDetail(null);renderArrivals()" style="background:none;border:1px solid ' + (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)') + ';border-radius:6px;padding:6px 16px;color:' + (isDark ? '#60a5fa' : '#3b82f6') + ';font-size:12px;cursor:pointer;font-family:inherit">Show All</button></td></tr>';
   }
 
   tb.innerHTML = html;
