@@ -1,61 +1,47 @@
 <!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
-<title>DASH - Delivery Automation Smart Hub</title>
+<title>DASH - Launching...</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<!-- TDS v9 CDN -->
-<link rel="stylesheet" href="https://digitalassets.tesla.com/tesla-design-system/raw/upload/design-system/9.x/index.css" />
+<style>
+body{background:#0f0f13;color:#f4f4f5;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.msg{text-align:center}
+h1{font-size:24px;margin-bottom:12px}
+p{color:#71717a;font-size:14px}
+</style>
 </head>
 <body>
+<div class="msg">
+<h1>Launching DASH...</h1>
+<p>If nothing happens, allow popups for this site.</p>
+</div>
 <script>
-// Load the full v18 Multi-CES bookmarklet and patch it for standalone server
 (async function(){
-  // Check auth
   var auth = await fetch('/api/auth/status').then(r=>r.json());
   if(!auth.hasDro){window.location='/';return}
-  
-  // Load config
-  var cfg = await fetch('/api/config').then(r=>r.json());
-  
-  // Load the v18 bookmarklet script from LOCAL server
+
   var script = await fetch('/api/bookmarklet.js?t='+Date.now()).then(r=>r.text());
-  
-  // Patch 1: Replace the localStorage token check with proxy token
-  // Original: var tk=...; var at=...; if(!at||!ui){alert(...);return}
+
+  // Patch: inject proxy token instead of localStorage
   script = script.replace(
     /var tk=\(localStorage[\s\S]*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/,
     'var at="proxy";var ui="'+auth.userId+'"'
   );
-  
-  // Patch 2: Skip server auto-detect + sendToken — we ARE the server
-  // Replace the async IIFE that does server detection with direct startHub()
+
+  // Patch: skip server detect, use empty SERVER (relative URLs via proxy)
   script = script.replace(
     /\/\/ Server URL[\s\S]*?\(async function\(\)\{[\s\S]*?startHub\(\);\s*\}\)\(\);/,
     'var SERVER="";startHub();'
   );
-  
-  // Patch 3: Replace window.open popup with direct document write
-  script = script.replace(
-    /var w=window\.open\('','_blank'\);\s*if\(!w\)\{alert\('Popup blocked!'\);return\}\s*w\.document\.open\(\);\s*w\.document\.write\(/,
-    'document.open();document.write('
-  );
-  script = script.replace(/w\.document\.close\(\)/, 'document.close()');
-  
-  // Patch 4: Replace DRO API base URL with proxy (inside the document.write string)
+
+  // Patch: DRO API -> proxy
   script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
-  
-  // Patch 5: Replace trtId with config
+
+  // Patch: trtId
+  var cfg = await fetch('/api/config').then(r=>r.json());
   script = script.replace(/trtId:28498/g, 'trtId:'+cfg.hub.trtId);
-  
-  // Patch 6: Inject CES from config
-  if (cfg.hub && cfg.hub.ces) {
-    script = script.replace(
-      /var CES=\['Ben Daubin','Sacha Villa','Sophie MACE'\];/,
-      'var CES='+JSON.stringify(cfg.hub.ces.map(function(c){return c.name}))+';'
-    );
-  }
-  
-  // Execute
+
+  // Execute — opens popup naturally (like bookmarklet)
   eval(script);
 })();
 </script>
