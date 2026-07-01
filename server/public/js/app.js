@@ -1170,17 +1170,20 @@ function NAV(idx, el) {
   document.querySelectorAll(".nav-item").forEach(function(n) {
     n.classList.remove("on");
   });
-  el.classList.add("on");
-  var titles = ["Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch"];
+  if (el && el.classList.contains('nav-item')) el.classList.add("on");
+  var titles = ["Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
-  // Dispatch (idx=5) shows the main view with dispatch mode
   if (idx === 5) {
+    // Dispatch: show main view + trigger dispatch modal
     STAB(0, null);
-    // Trigger dispatch if function exists
     if (typeof SHOWDISPATCH === 'function') SHOWDISPATCH();
+  } else if (idx === 6) {
+    // Pull-Up: show main view + trigger pull-up
+    STAB(0, null);
+    if (typeof QP === 'function') QP(el);
   } else {
     STAB(idx, null);
   }

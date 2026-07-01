@@ -217,7 +217,7 @@ body {
 .nav-group-header svg:first-child {
   width: 20px;
   height: 20px;
-  opacity: .5;
+  opacity: .7;
   flex-shrink: 0;
 }
 
@@ -226,10 +226,10 @@ body {
 }
 
 .nav-chevron {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   margin-left: auto;
-  opacity: .4;
+  opacity: .3;
   transition: transform .2s;
   flex-shrink: 0;
 }
@@ -256,6 +256,23 @@ body {
 .nav-group-items .nav-item {
   padding-left: 42px;
   font-size: 13px;
+}
+
+/* Links in nav (like BI Export) */
+a.nav-item {
+  text-decoration: none;
+  color: #71717a;
+}
+
+/* Collapsed sidebar: hide group items and labels */
+.sidebar.collapsed .nav-group-items,
+.sidebar.collapsed .nav-chevron {
+  display: none;
+}
+
+.sidebar.collapsed .nav-group-header {
+  justify-content: center;
+  padding: 9px 0;
 }
 
 .sidebar-footer {
