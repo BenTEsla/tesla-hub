@@ -778,3 +778,132 @@ tr:nth-child(even) td {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, .2);
 }
+
+/* ============================================
+   TAB VIEWS - Dark theme override
+   Server-rendered tabs use inline light styles.
+   These rules force dark theme consistency.
+   ============================================ */
+
+/* All tab views: override backgrounds and text colors */
+#arrView, #stockView, #tiView, #csatView {
+  color: #d4d4d8 !important;
+}
+
+/* Cards with white background → dark */
+#arrView [style*="background:#fff"],
+#arrView [style*="background: #fff"],
+#stockView [style*="background:#fff"],
+#stockView [style*="background: #fff"],
+#tiView [style*="background:#fff"],
+#tiView [style*="background: #fff"],
+#csatView [style*="background:#fff"],
+#csatView [style*="background: #fff"] {
+  background: rgba(255, 255, 255, .04) !important;
+  border: 1px solid rgba(255, 255, 255, .06) !important;
+  color: #d4d4d8 !important;
+}
+
+/* Dark text → light */
+#arrView [style*="color:#171a20"],
+#arrView [style*="color: #171a20"],
+#stockView [style*="color:#171a20"],
+#stockView [style*="color: #171a20"],
+#tiView [style*="color:#171a20"],
+#tiView [style*="color: #171a20"],
+#csatView [style*="color:#171a20"],
+#csatView [style*="color: #171a20"] {
+  color: #f4f4f5 !important;
+}
+
+/* Grey text → lighter grey */
+#arrView [style*="color:#5c5e62"],
+#stockView [style*="color:#5c5e62"],
+#tiView [style*="color:#5c5e62"],
+#csatView [style*="color:#5c5e62"] {
+  color: #71717a !important;
+}
+
+/* Tab view tables */
+#arrView table,
+#stockView table,
+#tiView table,
+#csatView table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#arrView th, #stockView th, #tiView th, #csatView th {
+  background: rgba(255, 255, 255, .03) !important;
+  color: #71717a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  text-align: left;
+}
+
+#arrView td, #stockView td, #tiView td, #csatView td {
+  color: #d4d4d8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .04) !important;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+#arrView tr:hover td, #stockView tr:hover td,
+#tiView tr:hover td, #csatView tr:hover td {
+  background: rgba(255, 255, 255, .03) !important;
+}
+
+/* Tab view borders */
+#arrView [style*="border-bottom:2px solid #eee"],
+#arrView [style*="border-bottom:2px solid #e9ecef"],
+#stockView [style*="border-bottom:2px solid #eee"],
+#tiView [style*="border-bottom:2px solid #eee"],
+#csatView [style*="border-bottom:2px solid #e9ecef"] {
+  border-bottom-color: rgba(255, 255, 255, .08) !important;
+}
+
+#arrView [style*="border-bottom:1px solid #f0f0f0"],
+#stockView [style*="border-bottom:1px solid #f0f0f0"],
+#tiView [style*="border-bottom:1px solid #f0f0f0"],
+#csatView [style*="border-bottom:1px solid #f0f0f0"] {
+  border-bottom-color: rgba(255, 255, 255, .04) !important;
+}
+
+/* Light background rows → dark */
+#arrView [style*="background:#fafafa"],
+#stockView [style*="background:#fafafa"],
+#tiView [style*="background:#fafafa"],
+#csatView [style*="background:#fafafa"] {
+  background: rgba(255, 255, 255, .02) !important;
+}
+
+/* Tab cards box-shadow → dark shadow */
+#arrView [style*="box-shadow"],
+#stockView [style*="box-shadow"],
+#tiView [style*="box-shadow"],
+#csatView [style*="box-shadow"] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .3) !important;
+}
+
+/* Buttons in tabs */
+#tiView button, #arrView button {
+  font-family: inherit;
+}
+
+/* Tab input fields */
+#tiView input[type="text"],
+#arrView input[type="text"] {
+  background: rgba(255, 255, 255, .04) !important;
+  border-color: rgba(255, 255, 255, .1) !important;
+  color: #d4d4d8 !important;
+}
+
+/* Progress bars */
+#arrView [style*="background:#e9ecef"],
+#csatView [style*="background:#e9ecef"] {
+  background: rgba(255, 255, 255, .08) !important;
+}
