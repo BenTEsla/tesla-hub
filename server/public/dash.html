@@ -118,21 +118,21 @@
   <div class="title-row">
     <h1 id="pageTitle" class="ttl">Dashboard</h1>
     <div style="flex:1"></div>
-    <div id="tabActions" style="position:relative"></div>
+    <div id="dashHeaderRight" style="text-align:right;padding-bottom:4px">
+      <div id="dashGreetingHeader" style="font-size:16px;font-weight:500;color:#d4d4d8"></div>
+      <div id="dashDateHeader" style="font-size:13px;color:#52525b;margin-top:2px"></div>
+    </div>
+    <div id="tabActions" style="position:relative;margin-left:16px"></div>
     <div id="themeAnchor" style="margin-left:12px"></div>
   </div>
 
   <!-- ========== DASHBOARD VIEW ========== -->
   <div id="dashView">
-    <!-- Hero: Clock + Greeting -->
+    <!-- Hero: Clock -->
     <div class="dash-hero">
       <div class="dash-hero-left">
         <div class="dash-clock" id="dashClock">--:--</div>
         <div class="dash-date" id="dashDateHero"></div>
-      </div>
-      <div class="dash-hero-right">
-        <div class="dash-greeting" id="dashGreeting"></div>
-        <div class="dash-greeting-sub">Rennes Saint-Jacques</div>
       </div>
     </div>
 
@@ -335,24 +335,20 @@
     var m = now.getMinutes();
     var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
     var dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    // Capitalize first letter
     dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+    var greeting = h < 6 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
 
+    // Hero clock
     var clockEl = document.getElementById('dashClock');
     if (clockEl) clockEl.textContent = timeStr;
-
     var dateEl = document.getElementById('dashDateHero');
     if (dateEl) dateEl.textContent = dateStr;
 
-    var greetEl = document.getElementById('dashGreeting');
-    if (greetEl) {
-      var greeting = h < 6 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
-      greetEl.textContent = greeting + ', Ben';
-    }
-
-    // Also update the title-row date if visible
-    var el = document.getElementById('dashDate');
-    if (el) el.textContent = dateStr + '  •  ' + timeStr;
+    // Title-row greeting (top right)
+    var greetHeader = document.getElementById('dashGreetingHeader');
+    if (greetHeader) greetHeader.textContent = greeting + ', Ben';
+    var dateHeader = document.getElementById('dashDateHeader');
+    if (dateHeader) dateHeader.textContent = dateStr + '  •  ' + timeStr;
   }
   updateClock();
   setInterval(updateClock, 10000);
