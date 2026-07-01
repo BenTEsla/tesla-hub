@@ -343,11 +343,15 @@
     var dateEl = document.getElementById('dashDateHero');
     if (dateEl) dateEl.textContent = dateStr;
 
-    // Title-row greeting (top right)
+    // Title-row greeting (top right) - date only, no time
     var greetHeader = document.getElementById('dashGreetingHeader');
     if (greetHeader) greetHeader.textContent = greeting + ', Ben';
     var dateHeader = document.getElementById('dashDateHeader');
-    if (dateHeader) dateHeader.textContent = dateStr + '  •  ' + timeStr;
+    if (dateHeader) {
+      // Capitalize each word
+      var dateCapitalized = dateStr.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+      dateHeader.textContent = dateCapitalized;
+    }
   }
   updateClock();
   setInterval(updateClock, 10000);
