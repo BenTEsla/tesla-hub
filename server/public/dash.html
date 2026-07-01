@@ -43,6 +43,12 @@
   </div>
 
   <div class="sidebar-nav">
+    <!-- Dashboard (direct) -->
+    <div class="nav-item on" onclick="NAV(0,this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </div>
+
     <!-- Delivery group -->
     <div class="nav-group open" id="navGroupDelivery">
       <div class="nav-group-header" onclick="this.parentElement.classList.toggle('open')">
@@ -51,15 +57,15 @@
         <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="nav-group-items">
-        <div class="nav-item on" onclick="NAV(0,this)"><span class="nav-label">Customer Delivery</span></div>
-        <div class="nav-item" onclick="NAV(5,this)"><span class="nav-label">Dispatch</span></div>
-        <div class="nav-item" onclick="NAV(6,this)"><span class="nav-label">Pull-Up</span></div>
+        <div class="nav-item" onclick="NAV(1,this)"><span class="nav-label">Customer Delivery</span></div>
+        <div class="nav-item" onclick="NAV(6,this)"><span class="nav-label">Dispatch</span></div>
+        <div class="nav-item" onclick="NAV(7,this)"><span class="nav-label">Pull-Up</span></div>
       </div>
     </div>
 
     <!-- Arrivals group -->
     <div class="nav-group open" id="navGroupArrivals">
-      <div class="nav-group-header" onclick="NAV(1,this);this.parentElement.classList.add('open')">
+      <div class="nav-group-header" onclick="NAV(2,this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         <span class="nav-label">Arrivals</span>
         <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -70,19 +76,19 @@
     </div>
 
     <!-- Stock (direct) -->
-    <div class="nav-item" onclick="NAV(2,this)">
+    <div class="nav-item" onclick="NAV(3,this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
       <span class="nav-label">Stock</span>
     </div>
 
     <!-- Trade-In (direct) -->
-    <div class="nav-item" onclick="NAV(3,this)">
+    <div class="nav-item" onclick="NAV(4,this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       <span class="nav-label">Trade-In</span>
     </div>
 
     <!-- CSAT (direct) -->
-    <div class="nav-item" onclick="NAV(4,this)">
+    <div class="nav-item" onclick="NAV(5,this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       <span class="nav-label">CSAT</span>
     </div>
@@ -105,9 +111,66 @@
      ============================================ -->
 <div class="main-content">
 
+  <!-- ========== DASHBOARD VIEW ========== -->
+  <div id="dashView">
+    <!-- Row 1: Key metric cards -->
+    <div class="dash-cards">
+      <div class="dash-card">
+        <div class="dash-card-label">Today's Deliveries</div>
+        <div class="dash-card-value" id="dashDeliveries">-</div>
+        <div class="dash-card-sub" id="dashDeliveriesSub">Loading...</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Ready</div>
+        <div class="dash-card-value dash-green" id="dashReady">-</div>
+        <div class="dash-card-sub" id="dashReadySub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Not Ready</div>
+        <div class="dash-card-value dash-red" id="dashNotReady">-</div>
+        <div class="dash-card-sub" id="dashNotReadySub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Stock Rennes</div>
+        <div class="dash-card-value dash-blue" id="dashStock">-</div>
+        <div class="dash-card-sub" id="dashStockSub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">CSAT Score</div>
+        <div class="dash-card-value" id="dashCsat">-</div>
+        <div class="dash-card-sub" id="dashCsatSub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Trade-In On Site</div>
+        <div class="dash-card-value dash-purple" id="dashTradeIn">-</div>
+        <div class="dash-card-sub" id="dashTradeInSub"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Charts -->
+    <div class="dash-charts">
+      <!-- Arrivals chart -->
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Arrivals This Week</div>
+        <div class="dash-bar-chart" id="dashArrChart"></div>
+      </div>
+      <!-- CES Performance -->
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">CES Performance</div>
+        <div id="dashCesChart"></div>
+      </div>
+    </div>
+
+    <!-- Row 3: Today's schedule -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">Today's Schedule</div>
+      <div id="dashSchedule"></div>
+    </div>
+  </div>
+
   <!-- TITLE -->
   <div class="title-row">
-    <h1 id="pageTitle" class="ttl">Customer Delivery</h1>
+    <h1 id="pageTitle" class="ttl">Dashboard</h1>
     <div style="flex:1"></div>
     <div id="tabActions" style="position:relative"></div>
     <div id="themeAnchor" style="margin-left:12px"></div>
@@ -123,7 +186,7 @@
   </div>
 
   <!-- ========== MAIN VIEW ========== -->
-  <div id="mainView">
+  <div id="mainView" style="display:none">
 
     <!-- STATS - Block 1: Overview | Block 2: Readiness | Block 3: Vehicle Status | Block 4: CES -->
     <div class="srow">
@@ -271,8 +334,8 @@
       return;
     }
 
-    // Auto-load deliveries
-    L();
+    // Auto-load dashboard
+    LOADDASH();
   }).catch(function(e) {
     console.error('Init error:', e);
   });

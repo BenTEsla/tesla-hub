@@ -1171,18 +1171,19 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
-  var titles = ["Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
+  if (el && el.classList.contains('nav-group-header')) {
+    el.style.color = '#f4f4f5';
+  }
+  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
-  if (idx === 5) {
-    // Dispatch: show main view + trigger dispatch modal
-    STAB(0, null);
+  if (idx === 6) {
+    STAB(1, null);
     if (typeof SHOWDISPATCH === 'function') SHOWDISPATCH();
-  } else if (idx === 6) {
-    // Pull-Up: show main view + trigger pull-up
-    STAB(0, null);
+  } else if (idx === 7) {
+    STAB(1, null);
     if (typeof QP === 'function') QP(el);
   } else {
     STAB(idx, null);
@@ -1198,13 +1199,23 @@ function STAB(idx, btn) {
   });
   if (btn) btn.classList.add("on");
 
-  document.getElementById("mainView").style.display = idx === 0 ? "" : "none";
-  document.getElementById("arrView").style.display = idx === 1 ? "" : "none";
-  document.getElementById("stockView").style.display = idx === 2 ? "" : "none";
-  document.getElementById("tiView").style.display = idx === 3 ? "" : "none";
-  document.getElementById("csatView").style.display = idx === 4 ? "" : "none";
+  document.getElementById("dashView").style.display = idx === 0 ? "" : "none";
+  document.getElementById("mainView").style.display = idx === 1 ? "" : "none";
+  document.getElementById("arrView").style.display = idx === 2 ? "" : "none";
+  document.getElementById("stockView").style.display = idx === 3 ? "" : "none";
+  document.getElementById("tiView").style.display = idx === 4 ? "" : "none";
+  document.getElementById("csatView").style.display = idx === 5 ? "" : "none";
 
-  if (idx === 1 && !document.getElementById("arrView").innerHTML.trim()) {
+  if (idx === 0 && typeof LOADDASH === 'function') {
+    LOADDASH();
+  }
+
+  if (idx === 1 && !document.getElementById("mainView").dataset.loaded) {
+    document.getElementById("mainView").dataset.loaded = "1";
+    L();
+  }
+
+  if (idx === 2 && !document.getElementById("arrView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/arrivals").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("arrView").innerHTML = h;
       LOADARR();
@@ -1213,7 +1224,7 @@ function STAB(idx, btn) {
     });
   }
 
-  if (idx === 2 && !document.getElementById("stockView").innerHTML.trim()) {
+  if (idx === 3 && !document.getElementById("stockView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/stock").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("stockView").innerHTML = h;
       LOADSTOCK();
@@ -1222,14 +1233,14 @@ function STAB(idx, btn) {
     });
   }
 
-  if (idx === 3 && !document.getElementById("tiView").innerHTML.trim()) {
+  if (idx === 4 && !document.getElementById("tiView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/tradein").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
     }).catch(function() {});
   }
 
-  if (idx === 4 && !document.getElementById("csatView").innerHTML.trim()) {
+  if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("csatView").innerHTML = h;
       LOADCSAT();
@@ -1362,3 +1373,126 @@ setTimeout(CHKAUTH, 2000);
 
 // Close any menus on click
 document.addEventListener("click", function() {});
+
+/* ============================================
+   DASHBOARD HOME: Load summary data
+   ============================================ */
+function LOADDASH() {
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+  var ds = new Date();
+  var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
+
+  // 1. Load today's deliveries
+  fetch(BASE + "/deliveryops/Customers/Dashboard", {
+    method: "POST", headers: h,
+    body: JSON.stringify({fromDeliveryDate: today, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+  }).then(function(r) { return r.json(); }).then(function(dash) {
+    var data = dash.Data || [];
+    var total = data.length;
+    var delivered = data.filter(function(d) { return d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete'; }).length;
+    var ready = total - delivered;
+    var notReady = 0;
+
+    document.getElementById("dashDeliveries").textContent = total;
+    document.getElementById("dashDeliveriesSub").textContent = delivered + " delivered";
+    document.getElementById("dashReady").textContent = ready;
+    document.getElementById("dashReadySub").textContent = "to deliver";
+    document.getElementById("dashNotReady").textContent = notReady;
+    document.getElementById("dashNotReadySub").textContent = "alerts";
+
+    // Schedule
+    var scheduleHtml = '';
+    data.sort(function(a, b) { return (a.ScheduledDeliveryStartDateString || '').localeCompare(b.ScheduledDeliveryStartDateString || ''); });
+    data.forEach(function(d) {
+      var t = '?';
+      var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+      var isDelivered = d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete';
+      scheduleHtml += '<div class="dash-schedule-row">'
+        + '<div class="dash-schedule-time">' + t + '</div>'
+        + '<div class="dash-schedule-name">' + (d.CustomerName || '') + '</div>'
+        + '<div class="dash-schedule-model">' + (d.VehicleModel || '') + '</div>'
+        + '<div class="dash-schedule-status">'
+        + '<div class="dash-schedule-dot" style="background:' + (isDelivered ? '#22c55e' : '#3b82f6') + '"></div>'
+        + '</div>'
+        + '</div>';
+    });
+    document.getElementById("dashSchedule").innerHTML = scheduleHtml || '<div style="color:#52525b;padding:20px;text-align:center">No deliveries today</div>';
+  }).catch(function(e) {
+    document.getElementById("dashDeliveries").textContent = '!';
+    document.getElementById("dashDeliveriesSub").textContent = e.message;
+  });
+
+  // 2. Load arrivals
+  fetch(SERVER + "/api/bi/arrivals").then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) return;
+    var chart = document.getElementById("dashArrChart");
+    var dates = j.data ? j.data.dates : [];
+    var arrived = j.data ? j.data.arrived : [];
+    var confident = j.data ? j.data.confident : [];
+    var preliminary = j.data ? j.data.preliminary : [];
+    var maxVal = 1;
+    dates.forEach(function(_, i) {
+      var total = (arrived[i] || 0) + (confident[i] || 0) + (preliminary[i] || 0);
+      if (total > maxVal) maxVal = total;
+    });
+    var html = '';
+    dates.slice(0, 7).forEach(function(d, i) {
+      var a = arrived[i] || 0, c = confident[i] || 0, p = preliminary[i] || 0;
+      var total = a + c + p;
+      var aH = Math.round((a / maxVal) * 140);
+      var cH = Math.round((c / maxVal) * 140);
+      var pH = Math.round((p / maxVal) * 140);
+      var label = d.length > 5 ? d.substring(0, 5) : d;
+      html += '<div class="dash-bar-group">'
+        + '<div class="dash-bar-value">' + total + '</div>'
+        + '<div style="display:flex;flex-direction:column-reverse;width:100%;align-items:center">'
+        + '<div class="dash-bar" style="height:' + aH + 'px;background:#22c55e"></div>'
+        + '<div class="dash-bar" style="height:' + cH + 'px;background:#3b82f6"></div>'
+        + '<div class="dash-bar" style="height:' + pH + 'px;background:#f59e0b"></div>'
+        + '</div>'
+        + '<div class="dash-bar-label">' + label + '</div>'
+        + '</div>';
+    });
+    chart.innerHTML = html;
+  }).catch(function() {});
+
+  // 3. Load stock
+  fetch(SERVER + "/api/bi/stock").then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) return;
+    document.getElementById("dashStock").textContent = j.rennes || 0;
+    var s = j.stats || {};
+    document.getElementById("dashStockSub").textContent = (s.customerCount || 0) + ' customer, ' + (s.inventoryCount || 0) + ' inventory';
+  }).catch(function() {});
+
+  // 4. Load CSAT
+  fetch(SERVER + "/api/bi/csat").then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) return;
+    document.getElementById("dashCsat").textContent = (j.summary ? j.summary.avgScore : '-');
+    document.getElementById("dashCsatSub").textContent = (j.summary ? j.summary.totalSurveys + ' surveys' : '');
+    // CES chart
+    var cesChart = document.getElementById("dashCesChart");
+    if (j.advisors && j.advisors.length) {
+      var maxScore = 100;
+      var html = '';
+      j.advisors.forEach(function(a) {
+        var score = a.scoreRaw || 0;
+        var color = score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : '#ef4444';
+        html += '<div class="dash-ces-row">'
+          + '<div class="dash-ces-name">' + a.name.split(' ')[0] + '</div>'
+          + '<div class="dash-ces-bar-bg"><div class="dash-ces-bar" style="width:' + score + '%;background:' + color + '">' + Math.round(score) + '%</div></div>'
+          + '</div>';
+      });
+      cesChart.innerHTML = html;
+    } else {
+      cesChart.innerHTML = '<div style="color:#52525b;padding:20px;text-align:center">No CSAT data</div>';
+    }
+  }).catch(function() {});
+
+  // 5. Load trade-in
+  fetch(SERVER + "/api/scan/status").then(function(r) { return r.json(); }).then(function(j) {
+    var onSite = (j.tracking || []).filter(function(t) { return !t.outDate; }).length;
+    document.getElementById("dashTradeIn").textContent = onSite;
+    document.getElementById("dashTradeInSub").textContent = 'vehicles on site';
+  }).catch(function() {});
+}
