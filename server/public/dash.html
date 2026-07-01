@@ -118,9 +118,10 @@
   <div class="title-row">
     <h1 id="pageTitle" class="ttl">Dashboard</h1>
     <div style="flex:1"></div>
-    <div id="dashHeaderRight" style="text-align:right;padding-bottom:4px">
-      <div id="dashGreetingHeader" style="font-size:16px;font-weight:500;color:#d4d4d8"></div>
-      <div id="dashDateHeader" style="font-size:13px;color:#52525b;margin-top:2px"></div>
+    <div id="dashHeaderRight" style="text-align:right">
+      <div id="dashGreetingHeader" style="font-size:14px;color:#71717a;font-weight:400"></div>
+      <div id="dashDateHeader" style="font-size:22px;font-weight:500;color:#f4f4f5;margin-top:2px"></div>
+      <div id="dashTimeHeader" style="font-size:14px;color:#71717a;margin-top:2px;font-variant-numeric:tabular-nums"></div>
     </div>
     <div id="tabActions" style="position:relative;margin-left:16px"></div>
     <div id="themeAnchor" style="margin-left:12px"></div>
@@ -128,12 +129,6 @@
 
   <!-- ========== DASHBOARD VIEW ========== -->
   <div id="dashView">
-    <!-- Hero: Clock -->
-    <div class="dash-hero">
-      <div class="dash-hero-left">
-        <div class="dash-clock" id="dashClock">--:--</div>
-      </div>
-    </div>
 
     <!-- Row 1: Key metric cards -->
     <div class="dash-cards">
@@ -338,7 +333,7 @@
     var dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     var greeting = h < 6 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 
-    var clockEl = document.getElementById('dashClock');
+    var clockEl = document.getElementById('dashTimeHeader');
     if (clockEl) clockEl.textContent = timeStr;
 
     var greetHeader = document.getElementById('dashGreetingHeader');
