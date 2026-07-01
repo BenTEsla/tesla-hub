@@ -848,6 +848,54 @@ tr:nth-child(even) td {
 /* ============================================
    DASHBOARD HOME PAGE
    ============================================ */
+
+/* Hero: Clock + Greeting */
+.dash-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.dash-hero-left {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.dash-clock {
+  font-size: 56px;
+  font-weight: 300;
+  color: #f4f4f5;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-date {
+  font-size: 16px;
+  color: #71717a;
+  font-weight: 400;
+  padding-bottom: 6px;
+}
+
+.dash-hero-right {
+  text-align: right;
+  padding-bottom: 6px;
+}
+
+.dash-greeting {
+  font-size: 20px;
+  font-weight: 500;
+  color: #d4d4d8;
+}
+
+.dash-greeting-sub {
+  font-size: 13px;
+  color: #52525b;
+  margin-top: 4px;
+}
+
 #dashView {
   padding: 0 32px 32px;
 }

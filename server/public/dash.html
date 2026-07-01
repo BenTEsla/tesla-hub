@@ -125,6 +125,18 @@
 
   <!-- ========== DASHBOARD VIEW ========== -->
   <div id="dashView">
+    <!-- Hero: Clock + Greeting -->
+    <div class="dash-hero">
+      <div class="dash-hero-left">
+        <div class="dash-clock" id="dashClock">--:--</div>
+        <div class="dash-date" id="dashDateHero"></div>
+      </div>
+      <div class="dash-hero-right">
+        <div class="dash-greeting" id="dashGreeting"></div>
+        <div class="dash-greeting-sub">Rennes Saint-Jacques</div>
+      </div>
+    </div>
+
     <!-- Row 1: Key metric cards -->
     <div class="dash-cards">
       <div class="dash-card">
@@ -320,14 +332,31 @@
   // Live date/time clock
   function updateClock() {
     var now = new Date();
-    var el = document.getElementById('dashDate');
-    if (el) {
-      el.textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-        + '  •  ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    var dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // Capitalize first letter
+    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+    var clockEl = document.getElementById('dashClock');
+    if (clockEl) clockEl.textContent = timeStr;
+
+    var dateEl = document.getElementById('dashDateHero');
+    if (dateEl) dateEl.textContent = dateStr;
+
+    var greetEl = document.getElementById('dashGreeting');
+    if (greetEl) {
+      var greeting = h < 6 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+      greetEl.textContent = greeting + ', Ben';
     }
+
+    // Also update the title-row date if visible
+    var el = document.getElementById('dashDate');
+    if (el) el.textContent = dateStr + '  •  ' + timeStr;
   }
   updateClock();
-  setInterval(updateClock, 30000);
+  setInterval(updateClock, 10000);
 
   // Load auth + config, then auto-load data
   Promise.all([
