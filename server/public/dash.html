@@ -117,6 +117,7 @@
   <!-- TITLE -->
   <div class="title-row">
     <h1 id="pageTitle" class="ttl">Dashboard</h1>
+    <div id="dashDate" style="margin-left:16px;font-size:14px;color:#71717a;font-weight:400;align-self:flex-end;padding-bottom:4px"></div>
     <div style="flex:1"></div>
     <div id="tabActions" style="position:relative"></div>
     <div id="themeAnchor" style="margin-left:12px"></div>
@@ -315,6 +316,18 @@
     dateOptions.push('<option value="' + iD + '">' + lbl + ' - ' + fD + '</option>');
   }
   document.getElementById('dt').innerHTML = dateOptions.join('');
+
+  // Live date/time clock
+  function updateClock() {
+    var now = new Date();
+    var el = document.getElementById('dashDate');
+    if (el) {
+      el.textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        + '  •  ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
 
   // Load auth + config, then auto-load data
   Promise.all([
