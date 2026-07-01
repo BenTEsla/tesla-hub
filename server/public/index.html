@@ -79,7 +79,7 @@ h1{text-align:center;font-size:26px;font-weight:700;margin-bottom:2px}
     <div class="drag-zone">
       <div class="arrow">⬆</div>
       <a class="bookmarklet-btn"
-         href="javascript:void(fetch('https://raw.githubusercontent.com/BenTEsla/tesla-hub/master/dashboard.js?t='+Date.now()).then(r=>r.text()).then(s=>eval(s)))"
+         href="javascript:void(fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js?ref=master&t='+Date.now(),{headers:{'Accept':'application/vnd.github.v3.raw'}}).then(r=>r.text()).then(s=>eval(s)))"
          onclick="event.preventDefault();alert('Ne cliquez pas ! Glissez-moi vers la barre de favoris ↑')">
         Delivery Hub
       </a>
