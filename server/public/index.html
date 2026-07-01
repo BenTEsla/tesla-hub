@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Tesla Delivery Hub — Setup</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#171a20;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:12px;padding:40px 36px;box-shadow:0 8px 32px rgba(0,0,0,.08);max-width:520px;width:100%}
+.logo{text-align:center;letter-spacing:8px;font-size:18px;color:#ccc;margin-bottom:6px}
+h1{text-align:center;font-size:26px;font-weight:700;margin-bottom:2px}
+.hub{text-align:center;color:#e8523a;font-size:14px;font-weight:600;margin-bottom:32px}
+
+.step{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:20px;margin-bottom:16px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#3e6ae1;color:#fff;font-size:13px;font-weight:700;margin-right:10px}
+.step-title{font-size:15px;font-weight:700;display:inline}
+.step-desc{font-size:13px;color:#666;margin-top:8px;line-height:1.6}
+
+.bookmarklet-btn{
+  display:inline-block;
+  padding:14px 32px;
+  background:linear-gradient(135deg,#e8523a,#c0392b);
+  color:#fff;
+  font-size:16px;
+  font-weight:700;
+  border-radius:8px;
+  text-decoration:none;
+  cursor:grab;
+  box-shadow:0 4px 16px rgba(232,82,58,.3);
+  transition:transform .15s,box-shadow .15s;
+  user-select:none;
+  margin:12px 0;
+}
+.bookmarklet-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(232,82,58,.4)}
+.bookmarklet-btn:active{cursor:grabbing;transform:scale(.97)}
+
+.drag-zone{
+  text-align:center;
+  border:2px dashed #ddd;
+  border-radius:10px;
+  padding:24px;
+  margin:12px 0;
+  background:#fff;
+}
+.drag-hint{font-size:12px;color:#999;margin-top:8px}
+.arrow{font-size:24px;color:#3e6ae1;animation:bounce 1.5s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+.status-bar{display:flex;gap:12px;margin-top:20px;padding:16px;background:#f8f9fa;border-radius:8px}
+.status-item{flex:1;text-align:center}
+.status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-bottom:4px}
+.status-label{font-size:11px;color:#888;display:block}
+.status-val{font-size:13px;font-weight:700}
+.dot-green{background:#28a745}
+.dot-red{background:#dc3545}
+.dot-orange{background:#f0ad4e}
+
+.help{font-size:12px;color:#aaa;text-align:center;margin-top:16px;line-height:1.6}
+.help a{color:#3e6ae1}
+</style>
+</head><body>
+<div class="card">
+  <div class="logo">T E S L A</div>
+  <h1>Delivery Hub</h1>
+  <div class="hub">Rennes Saint-Jacques</div>
+
+  <!-- STEP 1: Install bookmarklet -->
+  <div class="step">
+    <span class="step-num">1</span>
+    <div class="step-title">Installer le bookmarklet</div>
+    <div class="step-desc">
+      Glissez ce bouton vers votre <b>barre de favoris</b> :
+    </div>
+    <div class="drag-zone">
+      <div class="arrow">⬆</div>
+      <a class="bookmarklet-btn"
+         href="javascript:void(fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js?t='+Date.now()).then(r=>r.json()).then(j=>eval(atob(j.content))))"
+         onclick="event.preventDefault();alert('Ne cliquez pas ! Glissez-moi vers la barre de favoris ↑')">
+        🚗 Delivery Hub
+      </a>
+      <div class="drag-hint">
+        Barre de favoris pas visible ? <b>Ctrl+Shift+B</b> pour l'afficher
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Use it -->
+  <div class="step">
+    <span class="step-num">2</span>
+    <div class="step-title">Lancer le dashboard</div>
+    <div class="step-desc">
+      1. Aller sur <a href="https://dro.tesla.com/advisor" target="_blank" style="color:#3e6ae1;font-weight:600">dro.tesla.com</a><br>
+      2. Cliquer sur <b>🚗 Delivery Hub</b> dans vos favoris<br>
+      3. Le dashboard s'ouvre dans un nouvel onglet !
+    </div>
+  </div>
+
+  <!-- STEP 3: DocGen -->
+  <div class="step">
+    <span class="step-num">3</span>
+    <div class="step-title">Activer l'impression DocGen</div>
+    <div class="step-desc">
+      Dans le dashboard, cliquez sur <b>🔑 Login DocGen</b><br>
+      Chrome s'ouvre → connectez-vous une fois → c'est sauvegardé !<br>
+      <span style="color:#999">(à refaire ~1x par heure quand le token expire)</span>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-bar" id="statusBar">
+    <div class="status-item">
+      <span class="status-dot dot-red" id="dotServer"></span>
+      <span class="status-label">Serveur</span>
+      <span class="status-val" id="valServer">...</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-red" id="dotDro"></span>
+      <span class="status-label">DRO</span>
+      <span class="status-val" id="valDro">...</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-red" id="dotDocgen"></span>
+      <span class="status-label">DocGen</span>
+      <span class="status-val" id="valDocgen">...</span>
+    </div>
+  </div>
+
+  <div class="help">
+    📡 Accès réseau : <b>http://10.86.17.25:3000</b><br>
+    Code source : <a href="https://github.com/BenTEsla/tesla-hub" target="_blank">github.com/BenTEsla/tesla-hub</a><br>
+    Questions ? Demandez à Ben 😎
+  </div>
+</div>
+
+<script>
+function checkStatus() {
+  fetch('/api/auth/status').then(r=>r.json()).then(j=>{
+    document.getElementById('dotServer').className = 'status-dot dot-green';
+    document.getElementById('valServer').textContent = 'OK';
+    
+    document.getElementById('dotDro').className = 'status-dot ' + (j.hasDro ? 'dot-green' : 'dot-red');
+    document.getElementById('valDro').textContent = j.hasDro ? 'Connecté' : 'Non connecté';
+    
+    document.getElementById('dotDocgen').className = 'status-dot ' + (j.hasDocgen ? 'dot-green' : 'dot-orange');
+    document.getElementById('valDocgen').textContent = j.hasDocgen ? 'Connecté' : 'Cliquer 🔑';
+  }).catch(()=>{
+    document.getElementById('dotServer').className = 'status-dot dot-red';
+    document.getElementById('valServer').textContent = 'Offline';
+  });
+}
+checkStatus();
+setInterval(checkStatus, 5000);
+</script>
+</body></html>

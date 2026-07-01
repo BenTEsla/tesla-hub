@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Tesla Delivery Hub</title>
+</head>
+<body>
+<script>
+// Load the full bookmarklet dashboard and patch it for standalone server
+(async function(){
+  // Check auth
+  var auth = await fetch('/api/auth/status').then(r=>r.json());
+  if(!auth.hasDro){window.location='/';return}
+  
+  // Load config
+  var cfg = await fetch('/api/config').then(r=>r.json());
+  
+  // Load the bookmarklet script from GitHub
+  var script = await fetch('https://api.github.com/repos/BenTEsla/tesla-hub/contents/dashboard.js',{headers:{'Accept':'application/vnd.github.v3.raw'}}).then(r=>r.text());
+  
+  // Patch 1: Remove the token check at the beginning - server handles auth
+  script = script.replace(
+    /var tk=.*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/s,
+    'var at="proxy";var ui="'+auth.userId+'";var CES='+JSON.stringify(cfg.hub.ces.map(function(c){return c.name}))
+  );
+  
+  // Patch 2: Replace DRO API base URL with proxy
+  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
+  
+  // Patch 3: Replace DocGen API with proxy
+  script = script.replace(/https:\/\/documentautomation-processapi\.tesla\.com/g, '/api/docgen');
+  
+  // Patch 4: Remove Authorization headers (proxy handles them)
+  script = script.replace(/"Authorization":AUTH\.token/g, '"X-Proxy":"true"');
+  script = script.replace(/"Authorization":"Bearer "\+AUTH\.token/g, '"X-Proxy":"true"');
+  script = script.replace(/AUTH\.token\?BASE/g, 'true?"/api/dro"');
+  
+  // Patch 5: Replace window.open for the dashboard (we're already in the page)
+  script = script.replace(
+    /var w=window\.open\('','_blank'\);.*?w\.document\.write\('/s,
+    'document.open();document.write(\''
+  );
+  script = script.replace(/w\.document\.close\(\)/, 'document.close()');
+  
+  // Patch 6: Replace trtId with config
+  script = script.replace(/trtId:28498/g, 'trtId:'+cfg.hub.trtId);
+  
+  // Execute
+  eval(script);
+})();
+</script>
+</body>
+</html>

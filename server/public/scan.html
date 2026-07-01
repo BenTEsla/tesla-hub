@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Trade-In Scanner</title>
+<style>
+body{font-family:sans-serif;padding:40px;background:#f5f5f5;margin:0}
+.card{background:#fff;border-radius:12px;padding:30px;max-width:600px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+h2{margin:0 0 4px}
+.drop{border:3px dashed #ddd;border-radius:12px;padding:60px 20px;text-align:center;margin:20px 0;cursor:pointer;transition:all .2s}
+.drop:hover,.drop.over{border-color:#3e6ae1;background:#f0f4ff}
+.drop input{display:none}
+.drop-icon{font-size:48px;color:#ccc;margin-bottom:10px}
+.drop-text{font-size:16px;color:#666}
+.drop-hint{font-size:13px;color:#aaa;margin-top:8px}
+#results{margin-top:20px}
+.result{padding:12px;border-radius:8px;margin:8px 0;font-size:14px}
+.result.ok{background:#e8f5e9;color:#2e7d32}
+.result.err{background:#fce4ec;color:#c62828}
+.result.loading{background:#e3f2fd;color:#1565c0}
+.tracking{margin-top:30px}
+.tracking table{width:100%;border-collapse:collapse;font-size:13px}
+.tracking th{text-align:left;padding:8px;color:#888;font-size:11px;text-transform:uppercase;border-bottom:2px solid #eee}
+.tracking td{padding:8px;border-bottom:1px solid #f0f0f0}
+</style></head><body>
+<div class="card">
+  <h2>Trade-In Scanner</h2>
+  <p style="color:#888;font-size:13px">Glissez le scan ici — upload DocGen automatique</p>
+  
+  <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="drop-icon">📄</div>
+    <div class="drop-text">Glissez un PDF ici ou cliquez pour parcourir</div>
+    <div class="drop-hint">La page de garde avec le QR code doit etre en premiere page</div>
+    <input type="file" id="fileInput" accept=".pdf" multiple>
+  </div>
+  
+  <div id="results"></div>
+</div>
+
+<div class="card tracking" style="margin-top:20px">
+  <h3>Suivi Trade-In</h3>
+  <table>
+    <thead><tr><th>RN</th><th>VIN</th><th>Date Upload</th><th>Status</th></tr></thead>
+    <tbody id="trackingBody"><tr><td colspan="4" style="color:#ccc;text-align:center">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+var dropZone = document.getElementById('dropZone');
+var fileInput = document.getElementById('fileInput');
+var results = document.getElementById('results');
+
+dropZone.ondragover = function(e) { e.preventDefault(); dropZone.classList.add('over'); };
+dropZone.ondragleave = function() { dropZone.classList.remove('over'); };
+dropZone.ondrop = function(e) { e.preventDefault(); dropZone.classList.remove('over'); handleFiles(e.dataTransfer.files); };
+fileInput.onchange = function() { handleFiles(fileInput.files); };
+
+function handleFiles(files) {
+  for (var i = 0; i < files.length; i++) {
+    uploadFile(files[i]);
+  }
+}
+
+function uploadFile(file) {
+  var div = document.createElement('div');
+  div.className = 'result loading';
+  div.textContent = 'Processing ' + file.name + '...';
+  results.prepend(div);
+  
+  var formData = new FormData();
+  formData.append('file', file);
+  
+  fetch('/api/scan/upload', { method: 'POST', body: formData })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) {
+        div.className = 'result ok';
+        div.textContent = 'OK: ' + file.name + ' → ' + j.rn + ' (uploaded to DocGen)';
+      } else {
+        div.className = 'result err';
+        div.textContent = 'ERR: ' + file.name + ' — ' + (j.error || 'Upload failed');
+      }
+      loadTracking();
+    })
+    .catch(function(e) {
+      div.className = 'result err';
+      div.textContent = 'ERR: ' + file.name + ' — ' + e.message;
+    });
+}
+
+function loadTracking() {
+  fetch('/api/scan/status').then(function(r) { return r.json(); }).then(function(j) {
+    var tbody = document.getElementById('trackingBody');
+    if (!j.tracking || j.tracking.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc;text-align:center">Aucun scan</td></tr>';
+      return;
+    }
+    var html = '';
+    j.tracking.slice().reverse().forEach(function(t) {
+      var date = new Date(t.uploadDate).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      html += '<tr><td><b>' + t.rn + '</b></td><td style="font-family:monospace;font-size:12px">' + (t.vin || '-') + '</td><td>' + date + '</td><td>' + (t.uploadOk ? '<span style="color:#28a745">Uploaded</span>' : '<span style="color:#dc3545">Failed</span>') + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+  });
+}
+loadTracking();
+</script>
+</body></html>

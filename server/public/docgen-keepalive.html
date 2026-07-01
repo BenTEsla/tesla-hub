@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>DocGen Keep-Alive</title>
+<style>
+body{font-family:sans-serif;text-align:center;padding:40px;background:#f5f5f5}
+.card{background:#fff;border-radius:12px;padding:30px;max-width:480px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.btn{padding:14px 32px;background:#3e6ae1;color:#fff;font-size:16px;font-weight:700;border-radius:8px;border:none;cursor:pointer;margin:12px 0}
+.btn:hover{background:#2952c0}
+.step{text-align:left;background:#fafafa;border-radius:8px;padding:14px;margin:10px 0;font-size:14px;line-height:1.6}
+.step b{color:#3e6ae1}
+#dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
+</style></head><body>
+<div class="card">
+  <h2 style="margin-bottom:4px">DocGen Keep-Alive</h2>
+  <p style="color:#888;font-size:13px">Token auto-refresh toutes les 45 min</p>
+  
+  <div style="margin:20px 0">
+    <span id="dot" style="background:#999"></span>
+    <span id="status" style="font-size:18px">Checking...</span>
+  </div>
+
+  <button class="btn" onclick="copyScript()">Copier le script</button>
+  <div id="copied" style="color:#28a745;font-size:13px;display:none">Copie !</div>
+
+  <div class="step"><b>1.</b> Cliquez <b>Copier le script</b></div>
+  <div class="step"><b>2.</b> Allez sur <a href="https://warpbilling.tesla.com" target="_blank" style="color:#3e6ae1">warpbilling.tesla.com</a></div>
+  <div class="step"><b>3.</b> F12 → Console → <b>Ctrl+V</b> → Enter</div>
+  <div class="step"><b>4.</b> Cliquez un RN → le titre passe <b>[DocGen OK]</b></div>
+  <div class="step"><b>5.</b> Laissez l'onglet ouvert — auto-refresh toutes les 45 min !</div>
+</div>
+<script>
+var SCRIPT = "(function(){var o=XMLHttpRequest.prototype.setRequestHeader,t={};XMLHttpRequest.prototype.setRequestHeader=function(k,v){t[k.toLowerCase()]=v;o.call(this,k,v)};function send(){if(t.authorization&&t.token){fetch('http://localhost:3000/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({docgenAuth:t.authorization,docgenToken:t.token})}).then(function(){document.title='[DocGen OK] '+new Date().toLocaleTimeString();console.log('DocGen token sent!')}).catch(function(){})}}setInterval(function(){if(t.authorization&&t.token)send()},2000);setInterval(function(){t={};var s=document.querySelector('input[placeholder*=\"Search\"]');if(s){s.value='RN127434210';s.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(function(){s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:13,bubbles:true}))},500)}console.log('DocGen auto-refresh...')},45*60*1000);document.title='[DocGen Keep-Alive ON]';console.log('DocGen Keep-Alive ON - cliquez un RN')})()";
+
+function copyScript() {
+  navigator.clipboard.writeText(SCRIPT).then(function() {
+    document.getElementById('copied').style.display = 'block';
+    setTimeout(function() { document.getElementById('copied').style.display = 'none'; }, 3000);
+  });
+}
+
+function checkStatus() {
+  fetch('/api/auth/status').then(function(r){return r.json()}).then(function(j) {
+    var d = document.getElementById('dot');
+    var s = document.getElementById('status');
+    if (j.docgenMinLeft > 10) {
+      d.style.background = '#28a745'; s.textContent = 'Token OK (' + j.docgenMinLeft + ' min)'; s.style.color = '#28a745';
+    } else if (j.docgenMinLeft > 0) {
+      d.style.background = '#f0ad4e'; s.textContent = 'Expiring (' + j.docgenMinLeft + ' min)'; s.style.color = '#f0ad4e';
+    } else {
+      d.style.background = '#dc3545'; s.textContent = 'Expired!'; s.style.color = '#dc3545';
+    }
+  });
+}
+checkStatus();
+setInterval(checkStatus, 30000);
+</script>
+</body></html>

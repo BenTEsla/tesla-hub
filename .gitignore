@@ -1,0 +1,16 @@
+node_modules/
+server/scans/*.pdf
+server/scans/processed/
+server/downloads/
+server/chrome-profile/
+server/data/tradein-tracking.json
+server/tokens.json
+server/print-status.json
+*.zip
+fix-*.cjs
+import-*.cjs
+content-v[0-9].js
+content-v1[0-1].js
+bookmarklet-*.txt
+server/data/bi_debug.png
+server/data/ziplabs_datasets.json
