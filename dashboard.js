@@ -76,12 +76,14 @@
   +'.title-row{padding:24px 32px 0;display:flex;align-items:center}'
   +'.ttl{font-size:32px;font-weight:500;color:#f4f4f5;line-height:40px}'
   +'#mainView,#arrView,#stockView,#tiView,#csatView{padding-top:20px}'
+  +'#arrView>div,#stockView>div,#tiView>div,#csatView>div{padding-top:0!important}'
+  +'#arrView>div>div:first-child,#stockView>div>div:first-child,#tiView>div>div:first-child,#csatView>div>div:first-child{margin-top:0!important}'
 
   // TABS (hidden - replaced by sidebar)
   +'.tabs{display:none}'
 
   // STATS
-  +'.srow{display:flex;gap:12px;margin:0 32px 20px;align-items:stretch}'
+  +'.srow{display:flex;gap:12px;margin:0 32px 16px;align-items:stretch}'
   +'.sb{display:inline-flex;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(12px)}'
   +'.si{display:flex;flex-direction:column;align-items:center;padding:20px 26px 14px;cursor:pointer;transition:all .15s;position:relative;min-width:110px;height:120px}'
   +'.si:not(:last-child)::after{content:"";position:absolute;right:0;top:16px;bottom:16px;width:1px;background:rgba(255,255,255,.08)}'
