@@ -353,4 +353,3 @@
   w.document.close();
   } // end startHub
 })();
-

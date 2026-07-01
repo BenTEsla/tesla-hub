@@ -930,7 +930,7 @@ app.post('/api/bi/stock/upload', express.text({ type: '*/*', limit: '5mb' }), (r
 app.get('/api/tab/tradein', (req, res) => {
   res.send('<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20)">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-    + '<h2 style="margin:0;font-size:20px">Trade-In Tracking</h2>'
+    + '<h2 style="margin:0;font-size:20px;display:none">Trade-In Tracking</h2>'
     + '<div style="display:flex;gap:8px">'
     + '<button onclick="ENRICHTI()" style="padding:6px 14px;background:#f0ad4e;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Enrich</button>'
     + '<button onclick="TRIGGERSCAN(this)" style="padding:6px 14px;background:#9c27b0;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Scan</button>'
@@ -1126,7 +1126,6 @@ app.get('/api/tab/arrivals', (req, res) => {
 
 app.get('/api/tab/stock', (req, res) => {
   res.send('<div style="padding:24px;font-family:var(--tds-font-family-latin-text, \'Universal Sans Text\', -apple-system, Arial, sans-serif);color:var(--tds-color--foreground-high-contrast, #171a20)">'
-    + '<h2 style="margin:0 0 20px;font-size:20px">Stock</h2>'
     + '<div id="stockContent"><div style="text-align:center;padding:60px;color:#999">Loading...</div></div>'
     + '</div>');
 });
