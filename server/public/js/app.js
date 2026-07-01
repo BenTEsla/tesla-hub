@@ -1171,12 +1171,19 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   el.classList.add("on");
-  var titles = ["Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT"];
+  var titles = ["Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch"];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
-  STAB(idx, null);
+  // Dispatch (idx=5) shows the main view with dispatch mode
+  if (idx === 5) {
+    STAB(0, null);
+    // Trigger dispatch if function exists
+    if (typeof SHOWDISPATCH === 'function') SHOWDISPATCH();
+  } else {
+    STAB(idx, null);
+  }
 }
 
 /* ============================================
