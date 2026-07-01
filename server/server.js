@@ -1142,6 +1142,112 @@ app.get('/api/config', (req, res) => {
 });
 
 // ============================================================
+// DASHBOARD LIVE: Pre-generate the full dashboard HTML
+// ============================================================
+app.get('/dashboard-live', (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '..', 'content-v10.js');
+    let script = fs.readFileSync(scriptPath, 'utf8');
+    
+    const hub = config.hubs[config.defaultHub];
+    const userId = tokens.userId || '428058';
+    
+    // Patch 1: Replace token check
+    script = script.replace(
+      /var tk=\(localStorage[\s\S]*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/,
+      'var at="proxy";var ui="' + userId + '"'
+    );
+    
+    // Patch 2: Replace server detect with direct call
+    script = script.replace(
+      /\/\/ Server URL[\s\S]*?\(async function\(\)\{[\s\S]*?startHub\(\);\s*\}\)\(\);/,
+      'var SERVER="";startHub();'
+    );
+    
+    // Patch 3: Replace window.open with capture
+    script = script.replace(
+      /var w=window\.open\('','_blank'\);\s*if\(!w\)\{alert\('Popup blocked!'\);return\}\s*w\.document\.open\(\);\s*w\.document\.write\(/,
+      'var _html=('
+    );
+    script = script.replace(/w\.document\.close\(\)/, 'window.__dashHTML=_html');
+    
+    // Patch 4: Replace DRO API
+    script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
+    
+    // Patch 5: trtId
+    script = script.replace(/trtId:28498/g, 'trtId:' + hub.trtId);
+    
+    // Patch 6: CES
+    if (hub.ces) {
+      const cesNames = JSON.stringify(hub.ces.map(c => c.name));
+      script = script.replace(
+        /var CES=\['Ben Daubin','Sacha Villa','Sophie MACE'\];/,
+        'var CES=' + cesNames + ';'
+      );
+    }
+    
+    // Execute to capture HTML
+    const vm = require('vm');
+    const sandbox = {
+      window: { __dashHTML: '' },
+      document: { addEventListener: function(){} },
+      localStorage: { getItem: function(){ return ''; }, setItem: function(){} },
+      alert: function(){},
+      setInterval: function(){},
+      setTimeout: function(){},
+      fetch: function(){ return Promise.resolve({ json: function(){ return {}; }, text: function(){ return ''; } }); }
+    };
+    
+    try {
+      vm.runInNewContext(script, sandbox, { timeout: 5000 });
+    } catch(e) {
+      // Expected - async code won't fully resolve
+    }
+    
+    let html = sandbox.window.__dashHTML || '';
+    
+    if (!html) {
+      // Fallback: extract HTML directly from the script string
+      const writeStart = script.indexOf("var _html=('") + 12;
+      const writeEnd = script.indexOf("window.__dashHTML=_html");
+      if (writeStart > 12 && writeEnd > writeStart) {
+        const htmlExpr = script.substring(writeStart, writeEnd - 3);
+        try {
+          // Create a function context with the needed variables
+          const at = 'proxy', ui = userId, SERVER = '';
+          const CES = hub.ces ? hub.ces.map(c => c.name) : ['Ben Daubin','Sacha Villa','Sophie MACE'];
+          const CFG = { trtId: hub.trtId, cc: 'FR' };
+          const dates = [];
+          for (let di = 0; di < 10 && dates.length < 7; di++) {
+            const dd = new Date(Date.now() + di * 864e5);
+            if (dd.getDay() === 0) continue;
+            const lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
+            const fD = dd.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            const iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+            dates.push('<option value="' + iD + '">' + lbl + ' - ' + fD + '</option>');
+          }
+          html = eval(htmlExpr);
+        } catch(e) {
+          console.log('Dashboard HTML eval error:', e.message);
+        }
+      }
+    }
+    
+    if (html) {
+      // Add favicon
+      html = html.replace('<head>', '<head><link rel="icon" type="image/svg+xml" href="/favicon.svg" />');
+      res.set('Content-Type', 'text/html');
+      res.send(html);
+    } else {
+      res.redirect('/dashboard.html');
+    }
+  } catch(e) {
+    console.log('Dashboard live error:', e.message);
+    res.redirect('/dashboard.html');
+  }
+});
+
+// ============================================================
 // PROXY: DRO API
 // ============================================================
 app.all('/api/dro/*', async (req, res) => {
