@@ -1,47 +1,44 @@
 <!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
-<title>DASH - Launching...</title>
+<title>DASH - Loading...</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<style>
-body{background:#0f0f13;color:#f4f4f5;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-.msg{text-align:center}
-h1{font-size:24px;margin-bottom:12px}
-p{color:#71717a;font-size:14px}
-</style>
+<style>body{background:#0f0f13;color:#f4f4f5;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}h1{font-size:20px}</style>
 </head>
 <body>
-<div class="msg">
-<h1>Launching DASH...</h1>
-<p>If nothing happens, allow popups for this site.</p>
-</div>
+<h1>Loading DASH...</h1>
 <script>
 (async function(){
   var auth = await fetch('/api/auth/status').then(r=>r.json());
   if(!auth.hasDro){window.location='/';return}
+  var cfg = await fetch('/api/config').then(r=>r.json());
 
   var script = await fetch('/api/bookmarklet.js?t='+Date.now()).then(r=>r.text());
 
-  // Patch: inject proxy token instead of localStorage
+  // Patch token
   script = script.replace(
     /var tk=\(localStorage[\s\S]*?if\(!at\|\|!ui\)\{alert\('Token not found!'\);return\}/,
     'var at="proxy";var ui="'+auth.userId+'"'
   );
-
-  // Patch: skip server detect, use empty SERVER (relative URLs via proxy)
+  // Patch server detect -> just call startHub
   script = script.replace(
     /\/\/ Server URL[\s\S]*?\(async function\(\)\{[\s\S]*?startHub\(\);\s*\}\)\(\);/,
-    'var SERVER="";startHub();'
+    'var SERVER="http://localhost:3000";startHub();'
   );
-
-  // Patch: DRO API -> proxy
-  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, '/api/dro');
-
-  // Patch: trtId
-  var cfg = await fetch('/api/config').then(r=>r.json());
+  // Patch DRO API
+  script = script.replace(/https:\/\/mytdeliveryopsapi\.tesla\.com\/api/g, 'http://localhost:3000/api/dro');
+  // Patch trtId
   script = script.replace(/trtId:28498/g, 'trtId:'+cfg.hub.trtId);
 
-  // Execute — opens popup naturally (like bookmarklet)
+  // Capture the HTML instead of opening popup
+  var capturedHTML = '';
+  script = script.replace(
+    /var w=window\.open\('','_blank'\);\s*if\(!w\)\{alert\('Popup blocked!'\);return\}\s*w\.document\.open\(\);\s*w\.document\.write\(/,
+    'var _html=('
+  );
+  script = script.replace(/w\.document\.close\(\)/, 'document.open();document.write(_html);document.close()');
+
+  // Execute to capture HTML then write it
   eval(script);
 })();
 </script>
