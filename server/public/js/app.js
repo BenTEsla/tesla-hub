@@ -1234,6 +1234,27 @@ function STAB(idx, btn) {
     }
   }
 
+  // Populate CES presence checkboxes
+  if (idx === 6) {
+    var cpBlock = document.getElementById('cesPresence');
+    if (cpBlock && !cpBlock.innerHTML.trim()) {
+      var cpHtml = '';
+      CES.forEach(function(c, i) {
+        var first = c.split(' ')[0];
+        cpHtml += '<div style="display:flex;flex-direction:column;gap:6px;padding:12px 16px;border:1px solid rgba(128,128,128,.15);border-radius:10px;min-width:140px">'
+          + '<div style="font-weight:600;font-size:14px">' + first + '</div>'
+          + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'
+          + '<input type="checkbox" checked id="cesPresent' + i + '" style="width:16px;height:16px;accent-color:#22c55e"> Present'
+          + '</label>'
+          + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'
+          + '<input type="checkbox" id="cesAdmin' + i + '" style="width:16px;height:16px;accent-color:#f59e0b"> Admin'
+          + '</label>'
+          + '</div>';
+      });
+      cpBlock.innerHTML = cpHtml;
+    }
+  }
+
   if (idx === 1 && !document.getElementById("mainView").dataset.loaded) {
     document.getElementById("mainView").dataset.loaded = "1";
     L();
@@ -1326,14 +1347,30 @@ function RUNDISPATCH(mode) {
       return { name: d.CustomerName || '?', rn: d.ReferenceNumber, time: t, model: d.VehicleModel || '', host: d.HostName || '', isPM: isPM, weight: weight, isEnt: isEnt, hasTI: hasTI };
     }).sort(function(a, b) { return a.time.localeCompare(b.time); });
 
+    // Filter CES by presence + apply admin penalty
+    var activeCES = [];
+    var adminPenalty = {};
+    CES.forEach(function(c, i) {
+      var present = document.getElementById('cesPresent' + i);
+      var admin = document.getElementById('cesAdmin' + i);
+      if (!present || present.checked) {
+        activeCES.push(c);
+        adminPenalty[c] = (admin && admin.checked) ? 0.5 : 0;
+      }
+    });
+
+    if (!activeCES.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">No CES selected. Check at least one as Present.</div>';
+      return;
+    }
+
     // Auto-assign by weight balancing
     var cesLoad = {};
-    CES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: 0, items: [] }; });
+    activeCES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: adminPenalty[c] || 0, items: [] }; });
     deliveries.forEach(function(d) {
-      // Find CES with lowest load for this slot
       var slot = d.isPM ? 'pm' : 'am';
-      var minCES = CES[0], minLoad = Infinity;
-      CES.forEach(function(c) {
+      var minCES = activeCES[0], minLoad = Infinity;
+      activeCES.forEach(function(c) {
         if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
       });
       d.assignedTo = minCES;
@@ -1343,8 +1380,8 @@ function RUNDISPATCH(mode) {
     });
 
     // Render grid
-    var html = '<div style="display:grid;grid-template-columns:repeat(' + CES.length + ',1fr);gap:16px">';
-    CES.forEach(function(c) {
+    var html = '<div style="display:grid;grid-template-columns:repeat(' + activeCES.length + ',1fr);gap:16px">';
+    activeCES.forEach(function(c) {
       var load = cesLoad[c];
       var firstName = c.split(' ')[0];
       html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(128,128,128,.15);border-radius:12px;padding:16px">';
