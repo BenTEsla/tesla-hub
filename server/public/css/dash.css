@@ -1013,10 +1013,15 @@ tr:nth-child(even) td {
   background: rgba(255, 255, 255, .04);
   border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 12px;
-  padding: 20px;
+  padding: 20px 12px;
   text-align: center;
   backdrop-filter: blur(12px);
   transition: transform .15s, box-shadow .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
 }
 
 .dash-card:hover {
@@ -1025,12 +1030,13 @@ tr:nth-child(even) td {
 }
 
 .dash-card-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--tds-color--foreground-low-contrast, #71717a);
   text-transform: uppercase;
   letter-spacing: .5px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
 .dash-card-value {
@@ -1041,9 +1047,10 @@ tr:nth-child(even) td {
 }
 
 .dash-card-sub {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--tds-color--foreground-low-contrast, #52525b);
-  margin-top: 8px;
+  margin-top: 6px;
+  min-height: 14px;
 }
 
 .dash-green { color: #22c55e; }
