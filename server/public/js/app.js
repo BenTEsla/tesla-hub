@@ -2273,15 +2273,49 @@ function LOADDASH() {
     var arrived = j.data ? j.data.arrived : [];
     var confident = j.data ? j.data.confident : [];
     var preliminary = j.data ? j.data.preliminary : [];
+
+    // Filter to current calendar week (Mon-Sun)
+    var now = new Date();
+    var dayOfWeek = now.getDay(); // 0=Sun,1=Mon..6=Sat
+    var diffToMon = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+    var monDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMon);
+    var sunDate = new Date(monDate.getFullYear(), monDate.getMonth(), monDate.getDate() + 6);
+    var monTs = monDate.getTime();
+    var sunTs = sunDate.getTime();
+
+    // Build a full Mon-Sun map with zeroes, then overlay CSV data
+    var weekMap = {};
+    for (var wd = 0; wd < 7; wd++) {
+      var dd = new Date(monDate.getFullYear(), monDate.getMonth(), monDate.getDate() + wd);
+      var key = ('0' + dd.getDate()).slice(-2) + '/' + ('0' + (dd.getMonth()+1)).slice(-2);
+      weekMap[key] = { a: 0, c: 0, p: 0 };
+    }
+    dates.forEach(function(d, i) {
+      var parts = d.split('/');
+      if (parts.length === 2) {
+        var dateObj = new Date(now.getFullYear(), parseInt(parts[1])-1, parseInt(parts[0]));
+        var ts = dateObj.getTime();
+        if (ts >= monTs && ts <= sunTs) {
+          weekMap[d] = { a: arrived[i] || 0, c: confident[i] || 0, p: preliminary[i] || 0 };
+        }
+      }
+    });
+    var weekDates = Object.keys(weekMap);
+    var weekArr = [], weekConf = [], weekPrel = [];
+    weekDates.forEach(function(k) {
+      weekArr.push(weekMap[k].a);
+      weekConf.push(weekMap[k].c);
+      weekPrel.push(weekMap[k].p);
+    });
+
     var maxVal = 1;
-    dates.forEach(function(_, i) {
-      var total = (arrived[i] || 0) + (confident[i] || 0) + (preliminary[i] || 0);
+    weekDates.forEach(function(_, i) {
+      var total = (weekArr[i] || 0) + (weekConf[i] || 0) + (weekPrel[i] || 0);
       if (total > maxVal) maxVal = total;
     });
     var html = '';
-    // Show only next 7 calendar days
-    dates.slice(0, 7).forEach(function(d, i) {
-      var a = arrived[i] || 0, c = confident[i] || 0, p = preliminary[i] || 0;
+    weekDates.forEach(function(d, i) {
+      var a = weekArr[i] || 0, c = weekConf[i] || 0, p = weekPrel[i] || 0;
       var total = a + c + p;
       var aH = Math.max(Math.round((a / maxVal) * 140), a > 0 ? 4 : 0);
       var cH = Math.max(Math.round((c / maxVal) * 140), c > 0 ? 4 : 0);
@@ -2337,6 +2371,15 @@ function LOADDASH() {
     var onSite = (j.tracking || []).filter(function(t) { return !t.outDate; }).length;
     document.getElementById("dashTradeIn").textContent = onSite;
     document.getElementById("dashTradeInSub").textContent = 'vehicles on site';
+  }).catch(function() {});
+
+  // 6. Load Due Bills count
+  fetch(SERVER + '/api/duebills').then(function(r) { return r.json(); }).then(function(bills) {
+    var open = bills.filter(function(b) { return b.status !== 'Resolved'; }).length;
+    var el = document.getElementById("dashDueBills");
+    if (el) el.textContent = open;
+    var sub = document.getElementById("dashDueBillsSub");
+    if (sub) sub.textContent = open > 0 ? open + ' open' : 'all clear';
   }).catch(function() {});
 }
 
