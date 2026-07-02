@@ -1665,13 +1665,18 @@ function LOADDASH() {
       if (total > maxVal) maxVal = total;
     });
     var html = '';
-    dates.slice(0, 7).forEach(function(d, i) {
+    // Show up to 8 dates, skip days with 0
+    var shown = 0;
+    dates.forEach(function(d, i) {
+      if (shown >= 8) return;
       var a = arrived[i] || 0, c = confident[i] || 0, p = preliminary[i] || 0;
       var total = a + c + p;
-      var aH = Math.round((a / maxVal) * 140);
-      var cH = Math.round((c / maxVal) * 140);
-      var pH = Math.round((p / maxVal) * 140);
-      var label = d.length > 5 ? d.substring(0, 5) : d;
+      if (total === 0 && shown > 2) return; // skip empty days after first few
+      shown++;
+      var aH = Math.max(Math.round((a / maxVal) * 140), a > 0 ? 4 : 0);
+      var cH = Math.max(Math.round((c / maxVal) * 140), c > 0 ? 4 : 0);
+      var pH = Math.max(Math.round((p / maxVal) * 140), p > 0 ? 4 : 0);
+      var label = d;
       html += '<div class="dash-bar-group">'
         + '<div class="dash-bar-value">' + total + '</div>'
         + '<div style="display:flex;flex-direction:column-reverse;width:100%;align-items:center">'
