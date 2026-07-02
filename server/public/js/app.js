@@ -1298,6 +1298,65 @@ function NAVCALWEEK(dir) {
   LOADCALENDAR();
 }
 
+function SHOWCALTODAY() {
+  var now = new Date();
+  var todayLabel = now.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+  // Find today's day index in _calAllDays
+  var todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  var dayIdx = -1;
+  for (var i = 0; i < _calAllDays.length; i++) {
+    if (_calAllDays[i].date === todayStr) { dayIdx = i; break; }
+  }
+  if (dayIdx === -1) {
+    // Today not in current week - reset to this week first
+    _calWeekOffset = 0;
+    LOADCALENDAR();
+    setTimeout(SHOWCALTODAY, 2000);
+    return;
+  }
+  var day = _calAllDays[dayIdx];
+  var allItems = [];
+  Object.keys(day.slots).sort().forEach(function(t) {
+    day.slots[t].forEach(function(item) {
+      allItems.push({time: t, name: item.name, rn: item.rn, vin6: item.vin6, model: item.model, host: item.host, status: item.status});
+    });
+  });
+
+  var panel = document.getElementById('calDetailOverlay');
+  var title = document.getElementById('calDetailTitle');
+  var body = document.getElementById('calDetailBody');
+  title.textContent = 'Today — ' + todayLabel + ' (' + allItems.length + ' appointments)';
+  panel.style.display = 'flex';
+
+  fetch(SERVER + '/api/notes').then(function(r) { return r.json(); }).then(function(notes) {
+    var html = '<table>';
+    html += '<thead><tr>';
+    html += '<th>Time</th><th>Customer</th><th>RN</th><th>VIN</th><th>Model</th><th>Host</th><th>Status</th><th style="min-width:200px">Notes</th>';
+    html += '</tr></thead><tbody>';
+    if (!allItems.length) {
+      html += '<tr><td colspan="8" style="text-align:center;padding:30px;color:#71717a">No appointments today</td></tr>';
+    }
+    allItems.forEach(function(it) {
+      var dotColor = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : it.status === 'Scheduled' ? '#3b82f6' : it.status === 'Delivered' ? '#71717a' : '#ef4444';
+      var note = notes[it.rn] || '';
+      html += '<tr>';
+      html += '<td style="font-weight:600;font-size:15px">' + it.time + '</td>';
+      html += '<td style="font-weight:600">' + it.name + '</td>';
+      html += '<td><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td style="font-family:monospace;font-size:13px;color:#71717a">' + (it.vin6 || '-') + '</td>';
+      html += '<td>' + it.model + '</td>';
+      html += '<td>' + (it.host || '-') + '</td>';
+      html += '<td><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
+      html += '<td><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  }).catch(function() {
+    body.innerHTML = '<div style="color:#ef4444">Error loading</div>';
+  });
+}
+
 /* ============================================
    CALENDAR: Weekly schedule grid
    ============================================ */
