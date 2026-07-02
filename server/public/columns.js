@@ -48,8 +48,10 @@ function colSavePrefs() {
 // APPLY: show/hide columns + set widths
 // ======================================
 function colApply() {
+  var isWeekMode = typeof WKMODE !== 'undefined' && WKMODE;
   COL_KEYS.forEach(function(k) {
-    var vis = COL_CONFIG[k].visible;
+    // In week mode, always show date column
+    var vis = (k === 'date' && isWeekMode) ? true : COL_CONFIG[k].visible;
     var w = COL_CONFIG[k].width;
     // Header
     var th = document.querySelector('th[data-col="' + k + '"]');
