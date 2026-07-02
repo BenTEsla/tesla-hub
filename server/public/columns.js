@@ -50,18 +50,18 @@ function colSavePrefs() {
 function colApply() {
   var isWeekMode = typeof WKMODE !== 'undefined' && WKMODE;
   COL_KEYS.forEach(function(k) {
-    // In week mode, always show date column
+    // In week mode, always show date column; otherwise use config
     var vis = (k === 'date' && isWeekMode) ? true : COL_CONFIG[k].visible;
     var w = COL_CONFIG[k].width;
     // Header
     var th = document.querySelector('th[data-col="' + k + '"]');
     if (th) {
-      th.style.display = vis ? '' : 'none';
+      th.style.display = vis ? 'table-cell' : 'none';
       if (vis) th.style.width = w + 'px';
     }
     // Body cells
     document.querySelectorAll('td[data-col="' + k + '"]').forEach(function(td) {
-      td.style.display = vis ? '' : 'none';
+      td.style.display = vis ? 'table-cell' : 'none';
     });
   });
 }

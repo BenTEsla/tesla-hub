@@ -615,10 +615,8 @@ function RST() {
    SHOW/HIDE DATE COLUMN (week mode)
    ============================================ */
 function showDateCol(show) {
-  document.getElementById("thDate").style.display = show ? "table-cell" : "none";
-  document.querySelectorAll(".dtc").forEach(function(c) {
-    c.style.display = show ? "table-cell" : "none";
-  });
+  // Now handled by colApply() which checks WKMODE
+  if (typeof colApply === 'function') colApply();
 }
 
 /* ============================================
