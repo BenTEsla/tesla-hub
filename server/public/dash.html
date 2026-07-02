@@ -127,18 +127,22 @@
     </div>
     <div id="tabActions" style="position:relative;margin-left:16px"></div>
     <!-- Header controls (TCP-style) -->
-    <div style="display:flex;align-items:center;gap:16px;margin-left:20px">
-      <a href="mailto:bdaubin@tesla.com?subject=DASH%20Bug%20Report&body=Page:%20%0ABug:%20%0ASteps:%20" title="Report a bug" style="color:inherit;opacity:.5;display:flex;align-items:center;gap:4px;text-decoration:none;font-size:13px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Support
-      </a>
-      <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.5;display:flex;align-items:center;padding:4px;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
-        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      </button>
-      <div style="display:flex;align-items:center;gap:6px;font-size:13px;opacity:.7">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span id="userName">Ben Daubin</span>
+    <div style="text-align:right;margin-left:20px">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-bottom:4px">
+        <a href="mailto:bdaubin@tesla.com?subject=DASH%20Bug%20Report&body=Page:%20%0ABug:%20%0ASteps:%20" title="Report a bug" style="color:inherit;opacity:.5;display:flex;align-items:center;gap:4px;text-decoration:none;font-size:13px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Support
+        </a>
+        <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.5;display:flex;align-items:center;padding:4px;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div style="display:flex;align-items:center;gap:6px;font-size:13px;opacity:.7">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="userName">Ben Daubin</span>
+        </div>
       </div>
+      <div id="dashGreetingHeader" style="font-size:13px;color:inherit;opacity:.5;font-weight:400"></div>
+      <div style="margin-top:2px"><span id="dashDateHeader" style="font-size:20px;font-weight:500;color:inherit"></span><span style="opacity:.3;margin:0 8px;font-size:20px">|</span><span id="dashTimeHeader" style="font-size:20px;font-weight:500;color:inherit;font-variant-numeric:tabular-nums"></span></div>
     </div>
   </div>
 
