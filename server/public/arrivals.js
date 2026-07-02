@@ -24,6 +24,20 @@ function renderArrivals() {
   el = document.getElementById("arrTodayDetail"); if (el) el.textContent = s.arrivedTotal + " arrived - " + (d.confident ? d.confident.reduce(function(a,b){return a+b},0) : 0) + " confident ETA";
   el = document.getElementById("arrWeekPct"); if (el) el.innerHTML = "Arrived: " + s.arrivedTotal + " | In Transit: " + s.inTransit;
 
+  // Last update badge
+  if (j.lastUpdate) {
+    var updEl = document.getElementById("arrLastUpdate");
+    if (!updEl) {
+      updEl = document.createElement("div");
+      updEl.id = "arrLastUpdate";
+      updEl.style.cssText = "font-size:12px;color:#71717a;text-align:right;padding:0 0 8px";
+      var parent = document.getElementById("arrTransit");
+      if (parent) parent.closest("div[style]").parentElement.parentElement.insertBefore(updEl, parent.closest("div[style]").parentElement);
+    }
+    var d2 = new Date(j.lastUpdate);
+    updEl.textContent = "Data updated: " + d2.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + " " + d2.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"});
+  }
+
   // Chart
   var ch = document.getElementById("arrDailyChart");
   if (ch && d.dates && d.dates.length > 1) {

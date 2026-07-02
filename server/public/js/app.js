@@ -1561,6 +1561,20 @@ function LOADCSAT() {
         ch.innerHTML = html;
       }
     }
+
+    // Last update badge for CSAT
+    if (j.lastUpdate) {
+      var csatUpd = document.getElementById("csatLastUpdate");
+      if (!csatUpd) {
+        csatUpd = document.createElement("div");
+        csatUpd.id = "csatLastUpdate";
+        csatUpd.style.cssText = "font-size:12px;color:#71717a;text-align:right;padding:8px 20px";
+        var csatView = document.getElementById("csatView");
+        if (csatView && csatView.firstChild) csatView.firstChild.insertBefore(csatUpd, csatView.firstChild.firstChild);
+      }
+      var ud = new Date(j.lastUpdate);
+      csatUpd.textContent = "Data updated: " + ud.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + " " + ud.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"});
+    }
   }).catch(function() {});
 }
 
