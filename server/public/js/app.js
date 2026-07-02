@@ -1201,6 +1201,21 @@ function STAB(idx, btn) {
     LOADDASH();
   }
 
+  // Populate dispatch date picker
+  if (idx === 6) {
+    var dp = document.getElementById('dispatchDate');
+    if (dp && !dp.options.length) {
+      for (var ddi = 0; ddi < 10 && dp.options.length < 7; ddi++) {
+        var ddd = new Date(Date.now() + ddi * 864e5);
+        if (ddd.getDay() === 0) continue;
+        var dlbl = ddi === 0 ? 'Today' : ddi === 1 ? 'Tomorrow' : 'D+' + ddi;
+        var dfD = ddd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        var diD = ddd.getFullYear() + '-' + String(ddd.getMonth() + 1).padStart(2, '0') + '-' + String(ddd.getDate()).padStart(2, '0');
+        dp.add(new Option(dlbl + ' - ' + dfD, diD));
+      }
+    }
+  }
+
   if (idx === 1 && !document.getElementById("mainView").dataset.loaded) {
     document.getElementById("mainView").dataset.loaded = "1";
     L();
