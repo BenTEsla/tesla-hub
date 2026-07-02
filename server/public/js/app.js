@@ -1299,12 +1299,38 @@ function LOADDISPATCHDATE() {
 
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
 
+  // Step 1: Get delivery list
   fetch(BASE + "/deliveryops/Customers/Dashboard", {
     method: "POST", headers: h,
     body: JSON.stringify({fromDeliveryDate: ds, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
   }).then(function(r) { return r.json(); }).then(function(dash) {
     var data = (dash.Data || []);
-    _dispatchData = data;
+
+    if (!data.length) {
+      _dispatchData = [];
+      container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>';
+      return;
+    }
+
+    // Step 2: Enrich with Advisor API (has Trade-In, Enterprise details)
+    var rns = data.map(function(d) { return d.ReferenceNumber; });
+    return fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+      method: "POST", headers: h,
+      body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:rns,Countries:[]}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+    }).then(function(r) { return r.json(); }).then(function(adv) {
+      // Merge: use advisor data (richer) with customer data (has schedule)
+      var advMap = {};
+      ((adv.Data && adv.Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
+      data.forEach(function(d) {
+        var a = advMap[d.ReferenceNumber];
+        if (a) {
+          d.TradeInActionStatus = a.TradeInActionStatus;
+          d.IsEnterpriseOrder = a.IsEnterpriseOrder;
+          d.VehicleModel = a.VehicleModel || d.VehicleModel;
+          d.CustomerName = a.CustomerName || d.CustomerName;
+        }
+      });
+      _dispatchData = data;
 
     if (!data.length) {
       container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>';
@@ -1335,6 +1361,7 @@ function LOADDISPATCHDATE() {
 
     container.innerHTML = html;
     if (previewBtn) previewBtn.disabled = false;
+    }); // close advisor .then
   }).catch(function(e) {
     container.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444">Error: ' + e.message + '</div>';
   });
