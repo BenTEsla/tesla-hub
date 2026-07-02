@@ -1177,7 +1177,7 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
-  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
+  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up", "Calendar"];
   var subtitles = [
     "Overview of today's delivery operations.",
     "Manage and track scheduled deliveries.",
@@ -1186,7 +1186,8 @@ function NAV(idx, el) {
     "Track trade-in vehicles on site.",
     "Customer satisfaction scores and CES performance.",
     "Assign deliveries to CES team members with balanced workload distribution.",
-    "Find deliveries from upcoming days that can be pulled forward."
+    "Find deliveries from upcoming days that can be pulled forward.",
+    "Weekly delivery schedule overview."
   ];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
@@ -1214,6 +1215,8 @@ function STAB(idx, btn) {
   document.getElementById("csatView").style.display = idx === 5 ? "" : "none";
   document.getElementById("dispatchView").style.display = idx === 6 ? "" : "none";
   document.getElementById("pullupView").style.display = idx === 7 ? "" : "none";
+  var calView = document.getElementById("calendarView");
+  if (calView) calView.style.display = idx === 8 ? "" : "none";
 
   if (idx === 0 && typeof LOADDASH === 'function') {
     LOADDASH();
@@ -1247,6 +1250,10 @@ function STAB(idx, btn) {
     LOADDISPATCHDATE();
   }
 
+  if (idx === 8 && typeof LOADCALENDAR === 'function') {
+    LOADCALENDAR();
+  }
+
   if (idx === 1 && !document.getElementById("mainView").dataset.loaded) {
     document.getElementById("mainView").dataset.loaded = "1";
     L();
@@ -1274,8 +1281,92 @@ function STAB(idx, btn) {
     fetch(SERVER + "/api/tab/tradein").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
-    }).catch(function() {});
+  }).catch(function() {});
+}
+
+/* ============================================
+   CALENDAR: Weekly schedule grid
+   ============================================ */
+function LOADCALENDAR() {
+  var container = document.getElementById('calendarContent');
+  container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading week...</div>';
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+
+  // Get Monday of current week
+  var now = new Date();
+  var mon = new Date(now);
+  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+
+  // Fetch 6 days (Mon-Sat)
+  var days = [];
+  var promises = [];
+  for (var i = 0; i < 6; i++) {
+    var d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    var label = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    days.push({date: ds, label: label, slots: {}});
+
+    (function(idx, dateStr) {
+      promises.push(
+        fetch(BASE + "/deliveryops/Customers/Dashboard", {
+          method: "POST", headers: h,
+          body: JSON.stringify({fromDeliveryDate: dateStr, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+        }).then(function(r) { return r.json(); }).then(function(j) {
+          (j.Data || []).forEach(function(c) {
+            var tm = (c.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (tm) {
+              var hr = parseInt(tm[1]);
+              var ampm = tm[3].toUpperCase();
+              if (ampm === 'PM' && hr < 12) hr += 12;
+              if (ampm === 'AM' && hr === 12) hr = 0;
+              var slot = String(hr).padStart(2,'0') + ':' + tm[2];
+              if (!days[idx].slots[slot]) days[idx].slots[slot] = [];
+              days[idx].slots[slot].push(c.CustomerName || '?');
+            }
+          });
+        }).catch(function() {})
+      );
+    })(i, ds);
   }
+
+  Promise.all(promises).then(function() {
+    // Collect all time slots
+    var allSlots = {};
+    days.forEach(function(d) { Object.keys(d.slots).forEach(function(s) { allSlots[s] = true; }); });
+    var times = Object.keys(allSlots).sort();
+
+    // If no slots, show default range
+    if (!times.length) times = ['09:00','09:30','10:00','10:30','11:00','11:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+
+    // Build grid
+    var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+    html += '<thead><tr><th style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
+    days.forEach(function(d) {
+      var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
+      html += '<th style="padding:10px 12px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    times.forEach(function(t) {
+      html += '<tr>';
+      html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
+      days.forEach(function(d) {
+        var count = d.slots[t] ? d.slots[t].length : 0;
+        var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
+        var color = count === 0 ? '#71717a' : count <= 2 ? '#22c55e' : count <= 4 ? '#3b82f6' : '#f59e0b';
+        var title = d.slots[t] ? d.slots[t].join(', ') : '';
+        html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:' + (count > 0 ? 'pointer' : 'default') + '" title="' + title + '">';
+        html += count > 0 ? '<span style="font-weight:700;color:' + color + '">' + count + '</span>' : '<span style="color:#d4d4d8">-</span>';
+        html += '</td>';
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  });
+}
 
   if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
     fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {
