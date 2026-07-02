@@ -166,6 +166,11 @@ function applyLight() {
     + '.sidebar-hbg:hover{color:#171a20!important}'
     + '.col-resize-handle{background:rgba(0,0,0,.15)!important}'
     + '.col-resize-handle:hover,.col-resize-handle:active{background:#3b82f6!important}'
+    + '.bt-p{background:rgba(59,130,246,.15)!important;color:#2563eb!important;border-color:rgba(59,130,246,.4)!important}'
+    + '.bt-p:hover{background:rgba(59,130,246,.25)!important}'
+    + '.bt-q{background:rgba(0,0,0,.04)!important;color:#52525b!important;border-color:rgba(0,0,0,.12)!important}'
+    + '.bt-q.on{background:rgba(59,130,246,.1)!important;color:#2563eb!important;border-color:rgba(59,130,246,.3)!important}'
+    + '.bt{border-color:rgba(0,0,0,.12)!important}'
   ;
   document.head.appendChild(s);
 }
