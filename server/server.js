@@ -46,7 +46,7 @@ app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0,
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
@@ -1152,6 +1152,54 @@ app.get('/api/notes/:rn', (req, res) => { res.json({ rn: req.params.rn, note: de
 app.post('/api/notes/:rn', (req, res) => {
   deliveryNotes[req.params.rn] = req.body.note || '';
   saveNotes();
+  res.json({ ok: true });
+});
+
+// ============================================================
+// DUE BILLS API
+// ============================================================
+const dueBillsFile = path.join(__dirname, 'data', 'due-bills.json');
+let dueBills = [];
+try { dueBills = JSON.parse(fs.readFileSync(dueBillsFile, 'utf8')); } catch(e) {}
+function saveDueBills() { fs.writeFileSync(dueBillsFile, JSON.stringify(dueBills, null, 2)); }
+
+app.get('/api/duebills', (req, res) => { res.json(dueBills); });
+
+app.post('/api/duebills', (req, res) => {
+  const bill = {
+    id: Date.now(),
+    rn: req.body.rn || '',
+    vin: req.body.vin || '',
+    customer: req.body.customer || '',
+    deliveryDate: req.body.deliveryDate || new Date().toISOString().split('T')[0],
+    issue: req.body.issue || '',
+    type: req.body.type || 'Cosmetic',
+    status: req.body.status || 'Open',
+    createdDate: new Date().toISOString().split('T')[0],
+    notes: req.body.notes || '',
+    ces: req.body.ces || ''
+  };
+  dueBills.push(bill);
+  saveDueBills();
+  res.json({ ok: true, bill });
+});
+
+app.put('/api/duebills/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const idx = dueBills.findIndex(b => b.id === id);
+  if (idx >= 0) {
+    Object.assign(dueBills[idx], req.body);
+    saveDueBills();
+    res.json({ ok: true, bill: dueBills[idx] });
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+app.delete('/api/duebills/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  dueBills = dueBills.filter(b => b.id !== id);
+  saveDueBills();
   res.json({ ok: true });
 });
 

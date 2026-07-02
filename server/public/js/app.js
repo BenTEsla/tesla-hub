@@ -1179,7 +1179,7 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
-  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up", "Calendar", "Vehicle Readiness", "SV & Holds"];
+  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up", "Calendar", "Vehicle Readiness", "SV & Holds", "Due Bills"];
   var subtitles = [
     "Overview of today's delivery operations.",
     "Manage and track scheduled deliveries.",
@@ -1191,7 +1191,8 @@ function NAV(idx, el) {
     "Find deliveries from upcoming days that can be pulled forward.",
     "Weekly delivery schedule overview.",
     "Vehicle preparation pipeline and readiness tracking.",
-    "Service visits and containment holds monitoring."
+    "Service visits and containment holds monitoring.",
+    "Track post-delivery defects and resolutions."
   ];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
@@ -1225,6 +1226,8 @@ function STAB(idx, btn) {
   if (vrsEl) vrsEl.style.display = idx === 9 ? "" : "none";
   var svholdsEl = document.getElementById("svholdsView");
   if (svholdsEl) svholdsEl.style.display = idx === 10 ? "" : "none";
+  var duebillsEl = document.getElementById("duebillsView");
+  if (duebillsEl) duebillsEl.style.display = idx === 11 ? "" : "none";
 
   if (idx === 0 && typeof LOADDASH === 'function') {
     LOADDASH();
@@ -1302,6 +1305,10 @@ function STAB(idx, btn) {
 
   if (idx === 10 && typeof LOADSVHOLDS === 'function') {
     LOADSVHOLDS();
+  }
+
+  if (idx === 11 && typeof LOADDUEBILLS === 'function') {
+    LOADDUEBILLS();
   }
 } // END OF STAB
 
@@ -2417,4 +2424,106 @@ function UPDATEHOST(rn, host) {
 function UPDATESTATUS(rn, status) {
   // TODO: Call DRO/TSS API to update appointment status
   console.log('Update status for', rn, '→', status);
+}
+
+/* ============================================
+   DUE BILLS: Track post-delivery defects
+   ============================================ */
+function LOADDUEBILLS() {
+  var container = document.getElementById('duebillsContent');
+
+  fetch(SERVER + '/api/duebills').then(function(r) { return r.json(); }).then(function(bills) {
+    var open = bills.filter(function(b) { return b.status === 'Open'; }).length;
+    var inProgress = bills.filter(function(b) { return b.status === 'Parts Ordered' || b.status === 'Scheduled'; }).length;
+    var resolved = bills.filter(function(b) { return b.status === 'Resolved'; }).length;
+
+    var html = '';
+
+    // Summary + Add button
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">';
+    html += '<div style="padding:12px 20px;border-radius:10px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05)"><span style="font-size:24px;font-weight:700;color:#ef4444">' + open + '</span> <span style="font-size:13px;color:#71717a">Open</span></div>';
+    html += '<div style="padding:12px 20px;border-radius:10px;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.05)"><span style="font-size:24px;font-weight:700;color:#f59e0b">' + inProgress + '</span> <span style="font-size:13px;color:#71717a">In Progress</span></div>';
+    html += '<div style="padding:12px 20px;border-radius:10px;border:1px solid rgba(34,197,94,.2);background:rgba(34,197,94,.05)"><span style="font-size:24px;font-weight:700;color:#22c55e">' + resolved + '</span> <span style="font-size:13px;color:#71717a">Resolved</span></div>';
+    html += '<div style="flex:1"></div>';
+    html += '<button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="SHOWADDDUEBILL()">+ New Due Bill</button>';
+    html += '</div>';
+
+    // Add form (hidden by default)
+    html += '<div id="duebillForm" style="display:none;margin-bottom:24px;padding:20px;border:1px solid rgba(128,128,128,.15);border-radius:12px">';
+    html += '<div style="font-size:16px;font-weight:600;margin-bottom:16px">New Due Bill</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+    html += '<input id="dbRn" placeholder="RN (ex: RN127...)" style="padding:8px 12px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent" />';
+    html += '<input id="dbCustomer" placeholder="Customer name" style="padding:8px 12px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent" />';
+    html += '<select id="dbType" style="padding:8px 12px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent"><option value="Cosmetic">Cosmetic</option><option value="Mechanical">Mechanical</option><option value="Missing Part">Missing Part</option><option value="Other">Other</option></select>';
+    html += '</div>';
+    html += '<input id="dbIssue" placeholder="Issue description" style="width:100%;padding:8px 12px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent;box-sizing:border-box;margin-bottom:12px" />';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="SAVEDUEBILL()">Save</button>';
+    html += '<button class="bt" onclick="document.getElementById(\'duebillForm\').style.display=\'none\'">Cancel</button>';
+    html += '</div></div>';
+
+    // Table
+    if (bills.length) {
+      html += '<table style="width:100%;border-collapse:collapse">';
+      html += '<thead><tr>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Date</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Type</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Issue</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Status</th>';
+      html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Notes</th>';
+      html += '</tr></thead><tbody>';
+
+      bills.sort(function(a, b) { return (b.createdDate || '').localeCompare(a.createdDate || ''); });
+      bills.forEach(function(b) {
+        var statusColor = b.status === 'Open' ? '#ef4444' : b.status === 'Resolved' ? '#22c55e' : '#f59e0b';
+        html += '<tr>';
+        html += '<td style="padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(128,128,128,.06)">' + (b.createdDate || '') + '</td>';
+        html += '<td style="padding:10px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06)">' + (b.customer || '') + '</td>';
+        html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + b.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + b.rn + '</a></td>';
+        html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + (b.type || '') + '</td>';
+        html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + (b.issue || '') + '</td>';
+        html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><select onchange="UPDATEDUEBILL(' + b.id + ',\'status\',this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:' + statusColor + ';background:transparent;cursor:pointer;font-weight:600"><option value="Open"' + (b.status === 'Open' ? ' selected' : '') + '>Open</option><option value="Parts Ordered"' + (b.status === 'Parts Ordered' ? ' selected' : '') + '>Parts Ordered</option><option value="Scheduled"' + (b.status === 'Scheduled' ? ' selected' : '') + '>Scheduled</option><option value="Resolved"' + (b.status === 'Resolved' ? ' selected' : '') + '>Resolved</option></select></td>';
+        html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><input type="text" value="' + (b.notes || '').replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="UPDATEDUEBILL(' + b.id + ',\'notes\',this.value)" style="padding:4px 8px;border:1px solid rgba(128,128,128,.15);border-radius:4px;font-size:12px;font-family:inherit;color:inherit;background:transparent;width:100%;box-sizing:border-box" /></td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="text-align:center;padding:40px;color:#71717a">No due bills yet. Click "+ New Due Bill" to create one.</div>';
+    }
+
+    container.innerHTML = html;
+  }).catch(function(e) {
+    container.innerHTML = '<div style="color:#ef4444">Error: ' + e.message + '</div>';
+  });
+}
+
+function SHOWADDDUEBILL() {
+  document.getElementById('duebillForm').style.display = '';
+}
+
+function SAVEDUEBILL() {
+  var bill = {
+    rn: document.getElementById('dbRn').value,
+    customer: document.getElementById('dbCustomer').value,
+    type: document.getElementById('dbType').value,
+    issue: document.getElementById('dbIssue').value,
+    ces: 'Ben Daubin'
+  };
+  fetch(SERVER + '/api/duebills', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(bill)
+  }).then(function() { LOADDUEBILLS(); });
+}
+
+function UPDATEDUEBILL(id, field, value) {
+  var update = {};
+  update[field] = value;
+  fetch(SERVER + '/api/duebills/' + id, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(update)
+  }).catch(function() {});
 }
