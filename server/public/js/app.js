@@ -1411,11 +1411,14 @@ function LOADCALENDAR() {
       }
       var isBreakRow = isLunch && !lunchHasData;
 
+      // Merge 4 break rows into 1: only render at 12:00, skip 12:30/13:00/13:30
+      if (isBreakRow && t !== '12:00') return;
+
       html += '<tr' + (isBreakRow ? ' class="cal-break"' : '') + '>';
       if (isBreakRow) {
-        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;font-style:italic">BREAK</td>';
+        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;font-style:italic">12:00 - 13:30</td>';
         days.forEach(function() {
-          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06)"></td>';
+          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);font-style:italic;color:#71717a;font-size:12px">BREAK</td>';
         });
       } else {
         html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
@@ -2016,7 +2019,7 @@ function LOADDASH() {
 var _calAllDays = [];
 
 function SHOWCALDETAIL(dayIdx, time) {
-  var panel = document.getElementById('calDetailPanel');
+  var panel = document.getElementById('calDetailOverlay');
   var title = document.getElementById('calDetailTitle');
   var body = document.getElementById('calDetailBody');
   if (!panel || !_calAllDays[dayIdx]) return;
@@ -2026,10 +2029,10 @@ function SHOWCALDETAIL(dayIdx, time) {
   if (!items.length) return;
 
   title.textContent = day.label + ' — ' + time;
-  panel.style.display = '';
+  panel.style.display = 'flex';
 
   fetch(SERVER + '/api/notes').then(function(r) { return r.json(); }).then(function(notes) {
-    var html = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:14px;color:#171a20">';
     html += '<thead><tr>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
@@ -2043,12 +2046,12 @@ function SHOWCALDETAIL(dayIdx, time) {
       var dotColor = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : it.status === 'Scheduled' ? '#3b82f6' : it.status === 'Delivered' ? '#71717a' : '#ef4444';
       var note = notes[it.rn] || '';
       html += '<tr>';
-      html += '<td style="padding:10px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06)">' + it.name + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + it.model + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + (it.host || '-') + '</td>';
+      html += '<td style="padding:10px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + it.name + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#3b82f6;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + it.model + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + (it.host || '-') + '</td>';
       html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid rgba(128,128,128,.2);border-radius:6px;font-size:13px;font-family:inherit;color:#171a20;background:#f9f9f9;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
       html += '</tr>';
     });
 

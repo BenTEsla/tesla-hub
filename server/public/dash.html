@@ -354,13 +354,15 @@
       <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()">Today</button>
     </div>
     <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
-    <!-- Detail panel: shows when clicking a time slot -->
-    <div id="calDetailPanel" style="display:none;margin-top:24px;border:1px solid rgba(128,128,128,.15);border-radius:12px;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3 id="calDetailTitle" style="margin:0;font-size:18px;font-weight:600"></h3>
-        <button class="bt" onclick="document.getElementById('calDetailPanel').style.display='none'">Close</button>
+    <!-- Detail modal: shows when clicking a time slot -->
+    <div id="calDetailOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+      <div style="background:#fff;border-radius:16px;padding:24px;max-width:900px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 id="calDetailTitle" style="margin:0;font-size:18px;font-weight:600;color:#171a20"></h3>
+          <button class="bt" onclick="document.getElementById('calDetailOverlay').style.display='none'">&#10005; Close</button>
+        </div>
+        <div id="calDetailBody"></div>
       </div>
-      <div id="calDetailBody"></div>
     </div>
   </div>
     <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
