@@ -1,5 +1,12 @@
 /* DASH v4.0 - Delivery Automation Smart Hub - Application Logic */
 
+function fmtSDD(sp) {
+  var days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  var dd = String(sp.getDate()).padStart(2, '0');
+  var mm = String(sp.getMonth() + 1).padStart(2, '0');
+  return days[sp.getDay()] + ' ' + dd + '/' + mm;
+}
+
 function ERRMSG(msg) {
   if (msg && (msg.indexOf('token') >= 0 || msg.indexOf('expired') >= 0 || msg.indexOf('401') >= 0 || msg.indexOf('Dashboard') >= 0 || msg.indexOf('undefined') >= 0)) {
     return '<div style="padding:60px;text-align:center"><div style="color:#f59e0b;font-size:16px;font-weight:600;margin-bottom:12px">DRO Token Expired</div><div style="color:#71717a;font-size:14px">Open the <a href="https://dro.tesla.com" target="_blank" style="color:#3b82f6">DRO tab</a> to refresh your session, then reload.</div></div>';
@@ -254,16 +261,6 @@ async function QW(wk, el) {
       if (sddRaw) {
         var sp = new Date(sddRaw);
         if (!isNaN(sp)) {
-          var fmtSDD = function(sp) {
-            var mm = String(sp.getMonth() + 1).padStart(2, "0");
-            var dd = String(sp.getDate()).padStart(2, "0");
-            var yy = sp.getFullYear();
-            var hh = sp.getHours();
-            var mi = String(sp.getMinutes()).padStart(2, "0");
-            var ampm = hh >= 12 ? "PM" : "AM";
-            var h12 = hh % 12 || 12;
-            return mm + "-" + dd + "-" + yy + " " + h12 + ":" + mi + " " + ampm;
-          };
           sddShort = fmtSDD(sp);
           sortKey = sp.toISOString();
         }
@@ -481,16 +478,6 @@ async function QP(el) {
       if (sddRaw) {
         var sp = new Date(sddRaw);
         if (!isNaN(sp)) {
-          var fmtSDD = function(sp) {
-            var mm = String(sp.getMonth() + 1).padStart(2, "0");
-            var dd = String(sp.getDate()).padStart(2, "0");
-            var yy = sp.getFullYear();
-            var hh = sp.getHours();
-            var mi = String(sp.getMinutes()).padStart(2, "0");
-            var ampm = hh >= 12 ? "PM" : "AM";
-            var h12 = hh % 12 || 12;
-            return mm + "-" + dd + "-" + yy + " " + h12 + ":" + mi + " " + ampm;
-          };
           sddShort = fmtSDD(sp);
           sortKey = sp.toISOString();
         }
