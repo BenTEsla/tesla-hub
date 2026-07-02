@@ -1398,19 +1398,35 @@ function LOADCALENDAR() {
       return '#ef4444';
     }
 
-    // Build grid
+    // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-    html += '<thead><tr><th style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
+    // Header row 1: Day names (colspan 2)
+    html += '<thead><tr><th rowspan="2" style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px;vertical-align:bottom">TIME</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
-      html += '<th style="padding:10px 12px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '</th>';
+      html += '<th colspan="2" style="padding:8px 6px 2px;text-align:center;font-size:12px;font-weight:600;border-bottom:none;' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '</th>';
+    });
+    html += '</tr>';
+    // Header row 2: S | C labels
+    html += '<tr>';
+    days.forEach(function() {
+      html += '<th style="padding:2px 6px 8px;text-align:center;font-size:10px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);color:#3b82f6;width:50px">S</th>';
+      html += '<th style="padding:2px 6px 8px;text-align:center;font-size:10px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);color:#22c55e;width:50px">C</th>';
     });
     html += '</tr></thead><tbody>';
 
     // Totals row
     html += '<tr class="cal-total"><td style="padding:10px 12px;font-size:12px;color:#71717a">TOTAL</td>';
-    dayTotals.forEach(function(total) {
-      html += '<td style="padding:10px 12px;text-align:center;font-size:14px">' + total + '</td>';
+    days.forEach(function(d) {
+      var sched = 0, conf = 0;
+      Object.keys(d.slots).forEach(function(s) {
+        d.slots[s].forEach(function(e) {
+          if (e.status === 'Confirmed' || e.status === 'Complete') conf++;
+          else sched++;
+        });
+      });
+      html += '<td style="padding:10px 6px;text-align:center;font-size:14px;color:#3b82f6">' + sched + '</td>';
+      html += '<td style="padding:10px 6px;text-align:center;font-size:14px;color:#22c55e">' + conf + '</td>';
     });
     html += '</tr>';
 
@@ -1430,34 +1446,24 @@ function LOADCALENDAR() {
       if (isBreakRow) {
         html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;font-style:italic">12:00 - 13:30</td>';
         days.forEach(function() {
-          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);font-style:italic;color:#71717a;font-size:12px">BREAK</td>';
+          html += '<td colspan="2" style="padding:8px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);font-style:italic;color:#71717a;font-size:12px">BREAK</td>';
         });
       } else {
         html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
         days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
-          var count = entries.length;
-          var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
-          var color = count === 0 ? '#71717a' : count <= 2 ? '#22c55e' : count <= 4 ? '#3b82f6' : '#f59e0b';
-          var titleParts = entries.map(function(e) { return e.name; });
-          var title = titleParts.join(', ');
-          if (count > 0) {
-            var namesHtml = entries.map(function(e) {
-              var dotColor = statusDotColor(e.status);
-              var line1 = '<span class="cal-dot" style="background:' + dotColor + '"></span><strong style="color:#e4e4e7">' + e.name + '</strong>';
-              var details = [e.rn, e.model, e.host].filter(function(v) { return v; }).join(' · ');
-              var line2 = details ? '<div style="font-size:10px;color:#71717a;margin-left:10px;margin-bottom:3px">' + details + '</div>' : '';
-              return line1 + line2;
-            }).join('');
-            html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'};SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
-            html += '<span class="cal-count" style="font-weight:700;color:' + color + '">' + count + '</span>';
-            html += '<div class="cal-names" style="display:none;font-size:11px;margin-top:4px;color:#d4d4d8;line-height:1.4;font-weight:400">' + namesHtml + '</div>';
-            html += '</td>';
-          } else {
-            html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:transparent">';
-            html += '<span style="color:#3f3f46">-</span>';
-            html += '</td>';
-          }
+          var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; });
+          var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; });
+          // Scheduled column
+          var sBg = sched.length === 0 ? 'transparent' : 'rgba(59,130,246,.08)';
+          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + sBg + ';cursor:pointer" title="Scheduled">';
+          html += sched.length > 0 ? '<span style="font-weight:700;color:#3b82f6">' + sched.length + '</span>' : '<span style="color:#3f3f46">-</span>';
+          html += '</td>';
+          // Confirmed column
+          var cBg = conf.length === 0 ? 'transparent' : 'rgba(34,197,94,.08)';
+          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + cBg + ';cursor:pointer" title="Confirmed">';
+          html += conf.length > 0 ? '<span style="font-weight:700;color:#22c55e">' + conf.length + '</span>' : '<span style="color:#3f3f46">-</span>';
+          html += '</td>';
         });
       }
       html += '</tr>';
