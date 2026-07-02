@@ -1266,6 +1266,7 @@ function STAB(idx, btn) {
    ============================================ */
 function RUNDISPATCH(mode) {
   var container = document.getElementById('dispatchContent');
+  var isPreview = mode === 'preview';
   container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading deliveries...</div>';
 
   // Populate date picker if empty
@@ -1354,6 +1355,10 @@ function RUNDISPATCH(mode) {
       html += '</div>';
     });
     html += '</div>';
+
+    if (isPreview) {
+      html = '<div style="padding:8px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:8px;color:#60a5fa;font-size:13px;font-weight:600;margin-bottom:16px;display:inline-block">PREVIEW MODE — Not saved to DRO</div>' + html;
+    }
 
     container.innerHTML = html;
   }).catch(function(e) {
