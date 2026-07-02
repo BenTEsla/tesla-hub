@@ -1437,12 +1437,16 @@ function LOADCALENDAR() {
 
   // Update week label
   var sat = new Date(mon);
-  sat.setDate(mon.getDate() + 5);
+  sat.setDate(mon.getDate() + (numDays - 1));
   var weekLabel = document.getElementById('calWeekLabel');
   if (weekLabel) {
-    var monLabel = mon.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-    var satLabel = sat.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-    weekLabel.textContent = monLabel + ' - ' + satLabel;
+    if (_calView === 'day') {
+      weekLabel.textContent = mon.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+    } else {
+      var monLabel = mon.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      var satLabel = sat.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      weekLabel.textContent = monLabel + ' - ' + satLabel;
+    }
   }
 
   Promise.all(promises).then(function() {
@@ -1479,12 +1483,12 @@ function LOADCALENDAR() {
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
     // Header row: Day names with total count
-    html += '<thead><tr><th style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
+    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
-      var dayTotal = 0;
-      Object.keys(d.slots).forEach(function(s) { dayTotal += d.slots[s].length; });
-      html += '<th colspan="2" style="padding:10px 6px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '<div style="font-size:18px;font-weight:700;margin-top:2px;color:inherit">' + dayTotal + '</div></th>';
+      var dayTotal = 0, daySched = 0, dayConf = 0;
+      Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
+      html += '<th colspan="2" style="padding:10px 6px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '<div style="font-size:18px;font-weight:700;margin-top:2px;color:inherit">' + dayTotal + '</div><div style="font-size:10px;margin-top:2px"><span style="color:#3b82f6">' + daySched + ' S</span> · <span style="color:#22c55e">' + dayConf + ' C</span></div></th>';
     });
     html += '</tr></thead><tbody>';
 
