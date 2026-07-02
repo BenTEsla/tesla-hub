@@ -1331,7 +1331,13 @@ function LOADCALENDAR() {
               if (ampm === 'AM' && hr === 12) hr = 0;
               var slot = String(hr).padStart(2,'0') + ':' + tm[2];
               if (!days[idx].slots[slot]) days[idx].slots[slot] = [];
-              days[idx].slots[slot].push(c.CustomerName || '?');
+              days[idx].slots[slot].push({
+                name: c.CustomerName || '?',
+                rn: c.ReferenceNumber || '',
+                model: c.VehicleModel || '',
+                host: c.HostName || '',
+                status: c.CustomerDeliveryStatus || 'Scheduled'
+              });
             }
           });
         }).catch(function() {})
@@ -1353,10 +1359,31 @@ function LOADCALENDAR() {
     // Collect all time slots
     var allSlots = {};
     days.forEach(function(d) { Object.keys(d.slots).forEach(function(s) { allSlots[s] = true; }); });
+
+    // Insert lunch break slots (12:00-13:30) so they always appear
+    ['12:00','12:30','13:00','13:30'].forEach(function(t) { allSlots[t] = true; });
+
     var times = Object.keys(allSlots).sort();
+    var lunchSlots = {'12:00':true,'12:30':true,'13:00':true,'13:30':true};
 
     // If no slots, show default range
-    if (!times.length) times = ['09:00','09:30','10:00','10:30','11:00','11:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+    if (!times.length) times = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+
+    // Compute daily totals
+    var dayTotals = days.map(function(d) {
+      var total = 0;
+      Object.keys(d.slots).forEach(function(s) { total += d.slots[s].length; });
+      return total;
+    });
+
+    // Status → dot color helper
+    function statusDotColor(status) {
+      var s = (status || '').toLowerCase();
+      if (s === 'confirmed' || s === 'complete') return '#22c55e';
+      if (s === 'scheduled') return '#3b82f6';
+      if (s === 'delivered') return '#71717a';
+      return '#ef4444';
+    }
 
     // Build grid
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
@@ -1367,27 +1394,56 @@ function LOADCALENDAR() {
     });
     html += '</tr></thead><tbody>';
 
+    // Totals row
+    html += '<tr class="cal-total"><td style="padding:10px 12px;font-size:12px;color:#71717a">TOTAL</td>';
+    dayTotals.forEach(function(total) {
+      html += '<td style="padding:10px 12px;text-align:center;font-size:14px">' + total + '</td>';
+    });
+    html += '</tr>';
+
     times.forEach(function(t) {
-      html += '<tr>';
-      html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
-      days.forEach(function(d) {
-        var count = d.slots[t] ? d.slots[t].length : 0;
-        var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
-        var color = count === 0 ? '#71717a' : count <= 2 ? '#22c55e' : count <= 4 ? '#3b82f6' : '#f59e0b';
-        var names = d.slots[t] || [];
-        var title = names.join(', ');
-        if (count > 0) {
-          var namesHtml = names.join('<br>');
-          html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'}" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
-          html += '<span class="cal-count" style="font-weight:700;color:' + color + '">' + count + '</span>';
-          html += '<div class="cal-names" style="display:none;font-size:11px;margin-top:4px;color:#d4d4d8;line-height:1.4;font-weight:400">' + namesHtml + '</div>';
-          html += '</td>';
-        } else {
-          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:transparent">';
-          html += '<span style="color:#3f3f46">-</span>';
-          html += '</td>';
-        }
-      });
+      var isLunch = !!lunchSlots[t];
+      // Check if any day has real data in this lunch slot
+      var lunchHasData = false;
+      if (isLunch) {
+        days.forEach(function(d) { if (d.slots[t] && d.slots[t].length) lunchHasData = true; });
+      }
+      var isBreakRow = isLunch && !lunchHasData;
+
+      html += '<tr' + (isBreakRow ? ' class="cal-break"' : '') + '>';
+      if (isBreakRow) {
+        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;font-style:italic">BREAK</td>';
+        days.forEach(function() {
+          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06)"></td>';
+        });
+      } else {
+        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
+        days.forEach(function(d) {
+          var entries = d.slots[t] || [];
+          var count = entries.length;
+          var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
+          var color = count === 0 ? '#71717a' : count <= 2 ? '#22c55e' : count <= 4 ? '#3b82f6' : '#f59e0b';
+          var titleParts = entries.map(function(e) { return e.name; });
+          var title = titleParts.join(', ');
+          if (count > 0) {
+            var namesHtml = entries.map(function(e) {
+              var dotColor = statusDotColor(e.status);
+              var line1 = '<span class="cal-dot" style="background:' + dotColor + '"></span><strong style="color:#e4e4e7">' + e.name + '</strong>';
+              var details = [e.rn, e.model, e.host].filter(function(v) { return v; }).join(' · ');
+              var line2 = details ? '<div style="font-size:10px;color:#71717a;margin-left:10px;margin-bottom:3px">' + details + '</div>' : '';
+              return line1 + line2;
+            }).join('');
+            html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'}" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
+            html += '<span class="cal-count" style="font-weight:700;color:' + color + '">' + count + '</span>';
+            html += '<div class="cal-names" style="display:none;font-size:11px;margin-top:4px;color:#d4d4d8;line-height:1.4;font-weight:400">' + namesHtml + '</div>';
+            html += '</td>';
+          } else {
+            html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:transparent">';
+            html += '<span style="color:#3f3f46">-</span>';
+            html += '</td>';
+          }
+        });
+      }
       html += '</tr>';
     });
 

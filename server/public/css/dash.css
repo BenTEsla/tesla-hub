@@ -1334,6 +1334,26 @@ select {
   white-space: normal;
 }
 
+.cal-break td {
+  background: rgba(128,128,128,.06) !important;
+  color: #71717a !important;
+}
+
+.cal-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.cal-total td {
+  font-weight: 700;
+  border-bottom: 2px solid rgba(128,128,128,.15) !important;
+  padding: 10px 12px !important;
+}
+
 /* ============================================
    TOOLTIP FOR COLLAPSED SIDEBAR
    ============================================ */
