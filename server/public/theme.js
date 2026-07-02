@@ -172,6 +172,8 @@ function applyLight() {
     + '.bt-green{background:rgba(34,197,94,.1)!important;color:#16a34a!important;border-color:rgba(34,197,94,.3)!important}'
     + '.bt-blue{background:rgba(59,130,246,.1)!important;color:#2563eb!important;border-color:rgba(59,130,246,.3)!important}'
     + '.bt-red{background:rgba(239,68,68,.1)!important;color:#dc2626!important;border-color:rgba(239,68,68,.3)!important}'
+    + '.dash-card{background:#fff!important;border-color:rgba(0,0,0,.08)!important;box-shadow:0 1px 4px rgba(0,0,0,.04)!important}'
+    + '.dash-chart-card{background:#fff!important;border-color:rgba(0,0,0,.08)!important;box-shadow:0 1px 4px rgba(0,0,0,.04)!important}'
     + '::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15)!important}'
     + '::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25)!important}'
     + '.sidebar{background:#f8f8fa!important;border-right-color:rgba(0,0,0,.08)!important}'
