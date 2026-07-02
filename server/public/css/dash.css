@@ -309,6 +309,15 @@ a.nav-item {
   margin-bottom: 0;
 }
 
+/* Show labels inside flyout even when sidebar is collapsed */
+.sidebar.collapsed .nav-group-items .nav-label {
+  display: inline !important;
+}
+
+.sidebar.collapsed .nav-group-items .nav-item svg {
+  display: none;
+}
+
 .sidebar.collapsed .nav-group-items .nav-item:hover {
   background: rgba(255, 255, 255, .06);
   color: #f4f4f5;
