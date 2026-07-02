@@ -1178,8 +1178,20 @@ function NAV(idx, el) {
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
   var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up"];
+  var subtitles = [
+    "Overview of today's delivery operations.",
+    "Manage and track scheduled deliveries.",
+    "Track vehicle arrivals and transit status.",
+    "Rennes fleet inventory and vehicle tracking.",
+    "Track trade-in vehicles on site.",
+    "Customer satisfaction scores and CES performance.",
+    "Assign deliveries to CES team members with balanced workload distribution.",
+    "Find deliveries from upcoming days that can be pulled forward."
+  ];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
+  var ps = document.getElementById("pageSubtitle");
+  if (ps) ps.textContent = subtitles[idx] || "";
   var ta = document.getElementById("tabActions");
   if (ta) ta.innerHTML = "";
   STAB(idx, null);
