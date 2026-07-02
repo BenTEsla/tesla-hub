@@ -24,15 +24,15 @@ function renderArrivals() {
   el = document.getElementById("arrTodayDetail"); if (el) el.textContent = s.arrivedTotal + " arrived - " + (d.confident ? d.confident.reduce(function(a,b){return a+b},0) : 0) + " confident ETA";
   el = document.getElementById("arrWeekPct"); if (el) el.innerHTML = "Arrived: " + s.arrivedTotal + " | In Transit: " + s.inTransit;
 
-  // Last update badge
+  // Last update badge - put it at the bottom, not top
   if (j.lastUpdate) {
     var updEl = document.getElementById("arrLastUpdate");
     if (!updEl) {
       updEl = document.createElement("div");
       updEl.id = "arrLastUpdate";
-      updEl.style.cssText = "font-size:12px;color:#71717a;text-align:right;padding:0 0 8px";
-      var parent = document.getElementById("arrTransit");
-      if (parent) parent.closest("div[style]").parentElement.parentElement.insertBefore(updEl, parent.closest("div[style]").parentElement);
+      updEl.style.cssText = "font-size:12px;color:#71717a;text-align:right;padding:8px 0 0";
+      var arrView = document.getElementById("arrView");
+      if (arrView && arrView.firstChild) arrView.firstChild.appendChild(updEl);
     }
     var d2 = new Date(j.lastUpdate);
     updEl.textContent = "Data updated: " + d2.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + " " + d2.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"});
