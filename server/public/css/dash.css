@@ -1196,6 +1196,22 @@ tr:nth-child(even) td {
   100% { left: 100%; }
 }
 
+/* Global select/option dark mode styling */
+select, select option {
+  background: #1c1c22;
+  color: #d4d4d8;
+}
+
+select {
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
 /* ============================================
    SCROLLBAR
    ============================================ */
