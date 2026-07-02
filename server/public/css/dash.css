@@ -286,15 +286,30 @@ a.nav-item {
 .sidebar.collapsed .nav-group-items {
   display: none;
   position: absolute;
-  left: 52px;
-  top: 0;
-  min-width: 180px;
-  background: #1c1c22;
-  border: 1px solid rgba(255, 255, 255, .1);
+  left: 44px;
+  top: -4px;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .12);
   border-radius: 10px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
   z-index: 1000;
+}
+
+/* Invisible bridge so mouse can travel from icon to flyout */
+.sidebar.collapsed .nav-group::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: 0;
+  width: 20px;
+  height: 100%;
+  display: none;
+}
+
+.sidebar.collapsed .nav-group:hover::after {
+  display: block;
 }
 
 .sidebar.collapsed .nav-group:hover .nav-group-items {
@@ -305,11 +320,12 @@ a.nav-item {
   padding: 8px 12px;
   font-size: 13px;
   opacity: 1;
-  color: #d4d4d8;
+  color: #393c41;
   margin-bottom: 0;
+  border-radius: 6px;
 }
 
-/* Show labels inside flyout even when sidebar is collapsed */
+/* Show labels inside flyout */
 .sidebar.collapsed .nav-group-items .nav-label {
   display: inline !important;
 }
@@ -319,18 +335,19 @@ a.nav-item {
 }
 
 .sidebar.collapsed .nav-group-items .nav-item:hover {
-  background: rgba(255, 255, 255, .06);
-  color: #f4f4f5;
+  background: rgba(0, 0, 0, .04);
+  color: #171a20;
 }
 
+/* Flyout title */
 .sidebar.collapsed .nav-group-items::before {
   content: attr(data-group);
   display: block;
   padding: 8px 12px 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #f4f4f5;
-  border-bottom: 1px solid rgba(255, 255, 255, .06);
+  color: #171a20;
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
   margin-bottom: 4px;
 }
 
