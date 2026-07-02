@@ -16,13 +16,42 @@ function renderArrivals() {
   var d = j.data;
   var isDark = !document.getElementById("lightThemeCSS");
 
+  // Find today's date in the data
+  var today = new Date();
+  var todayStr = String(today.getDate()).padStart(2,'0') + '/' + String(today.getMonth()+1).padStart(2,'0');
+  var todayCount = 0;
+  if (d.dates) {
+    for (var ti = 0; ti < d.dates.length; ti++) {
+      if (d.dates[ti] === todayStr) {
+        todayCount = (d.arrived[ti] || 0) + (d.confident[ti] || 0) + (d.preliminary[ti] || 0);
+        break;
+      }
+    }
+  }
+
+  // Calculate this week (Monday to Sunday)
+  var weekTotal = 0;
+  var mon = new Date(today); mon.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  if (d.dates) {
+    for (var wi = 0; wi < d.dates.length; wi++) {
+      var parts = d.dates[wi].split('/');
+      if (parts.length === 2) {
+        var dateObj = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[0]));
+        if (dateObj >= mon && dateObj <= sun) {
+          weekTotal += (d.arrived[wi] || 0) + (d.confident[wi] || 0) + (d.preliminary[wi] || 0);
+        }
+      }
+    }
+  }
+
   // Update stat cards
   var el;
   el = document.getElementById("arrTransit"); if (el) el.textContent = s.inTransit;
-  el = document.getElementById("arrToday"); if (el) el.textContent = s.arrivedTotal;
-  el = document.getElementById("arrWeek"); if (el) el.textContent = s.thisWeek;
-  el = document.getElementById("arrTodayDetail"); if (el) el.textContent = s.arrivedTotal + " arrived - " + (d.confident ? d.confident.reduce(function(a,b){return a+b},0) : 0) + " confident ETA";
-  el = document.getElementById("arrWeekPct"); if (el) el.innerHTML = "Arrived: " + s.arrivedTotal + " | In Transit: " + s.inTransit;
+  el = document.getElementById("arrToday"); if (el) el.textContent = todayCount;
+  el = document.getElementById("arrWeek"); if (el) el.textContent = weekTotal;
+  el = document.getElementById("arrTodayDetail"); if (el) el.textContent = todayCount > 0 ? todayCount + " expected today" : "No arrivals today";
+  el = document.getElementById("arrWeekPct"); if (el) el.innerHTML = "Mon " + String(mon.getDate()).padStart(2,'0') + '/' + String(mon.getMonth()+1).padStart(2,'0') + " - Sun " + String(sun.getDate()).padStart(2,'0') + '/' + String(sun.getMonth()+1).padStart(2,'0');
 
   // Last update badge - put it at the bottom, not top
   if (j.lastUpdate) {
