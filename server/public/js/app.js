@@ -1261,7 +1261,7 @@ function STAB(idx, btn) {
     fetch(SERVER + "/api/tab/tradein").then(function(r) { return r.text(); }).then(function(h) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
-  }).catch(function() {});
+    }).catch(function() {});
   }
 
   // Populate dispatch date picker
@@ -1275,6 +1275,7 @@ function STAB(idx, btn) {
         var dfD = ddd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         var diD = ddd.getFullYear() + '-' + String(ddd.getMonth() + 1).padStart(2, '0') + '-' + String(ddd.getDate()).padStart(2, '0');
         dp.add(new Option(dlbl + ' - ' + dfD, diD));
+      }
     }
   }
 }
@@ -1474,7 +1475,6 @@ function LOADPULLUP() {
       document.getElementById("csatView").innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error loading CSAT: ' + e.message + '</div>';
     });
   }
-}
 
 /* ============================================
    UPDATE COUNTS: total/ok/alert in stats row
