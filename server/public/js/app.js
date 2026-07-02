@@ -1179,7 +1179,7 @@ function NAV(idx, el) {
     n.classList.remove("on");
   });
   if (el && el.classList.contains('nav-item')) el.classList.add("on");
-  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up", "Calendar"];
+  var titles = ["Dashboard", "Customer Delivery", "Arrivals", "Stock", "Trade-In", "CSAT", "Dispatch", "Pull-Up", "Calendar", "Vehicle Readiness", "SV & Holds"];
   var subtitles = [
     "Overview of today's delivery operations.",
     "Manage and track scheduled deliveries.",
@@ -1189,7 +1189,9 @@ function NAV(idx, el) {
     "Customer satisfaction scores and CES performance.",
     "Assign deliveries to CES team members with balanced workload distribution.",
     "Find deliveries from upcoming days that can be pulled forward.",
-    "Weekly delivery schedule overview."
+    "Weekly delivery schedule overview.",
+    "Vehicle preparation pipeline and readiness tracking.",
+    "Service visits and containment holds monitoring."
   ];
   var pt = document.getElementById("pageTitle");
   if (pt) pt.textContent = titles[idx] || "";
@@ -1219,6 +1221,10 @@ function STAB(idx, btn) {
   document.getElementById("pullupView").style.display = idx === 7 ? "" : "none";
   var calView = document.getElementById("calendarView");
   if (calView) calView.style.display = idx === 8 ? "" : "none";
+  var vrsEl = document.getElementById("vrsView");
+  if (vrsEl) vrsEl.style.display = idx === 9 ? "" : "none";
+  var svholdsEl = document.getElementById("svholdsView");
+  if (svholdsEl) svholdsEl.style.display = idx === 10 ? "" : "none";
 
   if (idx === 0 && typeof LOADDASH === 'function') {
     LOADDASH();
@@ -1288,6 +1294,14 @@ function STAB(idx, btn) {
 
   if (idx === 8 && typeof LOADCALENDAR === 'function') {
     LOADCALENDAR();
+  }
+
+  if (idx === 9 && typeof LOADVRS === 'function') {
+    LOADVRS();
+  }
+
+  if (idx === 10 && typeof LOADSVHOLDS === 'function') {
+    LOADSVHOLDS();
   }
 } // END OF STAB
 
@@ -1930,6 +1944,188 @@ function LOADCSAT() {
       csatUpd.textContent = "Data updated: " + ud.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + " " + ud.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"});
     }
   }).catch(function() {});
+}
+
+/* ============================================
+   VRS: Vehicle Readiness Pipeline
+   ============================================ */
+function LOADVRS() {
+  var container = document.getElementById('vrsContent');
+  container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading pipeline...</div>';
+
+  fetch(SERVER + '/api/bi/stock').then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) { container.innerHTML = '<div style="color:#ef4444">' + j.error + '</div>'; return; }
+
+    var vehicles = j.vehicles || [];
+    var rennes = vehicles.filter(function(v) { return v.trtId === '28498'; });
+
+    // Pipeline stages
+    var inTransit = rennes.filter(function(v) { return v.dwellDays === null || v.dwellDays < 0; }).length;
+    var arrived = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays >= 0 && v.dwellDays <= 1; }).length;
+    var inPrep = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays > 1 && v.dwellDays <= 7; }).length;
+    var ready = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays > 7; }).length;
+    var withHold = rennes.filter(function(v) { return v.hold; }).length;
+    var matched = rennes.filter(function(v) { return v.matched; }).length;
+    var unmatched = rennes.length - matched;
+
+    // Aging buckets
+    var aging = j.stats ? j.stats.aging : {};
+
+    var cardStyle = 'text-align:center;padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(12px);background:rgba(255,255,255,.04)';
+
+    var html = '';
+
+    // Pipeline cards
+    html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px">';
+    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#3b82f6">' + inTransit + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">In Transit</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#f59e0b">' + arrived + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">Just Arrived</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#a855f7">' + inPrep + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">In Prep</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#22c55e">' + (rennes.length - inTransit) + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">On Site</div></div>';
+    html += '<div style="' + cardStyle + ';border-color:' + (withHold > 0 ? 'rgba(239,68,68,.3)' : 'rgba(255,255,255,.06)') + '"><div style="font-size:32px;font-weight:700;color:' + (withHold > 0 ? '#ef4444' : '#22c55e') + '">' + withHold + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">Holds</div></div>';
+    html += '</div>';
+
+    // Pipeline bar
+    var total = rennes.length || 1;
+    html += '<div style="margin-bottom:32px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:8px">Vehicle Pipeline</div>';
+    html += '<div style="display:flex;height:32px;border-radius:8px;overflow:hidden;font-size:12px;font-weight:600">';
+    if (inTransit > 0) html += '<div style="background:#3b82f6;flex:' + inTransit + ';display:flex;align-items:center;justify-content:center;color:#fff" title="In Transit">' + inTransit + '</div>';
+    if (arrived > 0) html += '<div style="background:#f59e0b;flex:' + arrived + ';display:flex;align-items:center;justify-content:center;color:#fff" title="Arrived">' + arrived + '</div>';
+    if (inPrep > 0) html += '<div style="background:#a855f7;flex:' + inPrep + ';display:flex;align-items:center;justify-content:center;color:#fff" title="In Prep">' + inPrep + '</div>';
+    var onSiteReady = rennes.length - inTransit - arrived - inPrep;
+    if (onSiteReady > 0) html += '<div style="background:#22c55e;flex:' + onSiteReady + ';display:flex;align-items:center;justify-content:center;color:#fff" title="Ready">' + onSiteReady + '</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#71717a">';
+    html += '<span>● In Transit (' + inTransit + ')</span>';
+    html += '<span>● Arrived (' + arrived + ')</span>';
+    html += '<span>● In Prep (' + inPrep + ')</span>';
+    html += '<span>● Ready (' + onSiteReady + ')</span>';
+    html += '</div></div>';
+
+    // Aging & matching stats
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+
+    // Aging
+    html += '<div style="' + cardStyle + ';text-align:left;padding:20px 24px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">Dwell Time Aging</div>';
+    var agingData = [
+      { label: '0-7 days', count: aging['0-7'] || 0, color: '#22c55e' },
+      { label: '8-14 days', count: aging['8-14'] || 0, color: '#f59e0b' },
+      { label: '15-30 days', count: aging['15-30'] || 0, color: '#f97316' },
+      { label: '31-60 days', count: aging['31-60'] || 0, color: '#ef4444' },
+      { label: '60+ days', count: aging['60+'] || 0, color: '#dc2626' }
+    ];
+    var maxAging = 1;
+    agingData.forEach(function(a) { if (a.count > maxAging) maxAging = a.count; });
+    agingData.forEach(function(a) {
+      html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">';
+      html += '<span style="width:70px;font-size:12px;color:#71717a">' + a.label + '</span>';
+      html += '<div style="flex:1;height:20px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + (a.count/maxAging*100) + '%;background:' + a.color + ';border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:11px;font-weight:600;color:#fff">' + (a.count > 0 ? a.count : '') + '</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Matching
+    html += '<div style="' + cardStyle + ';text-align:left;padding:20px 24px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">Vehicle Matching</div>';
+    html += '<div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">';
+    html += '<div><div style="font-size:28px;font-weight:700;color:#22c55e">' + matched + '</div><div style="font-size:12px;color:#71717a">Matched</div></div>';
+    html += '<div><div style="font-size:28px;font-weight:700;color:#f59e0b">' + unmatched + '</div><div style="font-size:12px;color:#71717a">Unmatched</div></div>';
+    html += '<div><div style="font-size:28px;font-weight:700">' + rennes.length + '</div><div style="font-size:12px;color:#71717a">Total Rennes</div></div>';
+    html += '</div>';
+    // By model
+    var byModel = j.stats ? j.stats.byModel : {};
+    html += '<div style="font-size:12px;font-weight:600;color:#71717a;margin-bottom:6px">BY MODEL</div>';
+    Object.keys(byModel).forEach(function(m) {
+      html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>' + m + '</span><span style="font-weight:600">' + byModel[m] + '</span></div>';
+    });
+    html += '</div>';
+
+    html += '</div>';
+
+    container.innerHTML = html;
+  }).catch(function(e) {
+    container.innerHTML = '<div style="color:#ef4444">Error: ' + e.message + '</div>';
+  });
+}
+
+/* ============================================
+   VRS: SV & Holds - Service Visits and Containment Holds
+   ============================================ */
+function LOADSVHOLDS() {
+  var container = document.getElementById('svholdsContent');
+  container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading...</div>';
+
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+  // Get next 7 days of deliveries and filter for SV/CH
+  var promises = [];
+  var allItems = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(Date.now() + i * 864e5);
+    var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    (function(dateStr) {
+      promises.push(
+        fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+          method: "POST", headers: h,
+          body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:[],Countries:[],DeliveryDate:dateStr,TrtId:String(CFG.trtId)}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+        }).then(function(r) { return r.json(); }).then(function(j) {
+          ((j.Data && j.Data.Dashboard) || []).forEach(function(a) {
+            if (a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete') {
+              allItems.push({
+                name: a.CustomerName,
+                rn: a.ReferenceNumber,
+                model: a.VehicleModel,
+                vin: a.Vin || '',
+                stage: a.VehicleStage || '',
+                sv: a.ServiceVisitGate === 'Incomplete' ? 'Active SV' : '',
+                ch: a.IsContainmentHold ? 'Containment Hold' : '',
+                hold: a.IsRepairOrderHold ? 'Repair Order Hold' : '',
+                date: dateStr
+              });
+            }
+          });
+        }).catch(function() {})
+      );
+    })(ds);
+  }
+
+  Promise.all(promises).then(function() {
+    if (!allItems.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-size:16px;font-weight:600">All clear — No active SVs or Holds</div>';
+      return;
+    }
+
+    var svCount = allItems.filter(function(it) { return it.sv; }).length;
+    var chCount = allItems.filter(function(it) { return it.ch || it.hold; }).length;
+
+    var html = '<div style="display:flex;gap:16px;margin-bottom:24px">';
+    html += '<div style="padding:16px 24px;border-radius:10px;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.05)"><span style="font-size:24px;font-weight:700;color:#f59e0b">' + svCount + '</span> <span style="color:#71717a;font-size:13px">Active SVs</span></div>';
+    html += '<div style="padding:16px 24px;border-radius:10px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05)"><span style="font-size:24px;font-weight:700;color:#ef4444">' + chCount + '</span> <span style="color:#71717a;font-size:13px">Holds</span></div>';
+    html += '</div>';
+
+    html += '<table style="width:100%;border-collapse:collapse">';
+    html += '<thead><tr><th style="text-align:left;padding:10px 14px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
+    html += '<th style="text-align:left;padding:10px 14px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
+    html += '<th style="text-align:left;padding:10px 14px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Model</th>';
+    html += '<th style="text-align:left;padding:10px 14px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Stage</th>';
+    html += '<th style="text-align:left;padding:10px 14px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Issue</th>';
+    html += '</tr></thead><tbody>';
+
+    allItems.forEach(function(it) {
+      var issue = [it.sv, it.ch, it.hold].filter(function(v) { return v; }).join(', ');
+      var issueColor = it.ch || it.hold ? '#ef4444' : '#f59e0b';
+      html += '<tr>';
+      html += '<td style="padding:10px 14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06)">' + it.name + '</td>';
+      html += '<td style="padding:10px 14px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td style="padding:10px 14px;border-bottom:1px solid rgba(128,128,128,.06)">' + it.model + '</td>';
+      html += '<td style="padding:10px 14px;border-bottom:1px solid rgba(128,128,128,.06)">' + it.stage + '</td>';
+      html += '<td style="padding:10px 14px;border-bottom:1px solid rgba(128,128,128,.06);color:' + issueColor + ';font-weight:600">' + issue + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
 }
 
 /* ============================================
