@@ -1160,6 +1160,41 @@ tr:nth-child(even) td {
 }
 
 /* ============================================
+   LOADING BAR (TDS-style)
+   ============================================ */
+.loading-bar {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background: rgba(128, 128, 128, .1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.loading-bar.active {
+  display: block;
+}
+
+.loading-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30%;
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  animation: loadbar 1.2s ease-in-out infinite;
+}
+
+@keyframes loadbar {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+/* ============================================
    SCROLLBAR
    ============================================ */
 ::-webkit-scrollbar {

@@ -626,6 +626,8 @@ function SA(el) {
    ============================================ */
 async function L() {
   var lg = document.getElementById("lg"), tbl = document.getElementById("tbl"), tb = document.getElementById("tb");
+  var loadBar = document.getElementById("loadingBar");
+  if (loadBar) loadBar.classList.add("active");
   lg.style.display = "block";
   tbl.style.display = "none";
 
@@ -826,12 +828,14 @@ async function L() {
 
     lg.style.display = "none";
     tbl.style.display = "";
+    if (loadBar) loadBar.classList.remove("active");
     TR();
     document.getElementById("sa").checked = true;
     document.getElementById("upd").textContent = "Updated at: " + new Date().toLocaleString("en-US", { month: "2-digit", day: "2-digit", hour: "numeric", minute: "2-digit", hour12: true });
     UC();
     UV();
   } catch (err) {
+    if (loadBar) loadBar.classList.remove("active");
     lg.innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error: ' + err.message + '</div>';
   }
 }
