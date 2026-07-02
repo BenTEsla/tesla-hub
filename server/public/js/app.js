@@ -1951,101 +1951,156 @@ function LOADCSAT() {
    ============================================ */
 function LOADVRS() {
   var container = document.getElementById('vrsContent');
-  container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading pipeline...</div>';
+  container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading vehicle readiness from COGS...</div>';
 
-  fetch(SERVER + '/api/bi/stock').then(function(r) { return r.json(); }).then(function(j) {
-    if (j.error) { container.innerHTML = '<div style="color:#ef4444">' + j.error + '</div>'; return; }
+  var h = {"Authorization": AUTH.token, "Content-Type": "application/json"};
+  var INTREPID = SERVER + '/api/intrepid/cogs/api/cogs';
 
-    var vehicles = j.vehicles || [];
-    var rennes = vehicles.filter(function(v) { return v.trtId === '28498'; });
+  // Fetch next 7 days of appointments with COG info
+  var allVehicles = [];
+  var promises = [];
+  for (var i = -1; i < 7; i++) {
+    var d = new Date(Date.now() + i * 864e5);
+    if (d.getDay() === 0) continue;
+    var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    (function(dateStr) {
+      promises.push(
+        fetch(INTREPID + '/getTssAppointmentsByDate?trtId=' + CFG.trtId + '&date=' + dateStr + '&searchQuery=', {headers: h})
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          (data || []).forEach(function(appt) {
+            var cogStatus = (appt.cogInfo && appt.cogInfo.vehicleCogStatusName) || 'Unknown';
+            // Avoid duplicates by VIN
+            var exists = allVehicles.some(function(v) { return v.vin === appt.vin; });
+            if (!exists) {
+              allVehicles.push({
+                vin: appt.vin || '',
+                rn: appt.referenceNumber || '',
+                model: appt.model === 'my' ? 'Model Y' : appt.model === 'm3' ? 'Model 3' : appt.model || '',
+                status: cogStatus,
+                statusId: appt.cogInfo ? appt.cogInfo.vehicleCogStatusId : 0,
+                date: dateStr,
+                time: appt.startDateTime ? new Date(appt.startDateTime).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'}) : '',
+                bay: (appt.cogInfo && appt.cogInfo.bayLocation) || '',
+                isB2b: appt.isB2b || false,
+                host: (appt.cogInfo && appt.cogInfo.createdBy) || ''
+              });
+            }
+          });
+        }).catch(function() {})
+      );
+    })(ds);
+  }
 
-    // Pipeline stages
-    var inTransit = rennes.filter(function(v) { return v.dwellDays === null || v.dwellDays < 0; }).length;
-    var arrived = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays >= 0 && v.dwellDays <= 1; }).length;
-    var inPrep = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays > 1 && v.dwellDays <= 7; }).length;
-    var ready = rennes.filter(function(v) { return v.dwellDays !== null && v.dwellDays > 7; }).length;
-    var withHold = rennes.filter(function(v) { return v.hold; }).length;
-    var matched = rennes.filter(function(v) { return v.matched; }).length;
-    var unmatched = rennes.length - matched;
+  Promise.all(promises).then(function() {
+    if (!allVehicles.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">No vehicle data from COGS.</div>';
+      return;
+    }
 
-    // Aging buckets
-    var aging = j.stats ? j.stats.aging : {};
+    // Group by status
+    var statusGroups = {};
+    allVehicles.forEach(function(v) {
+      if (!statusGroups[v.status]) statusGroups[v.status] = [];
+      statusGroups[v.status].push(v);
+    });
 
-    var cardStyle = 'text-align:center;padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(12px);background:rgba(255,255,255,.04)';
+    // Define pipeline order and colors
+    var pipeline = [
+      { name: 'Too Dirty to Inspect', color: '#71717a', icon: '🚿' },
+      { name: 'Receiving Inspection Pending', color: '#f59e0b', icon: '🔍' },
+      { name: 'PDI Pending', color: '#3b82f6', icon: '🔧' },
+      { name: 'In Wash', color: '#06b6d4', icon: '🚿' },
+      { name: 'Charging', color: '#a855f7', icon: '⚡' },
+      { name: 'Ready for Delivery', color: '#22c55e', icon: '✅' },
+      { name: 'Finished Goods', color: '#22c55e', icon: '✅' }
+    ];
+
+    var cardStyle = 'text-align:center;padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(12px);background:rgba(255,255,255,.04);cursor:pointer;transition:transform .15s';
 
     var html = '';
 
     // Pipeline cards
-    html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px">';
-    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#3b82f6">' + inTransit + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">In Transit</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#f59e0b">' + arrived + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">Just Arrived</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#a855f7">' + inPrep + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">In Prep</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="font-size:32px;font-weight:700;color:#22c55e">' + (rennes.length - inTransit) + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">On Site</div></div>';
-    html += '<div style="' + cardStyle + ';border-color:' + (withHold > 0 ? 'rgba(239,68,68,.3)' : 'rgba(255,255,255,.06)') + '"><div style="font-size:32px;font-weight:700;color:' + (withHold > 0 ? '#ef4444' : '#22c55e') + '">' + withHold + '</div><div style="font-size:12px;color:#71717a;text-transform:uppercase;margin-top:4px">Holds</div></div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:28px">';
+    pipeline.forEach(function(p) {
+      var count = (statusGroups[p.name] || []).length;
+      html += '<div style="' + cardStyle + '" onclick="SHOWVRSSTATUS(\'' + p.name.replace(/'/g, "\\'") + '\')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">';
+      html += '<div style="font-size:28px;font-weight:700;color:' + p.color + '">' + count + '</div>';
+      html += '<div style="font-size:11px;color:#71717a;margin-top:4px;line-height:1.3">' + p.name + '</div>';
+      html += '</div>';
+    });
+    // Other statuses
+    Object.keys(statusGroups).forEach(function(s) {
+      if (!pipeline.some(function(p) { return p.name === s; })) {
+        var count = statusGroups[s].length;
+        html += '<div style="' + cardStyle + '" onclick="SHOWVRSSTATUS(\'' + s.replace(/'/g, "\\'") + '\')">';
+        html += '<div style="font-size:28px;font-weight:700;color:#71717a">' + count + '</div>';
+        html += '<div style="font-size:11px;color:#71717a;margin-top:4px">' + s + '</div>';
+        html += '</div>';
+      }
+    });
     html += '</div>';
 
     // Pipeline bar
-    var total = rennes.length || 1;
-    html += '<div style="margin-bottom:32px">';
-    html += '<div style="font-size:14px;font-weight:600;margin-bottom:8px">Vehicle Pipeline</div>';
-    html += '<div style="display:flex;height:32px;border-radius:8px;overflow:hidden;font-size:12px;font-weight:600">';
-    if (inTransit > 0) html += '<div style="background:#3b82f6;flex:' + inTransit + ';display:flex;align-items:center;justify-content:center;color:#fff" title="In Transit">' + inTransit + '</div>';
-    if (arrived > 0) html += '<div style="background:#f59e0b;flex:' + arrived + ';display:flex;align-items:center;justify-content:center;color:#fff" title="Arrived">' + arrived + '</div>';
-    if (inPrep > 0) html += '<div style="background:#a855f7;flex:' + inPrep + ';display:flex;align-items:center;justify-content:center;color:#fff" title="In Prep">' + inPrep + '</div>';
-    var onSiteReady = rennes.length - inTransit - arrived - inPrep;
-    if (onSiteReady > 0) html += '<div style="background:#22c55e;flex:' + onSiteReady + ';display:flex;align-items:center;justify-content:center;color:#fff" title="Ready">' + onSiteReady + '</div>';
+    var total = allVehicles.length;
+    html += '<div style="margin-bottom:28px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:8px">Pipeline (' + total + ' vehicles)</div>';
+    html += '<div style="display:flex;height:28px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:600">';
+    pipeline.forEach(function(p) {
+      var count = (statusGroups[p.name] || []).length;
+      if (count > 0) {
+        html += '<div style="background:' + p.color + ';flex:' + count + ';display:flex;align-items:center;justify-content:center;color:#fff;min-width:20px" title="' + p.name + ': ' + count + '">' + count + '</div>';
+      }
+    });
     html += '</div>';
-    html += '<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#71717a">';
-    html += '<span>● In Transit (' + inTransit + ')</span>';
-    html += '<span>● Arrived (' + arrived + ')</span>';
-    html += '<span>● In Prep (' + inPrep + ')</span>';
-    html += '<span>● Ready (' + onSiteReady + ')</span>';
+    html += '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#71717a;flex-wrap:wrap">';
+    pipeline.forEach(function(p) {
+      var count = (statusGroups[p.name] || []).length;
+      if (count > 0) html += '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + p.color + ';margin-right:4px"></span>' + p.name + ' (' + count + ')</span>';
+    });
     html += '</div></div>';
 
-    // Aging & matching stats
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+    // Vehicle table
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:8px">All Vehicles</div>';
+    html += '<table style="width:100%;border-collapse:collapse">';
+    html += '<thead><tr>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">VIN</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Model</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Status</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Appt</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Bay</th>';
+    html += '</tr></thead><tbody>';
 
-    // Aging
-    html += '<div style="' + cardStyle + ';text-align:left;padding:20px 24px">';
-    html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">Dwell Time Aging</div>';
-    var agingData = [
-      { label: '0-7 days', count: aging['0-7'] || 0, color: '#22c55e' },
-      { label: '8-14 days', count: aging['8-14'] || 0, color: '#f59e0b' },
-      { label: '15-30 days', count: aging['15-30'] || 0, color: '#f97316' },
-      { label: '31-60 days', count: aging['31-60'] || 0, color: '#ef4444' },
-      { label: '60+ days', count: aging['60+'] || 0, color: '#dc2626' }
-    ];
-    var maxAging = 1;
-    agingData.forEach(function(a) { if (a.count > maxAging) maxAging = a.count; });
-    agingData.forEach(function(a) {
-      html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">';
-      html += '<span style="width:70px;font-size:12px;color:#71717a">' + a.label + '</span>';
-      html += '<div style="flex:1;height:20px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + (a.count/maxAging*100) + '%;background:' + a.color + ';border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:11px;font-weight:600;color:#fff">' + (a.count > 0 ? a.count : '') + '</div></div>';
-      html += '</div>';
+    allVehicles.sort(function(a, b) { return (a.statusId || 0) - (b.statusId || 0); });
+    allVehicles.forEach(function(v) {
+      var statusColor = '#71717a';
+      pipeline.forEach(function(p) { if (p.name === v.status) statusColor = p.color; });
+      html += '<tr>';
+      html += '<td style="padding:8px 12px;font-family:monospace;font-size:12px;border-bottom:1px solid rgba(128,128,128,.06)">' + v.vin + '</td>';
+      html += '<td style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + v.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + v.rn + '</a></td>';
+      html += '<td style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + v.model + '</td>';
+      html += '<td style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.06);color:' + statusColor + ';font-weight:600">' + v.status + '</td>';
+      html += '<td style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + v.date + ' ' + v.time + '</td>';
+      html += '<td style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + (v.bay || '-') + '</td>';
+      html += '</tr>';
     });
-    html += '</div>';
 
-    // Matching
-    html += '<div style="' + cardStyle + ';text-align:left;padding:20px 24px">';
-    html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">Vehicle Matching</div>';
-    html += '<div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">';
-    html += '<div><div style="font-size:28px;font-weight:700;color:#22c55e">' + matched + '</div><div style="font-size:12px;color:#71717a">Matched</div></div>';
-    html += '<div><div style="font-size:28px;font-weight:700;color:#f59e0b">' + unmatched + '</div><div style="font-size:12px;color:#71717a">Unmatched</div></div>';
-    html += '<div><div style="font-size:28px;font-weight:700">' + rennes.length + '</div><div style="font-size:12px;color:#71717a">Total Rennes</div></div>';
-    html += '</div>';
-    // By model
-    var byModel = j.stats ? j.stats.byModel : {};
-    html += '<div style="font-size:12px;font-weight:600;color:#71717a;margin-bottom:6px">BY MODEL</div>';
-    Object.keys(byModel).forEach(function(m) {
-      html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>' + m + '</span><span style="font-weight:600">' + byModel[m] + '</span></div>';
-    });
-    html += '</div>';
-
-    html += '</div>';
-
+    html += '</tbody></table>';
     container.innerHTML = html;
-  }).catch(function(e) {
-    container.innerHTML = '<div style="color:#ef4444">Error: ' + e.message + '</div>';
+  });
+}
+
+function SHOWVRSSTATUS(status) {
+  // Scroll to and highlight vehicles with this status in the table
+  var rows = document.querySelectorAll('#vrsContent tbody tr');
+  rows.forEach(function(r) {
+    var statusCell = r.cells[3];
+    if (statusCell && statusCell.textContent === status) {
+      r.style.background = 'rgba(59,130,246,.1)';
+    } else {
+      r.style.background = '';
+    }
   });
 }
 
