@@ -1595,7 +1595,8 @@ function LOADCSAT() {
    ============================================ */
 
 // Search input
-document.getElementById("srch").oninput = function() {
+var _srch = document.getElementById("srch");
+if (_srch) _srch.oninput = function() {
   var q = this.value.toLowerCase();
   document.querySelectorAll("#tb tr").forEach(function(r) {
     r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
@@ -1604,7 +1605,8 @@ document.getElementById("srch").oninput = function() {
 };
 
 // Hamburger menu toggle
-document.getElementById("hbg").onclick = function() {
+var _hbg = document.getElementById("hbg");
+if (_hbg) _hbg.onclick = function() {
   document.getElementById("sidebar").classList.toggle("collapsed");
 };
 
