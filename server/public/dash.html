@@ -293,14 +293,25 @@
 
   <!-- ========== DISPATCH VIEW ========== -->
   <div id="dispatchView" style="display:none;padding:0 32px 32px">
-    <!-- Controls: date + CES + preview on one line -->
-    <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center;flex-wrap:wrap">
-      <select id="dispatchDate" class="fi2" style="padding:8px 14px"></select>
+    <!-- Date picker + auto-load -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <select id="dispatchDate" class="fi2" style="padding:8px 14px" onchange="LOADDISPATCHDATE()"></select>
       <div style="flex:1"></div>
-      <div id="cesPresence" style="display:flex;gap:8px"></div>
-      <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="console.log('PREVIEW');RUNDISPATCH('preview')">Preview</button>
     </div>
-    <div id="dispatchContent" style="color:var(--tds-color--foreground-low-contrast, #71717a);text-align:center;padding:40px">Select a date and click Preview to see the assignment.</div>
+
+    <!-- Summary cards (populated by JS) -->
+    <div id="dispatchSummary" style="margin-bottom:24px"></div>
+
+    <!-- Team selection -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <span style="font-size:13px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:.5px">Team</span>
+      <div id="cesTeam" style="display:flex;gap:8px"></div>
+      <div style="flex:1"></div>
+      <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="RUNDISPATCH('preview')" id="dispatchPreviewBtn" disabled>Preview Assignment</button>
+    </div>
+
+    <!-- Grid result -->
+    <div id="dispatchContent"></div>
   </div>
 
   <!-- ========== PULL-UP VIEW ========== -->

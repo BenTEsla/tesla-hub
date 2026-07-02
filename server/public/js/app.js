@@ -1219,7 +1219,7 @@ function STAB(idx, btn) {
     LOADDASH();
   }
 
-  // Populate dispatch date picker
+  // Populate dispatch date picker and CES team toggles
   if (idx === 6) {
     var dp = document.getElementById('dispatchDate');
     if (dp && !dp.options.length) {
@@ -1232,22 +1232,19 @@ function STAB(idx, btn) {
         dp.add(new Option(dlbl + ' - ' + dfD, diD));
       }
     }
-  }
-
-  // Populate CES presence pills
-  if (idx === 6) {
-    var cpBlock = document.getElementById('cesPresence');
-    if (cpBlock && !cpBlock.innerHTML.trim()) {
-      var cpHtml = '';
+    // CES team toggles
+    var teamBlock = document.getElementById('cesTeam');
+    if (teamBlock && !teamBlock.innerHTML.trim()) {
+      var teamHtml = '';
       CES.forEach(function(c, i) {
         var first = c.split(' ')[0];
-        cpHtml += '<div style="display:flex;gap:4px">'
-          + '<button id="cesPresent' + i + '" data-active="1" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.opacity=this.dataset.active===\'1\'?\'1\':\'0.4\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(34,197,94,.4)\':\'rgba(128,128,128,.2)\'" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.08);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:inherit">' + first + '</button>'
-          + '<button id="cesAdmin' + i + '" data-active="0" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.background=this.dataset.active===\'1\'?\'rgba(245,158,11,.15)\':\'transparent\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(245,158,11,.4)\':\'rgba(128,128,128,.2)\'" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(128,128,128,.2);background:transparent;font-size:11px;font-family:inherit;cursor:pointer;color:inherit" title="Admin duty">A</button>'
-          + '</div>';
+        teamHtml += '<button id="cesToggle' + i + '" data-active="1" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.opacity=this.dataset.active===\'1\'?\'1\':\'0.35\'" style="padding:6px 16px;border-radius:20px;border:1px solid rgba(128,128,128,.2);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:inherit;background:transparent">' + first + '</button>';
+        teamHtml += '<button id="cesAdminToggle' + i + '" data-active="0" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.textContent=this.dataset.active===\'1\'?\'Admin\':\'A\';this.style.background=this.dataset.active===\'1\'?\'rgba(245,158,11,.12)\':\'transparent\';this.style.color=this.dataset.active===\'1\'?\'#f59e0b\':\'inherit\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(245,158,11,.3)\':\'rgba(128,128,128,.2)\'" style="padding:4px 8px;border-radius:20px;border:1px solid rgba(128,128,128,.2);font-size:11px;font-family:inherit;cursor:pointer;color:inherit;background:transparent;margin-right:8px" title="Toggle admin duty">A</button>';
       });
-      cpBlock.innerHTML = cpHtml;
+      teamBlock.innerHTML = teamHtml;
     }
+    // Auto-load for current date
+    LOADDISPATCHDATE();
   }
 
   if (idx === 1 && !document.getElementById("mainView").dataset.loaded) {
@@ -1280,142 +1277,173 @@ function STAB(idx, btn) {
     }).catch(function() {});
   }
 
-  // Populate dispatch date picker
-  if (idx === 6) {
-    var dp = document.getElementById('dispatchDate');
-    if (dp && !dp.options.length) {
-      for (var ddi = 0; ddi < 10 && dp.options.length < 7; ddi++) {
-        var ddd = new Date(Date.now() + ddi * 864e5);
-        if (ddd.getDay() === 0) continue;
-        var dlbl = ddi === 0 ? 'Today' : ddi === 1 ? 'Tomorrow' : 'D+' + ddi;
-        var dfD = ddd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        var diD = ddd.getFullYear() + '-' + String(ddd.getMonth() + 1).padStart(2, '0') + '-' + String(ddd.getDate()).padStart(2, '0');
-        dp.add(new Option(dlbl + ' - ' + dfD, diD));
-      }
-    }
-  }
 }
 
 /* ============================================
    DISPATCH PAGE: Auto-assign deliveries to CES
    ============================================ */
-function RUNDISPATCH(mode) {
-  var container = document.getElementById('dispatchContent');
-  var isPreview = mode === 'preview';
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading deliveries...</div>';
+var _dispatchData = null;
 
-  // Populate date picker if empty
-  var datePicker = document.getElementById('dispatchDate');
-  if (datePicker && !datePicker.options.length) {
-    for (var di = 0; di < 10 && datePicker.options.length < 7; di++) {
-      var dd = new Date(Date.now() + di * 864e5);
-      if (dd.getDay() === 0) continue;
-      var lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
-      var fD = dd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      var iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
-      datePicker.add(new Option(lbl + ' - ' + fD, iD));
-    }
-  }
+function LOADDISPATCHDATE() {
+  var container = document.getElementById('dispatchSummary');
+  var contentEl = document.getElementById('dispatchContent');
+  var previewBtn = document.getElementById('dispatchPreviewBtn');
+  contentEl.innerHTML = '';
+  if (previewBtn) previewBtn.disabled = true;
+
+  var dp = document.getElementById('dispatchDate');
+  if (!dp || !dp.value) return;
+  var ds = dp.value;
+
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a;font-size:13px">Loading...</div>';
 
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
-  var today = datePicker ? datePicker.value : new Date().toISOString().split('T')[0];
 
   fetch(BASE + "/deliveryops/Customers/Dashboard", {
     method: "POST", headers: h,
-    body: JSON.stringify({fromDeliveryDate: today, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+    body: JSON.stringify({fromDeliveryDate: ds, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
   }).then(function(r) { return r.json(); }).then(function(dash) {
     var data = (dash.Data || []);
+    _dispatchData = data;
+
     if (!data.length) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">No deliveries found for today.</div>';
+      container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>';
       return;
     }
 
-    // Parse times and split AM/PM
-    var deliveries = data.map(function(d) {
-      var t = '?';
-      var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-      var isEnt = !!d.IsEnterpriseOrder;
-      var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
-      var weight = isEnt ? 1.5 : hasTI ? 1.3 : 1.0;
-      var isPM = parseInt(t) >= 13;
-      return { name: d.CustomerName || '?', rn: d.ReferenceNumber, time: t, model: d.VehicleModel || '', host: d.HostName || '', isPM: isPM, weight: weight, isEnt: isEnt, hasTI: hasTI };
-    }).sort(function(a, b) { return a.time.localeCompare(b.time); });
+    // Count types
+    var total = data.length;
+    var enterprise = data.filter(function(d) { return d.IsEnterpriseOrder; }).length;
+    var tradein = data.filter(function(d) { return d.TradeInActionStatus === 'COMPLETE_TRADE_IN'; }).length;
+    var regular = total - enterprise;
+    var delivered = data.filter(function(d) { return d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete'; }).length;
+    var pending = total - delivered;
 
-    // Filter CES by presence + apply admin penalty
-    var activeCES = [];
-    var adminPenalty = {};
-    CES.forEach(function(c, i) {
-      var present = document.getElementById('cesPresent' + i);
-      var admin = document.getElementById('cesAdmin' + i);
-      if (!present || present.dataset.active === '1') {
-        activeCES.push(c);
-        adminPenalty[c] = (admin && admin.dataset.active === '1') ? 0.5 : 0;
-      }
-    });
+    // Summary cards
+    var cardStyle = 'text-align:center;padding:16px 20px;border-radius:10px;border:1px solid rgba(128,128,128,.12);min-width:100px';
+    var numStyle = 'font-size:28px;font-weight:700;line-height:1;margin-bottom:4px';
+    var lblStyle = 'font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.5px;font-weight:600';
 
-    if (!activeCES.length) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">No CES selected. Check at least one as Present.</div>';
-      return;
-    }
-
-    // Auto-assign by weight balancing
-    var cesLoad = {};
-    activeCES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: adminPenalty[c] || 0, items: [] }; });
-    deliveries.forEach(function(d) {
-      var slot = d.isPM ? 'pm' : 'am';
-      var minCES = activeCES[0], minLoad = Infinity;
-      activeCES.forEach(function(c) {
-        if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
-      });
-      d.assignedTo = minCES;
-      cesLoad[minCES][slot] += d.weight;
-      cesLoad[minCES].total += d.weight;
-      cesLoad[minCES].items.push(d);
-    });
-
-    // Render grid
-    var html = '<div style="display:grid;grid-template-columns:repeat(' + activeCES.length + ',1fr);gap:16px">';
-    activeCES.forEach(function(c) {
-      var load = cesLoad[c];
-      var firstName = c.split(' ')[0];
-      html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(128,128,128,.15);border-radius:12px;padding:16px">';
-      html += '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + firstName + '</div>';
-      html += '<div style="font-size:12px;color:#71717a;margin-bottom:12px">Load: ' + load.total.toFixed(1) + ' (' + load.items.length + ' deliveries)</div>';
-
-      // AM section
-      var amItems = load.items.filter(function(d) { return !d.isPM; });
-      html += '<div style="font-size:11px;color:#3b82f6;font-weight:600;text-transform:uppercase;margin-bottom:6px">AM (' + amItems.length + ')</div>';
-      amItems.forEach(function(d) {
-        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(59,130,246,.06);font-size:13px">';
-        html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
-        html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
-        html += '</div>';
-      });
-
-      // PM section
-      var pmItems = load.items.filter(function(d) { return d.isPM; });
-      html += '<div style="font-size:11px;color:#f59e0b;font-weight:600;text-transform:uppercase;margin:12px 0 6px">PM (' + pmItems.length + ')</div>';
-      pmItems.forEach(function(d) {
-        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,158,11,.06);font-size:13px">';
-        html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
-        html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
-        html += '</div>';
-      });
-
-      html += '</div>';
-    });
+    var html = '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + '">' + total + '</div><div style="' + lblStyle + '">Total</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#22c55e">' + pending + '</div><div style="' + lblStyle + '">To Deliver</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#3b82f6">' + delivered + '</div><div style="' + lblStyle + '">Delivered</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#a855f7">' + tradein + '</div><div style="' + lblStyle + '">Trade-In</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#f59e0b">' + enterprise + '</div><div style="' + lblStyle + '">Enterprise</div></div>';
+    html += '<div style="' + cardStyle + '"><div style="' + numStyle + '">' + regular + '</div><div style="' + lblStyle + '">Regular</div></div>';
     html += '</div>';
 
-    if (isPreview) {
-      html = '<div style="padding:8px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:8px;color:#60a5fa;font-size:13px;font-weight:600;margin-bottom:16px;display:inline-block">PREVIEW — Click Save to confirm</div>' + html;
-      html += '<div style="text-align:center;margin-top:20px"><button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3);padding:10px 32px;font-size:15px" onclick="RUNDISPATCH()">Save Dispatch</button></div>';
-    }
-
     container.innerHTML = html;
+    if (previewBtn) previewBtn.disabled = false;
   }).catch(function(e) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Error: ' + e.message + '</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444">Error: ' + e.message + '</div>';
   });
+}
+
+function RUNDISPATCH(mode) {
+  var container = document.getElementById('dispatchContent');
+  var isPreview = mode === 'preview';
+
+  if (!_dispatchData || !_dispatchData.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No delivery data. Select a date first.</div>';
+    return;
+  }
+
+  // Get active CES
+  var activeCES = [];
+  var adminPenalty = {};
+  CES.forEach(function(c, i) {
+    var btn = document.getElementById('cesToggle' + i);
+    var adminBtn = document.getElementById('cesAdminToggle' + i);
+    if (!btn || btn.dataset.active === '1') {
+      activeCES.push(c);
+      adminPenalty[c] = (adminBtn && adminBtn.dataset.active === '1') ? 0.5 : 0;
+    }
+  });
+
+  if (!activeCES.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">No CES selected.</div>';
+    return;
+  }
+
+  // Parse deliveries
+  var deliveries = _dispatchData.map(function(d) {
+    var t = '?';
+    var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+    var isEnt = !!d.IsEnterpriseOrder;
+    var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+    var weight = isEnt ? 1.5 : hasTI ? 1.3 : 1.0;
+    var isPM = parseInt(t) >= 13;
+    return { name: d.CustomerName || '?', rn: d.ReferenceNumber, time: t, model: d.VehicleModel || '', host: d.HostName || '', isPM: isPM, weight: weight, isEnt: isEnt, hasTI: hasTI };
+  }).sort(function(a, b) { return a.time.localeCompare(b.time); });
+
+  // Auto-assign by weight balancing
+  var cesLoad = {};
+  activeCES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: adminPenalty[c] || 0, items: [] }; });
+
+  deliveries.forEach(function(d) {
+    var slot = d.isPM ? 'pm' : 'am';
+    var minCES = activeCES[0], minLoad = Infinity;
+    activeCES.forEach(function(c) {
+      if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
+    });
+    d.assignedTo = minCES;
+    cesLoad[minCES][slot] += d.weight;
+    cesLoad[minCES].total += d.weight;
+    cesLoad[minCES].items.push(d);
+  });
+
+  // Render grid
+  var html = '<div style="display:grid;grid-template-columns:repeat(' + activeCES.length + ',1fr);gap:16px">';
+  activeCES.forEach(function(c) {
+    var load = cesLoad[c];
+    var firstName = c.split(' ')[0];
+    var isAdmin = adminPenalty[c] > 0;
+    html += '<div style="border:1px solid rgba(128,128,128,.12);border-radius:12px;padding:16px">';
+    html += '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + firstName + (isAdmin ? ' <span style="font-size:11px;color:#f59e0b;font-weight:600">ADMIN</span>' : '') + '</div>';
+    html += '<div style="font-size:12px;color:#71717a;margin-bottom:12px">Load: ' + load.total.toFixed(1) + ' (' + load.items.length + ' deliveries)</div>';
+
+    var amItems = load.items.filter(function(d) { return !d.isPM; });
+    html += '<div style="font-size:11px;color:#3b82f6;font-weight:600;text-transform:uppercase;margin-bottom:6px">AM (' + amItems.length + ')</div>';
+    amItems.forEach(function(d) {
+      html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(59,130,246,.06);font-size:13px">';
+      html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
+      html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
+      html += '</div>';
+    });
+
+    var pmItems = load.items.filter(function(d) { return d.isPM; });
+    html += '<div style="font-size:11px;color:#f59e0b;font-weight:600;text-transform:uppercase;margin:12px 0 6px">PM (' + pmItems.length + ')</div>';
+    pmItems.forEach(function(d) {
+      html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,158,11,.06);font-size:13px">';
+      html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
+      html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
+  });
+  html += '</div>';
+
+  if (isPreview) {
+    html += '<div style="text-align:center;margin-top:24px"><button class="bt" style="padding:10px 32px;font-size:15px;background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="SAVEDISPATCH()">Save to DRO</button></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function SAVEDISPATCH() {
+  // For now, just show confirmation
+  var btn = event.target;
+  btn.textContent = 'Saved!';
+  btn.style.background = 'rgba(34,197,94,.2)';
+  btn.disabled = true;
+  setTimeout(function() {
+    btn.textContent = 'Save to DRO';
+    btn.style.background = 'rgba(34,197,94,.12)';
+    btn.disabled = false;
+  }, 3000);
 }
 
 /* ============================================
