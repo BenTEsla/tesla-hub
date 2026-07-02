@@ -1275,7 +1275,6 @@ function STAB(idx, btn) {
         var dfD = ddd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         var diD = ddd.getFullYear() + '-' + String(ddd.getMonth() + 1).padStart(2, '0') + '-' + String(ddd.getDate()).padStart(2, '0');
         dp.add(new Option(dlbl + ' - ' + dfD, diD));
-      }
     }
   }
 }
