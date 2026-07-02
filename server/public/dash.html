@@ -115,16 +115,10 @@
 <div class="main-content">
 
   <!-- TITLE -->
-  <div class="title-row">
-    <div>
-      <h1 id="pageTitle" class="ttl">Dashboard</h1>
-      <div id="pageSubtitle" style="font-size:14px;color:#71717a;margin-top:4px">Overview of today's delivery operations.</div>
-    </div>
-    <div style="flex:1"></div>
-    <div id="tabActions" style="position:relative"></div>
-    <!-- Header right block -->
-    <div style="text-align:right;margin-left:20px">
-      <div style="display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-bottom:6px">
+  <div class="title-row" style="display:grid;grid-template-columns:1fr auto;align-items:end">
+    <h1 id="pageTitle" class="ttl" style="margin:0">Dashboard</h1>
+    <div style="text-align:right">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:14px">
         <a href="mailto:bdaubin@tesla.com?subject=DASH%20Bug%20Report&body=Page:%20%0ABug:%20%0ASteps:%20" title="Report a bug" style="color:inherit;opacity:.5;display:flex;align-items:center;gap:4px;text-decoration:none;font-size:13px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Support
@@ -137,9 +131,11 @@
           Ben Daubin
         </div>
       </div>
-      <div id="dashGreetingHeader" style="font-size:13px;color:inherit;opacity:.5"></div>
-      <div style="margin-top:2px"><span id="dashDateHeader" style="font-size:18px;font-weight:500;color:inherit"></span><span style="opacity:.25;margin:0 6px;font-size:18px">|</span><span id="dashTimeHeader" style="font-size:18px;font-weight:500;color:inherit;font-variant-numeric:tabular-nums"></span></div>
+      <div id="dashGreetingHeader" style="font-size:12px;color:inherit;opacity:.4;margin-top:2px"></div>
     </div>
+    <div id="pageSubtitle" style="font-size:14px;color:#71717a;margin-top:4px">Overview of today's delivery operations.</div>
+    <div id="tabActions" style="position:relative"></div>
+    <div style="text-align:right"><span id="dashDateHeader" style="font-size:14px;color:inherit;opacity:.7"></span><span style="opacity:.2;margin:0 6px;font-size:14px">|</span><span id="dashTimeHeader" style="font-size:14px;color:inherit;opacity:.7;font-variant-numeric:tabular-nums"></span></div>
   </div>
 
   <!-- ========== DASHBOARD VIEW ========== -->
