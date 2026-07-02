@@ -162,19 +162,13 @@ body {
 }
 
 .nav-item:hover {
-  opacity: 1;
   background: rgba(128, 128, 128, .08);
 }
 
 .nav-item.on {
-  opacity: 1;
-  background: rgba(255, 255, 255, .04);
-}
-
-.nav-item.on {
-  color: #f4f4f5;
   background: rgba(255, 255, 255, .06);
   font-weight: 600;
+}
 }
 
 .nav-item svg {
@@ -211,7 +205,6 @@ body {
 }
 
 .nav-group-header:hover {
-  opacity: 1;
   background: rgba(128, 128, 128, .08);
 }
 
