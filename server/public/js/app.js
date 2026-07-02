@@ -1478,35 +1478,15 @@ function LOADCALENDAR() {
 
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-    // Header row 1: Day names (colspan 2)
-    html += '<thead><tr><th rowspan="2" style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px;vertical-align:bottom">TIME</th>';
+    // Header row: Day names with total count
+    html += '<thead><tr><th style="padding:10px 12px;text-align:left;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
-      html += '<th colspan="2" style="padding:8px 6px 2px;text-align:center;font-size:12px;font-weight:600;border-bottom:none;' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '</th>';
-    });
-    html += '</tr>';
-    // Header row 2: S | C labels
-    html += '<tr>';
-    days.forEach(function() {
-      html += '<th style="padding:2px 6px 8px;text-align:center;font-size:10px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);color:#3b82f6;width:50px">S</th>';
-      html += '<th style="padding:2px 6px 8px;text-align:center;font-size:10px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);color:#22c55e;width:50px">C</th>';
+      var dayTotal = 0;
+      Object.keys(d.slots).forEach(function(s) { dayTotal += d.slots[s].length; });
+      html += '<th colspan="2" style="padding:10px 6px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '<div style="font-size:18px;font-weight:700;margin-top:2px;color:inherit">' + dayTotal + '</div></th>';
     });
     html += '</tr></thead><tbody>';
-
-    // Totals row
-    html += '<tr class="cal-total"><td style="padding:10px 12px;font-size:12px;color:#71717a">TOTAL</td>';
-    days.forEach(function(d) {
-      var sched = 0, conf = 0;
-      Object.keys(d.slots).forEach(function(s) {
-        d.slots[s].forEach(function(e) {
-          if (e.status === 'Confirmed' || e.status === 'Complete') conf++;
-          else sched++;
-        });
-      });
-      html += '<td style="padding:10px 6px;text-align:center;font-size:14px;color:#3b82f6">' + sched + '</td>';
-      html += '<td style="padding:10px 6px;text-align:center;font-size:14px;color:#22c55e">' + conf + '</td>';
-    });
-    html += '</tr>';
 
     times.forEach(function(t) {
       var isLunch = !!lunchSlots[t];
