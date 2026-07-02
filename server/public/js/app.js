@@ -1283,8 +1283,12 @@ function STAB(idx, btn) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
   }).catch(function() {});
-}
-}
+  }
+
+  if (idx === 8 && typeof LOADCALENDAR === 'function') {
+    LOADCALENDAR();
+  }
+} // END OF STAB
 
 /* ============================================
    CALENDAR: Week navigation
@@ -1475,15 +1479,6 @@ function LOADCALENDAR() {
     container.innerHTML = html;
   });
 }
-
-  if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
-    fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {
-      document.getElementById("csatView").innerHTML = h;
-      LOADCSAT();
-    }).catch(function(e) {
-      document.getElementById("csatView").innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error loading CSAT: ' + e.message + '</div>';
-    });
-  }
 
 /* ============================================
    DISPATCH PAGE: Auto-assign deliveries to CES
