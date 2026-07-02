@@ -681,19 +681,22 @@ table {
   table-layout: fixed;
 }
 
-/* Column widths */
-th:nth-child(1)  { width: 32px; }   /* Checkbox */
-th:nth-child(2)  { width: 50px; }   /* Time */
-th:nth-child(3)  { width: 220px; }  /* Customer */
-th:nth-child(4)  { width: 110px; }  /* RN */
-th:nth-child(5)  { width: 75px; }   /* Vehicle */
-th:nth-child(6)  { width: 90px; }   /* Registration */
-th:nth-child(7)  { width: 75px; }   /* Payment */
-th:nth-child(8)  { width: 80px; }   /* Trade-In */
-th:nth-child(9)  { width: 100px; }  /* Vehicle Status */
-th:nth-child(10) { width: 55px; }   /* Hold */
-th:nth-child(11) { width: 75px; }   /* Insurance */
-th:nth-child(12) { width: 45px; }   /* Actions */
+/* Column resize handle */
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background .15s;
+  z-index: 11;
+}
+.col-resize-handle:hover,
+.col-resize-handle:active {
+  background: #3b82f6;
+}
 
 th {
   padding: 12px 14px;
@@ -710,6 +713,8 @@ th {
   z-index: 10;
   text-transform: uppercase;
   letter-spacing: .3px;
+  position: relative;
+  overflow: hidden;
 }
 
 th:hover {

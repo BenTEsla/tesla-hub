@@ -300,6 +300,12 @@
       <button class="bt-q" onclick="QW(1,this)">Next Week</button>
       <button class="bt bt-p" onclick="L()">Search</button>
       <button class="bt" onclick="RST()">Reset</button>
+      <div style="position:relative;display:inline-block">
+        <button class="bt" onclick="COLPICKER()" title="Customize columns" style="padding:6px 10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <div id="colPickerMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 0;z-index:100;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+      </div>
       <div style="flex:1"></div>
       <button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="G()">Print</button>
       <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);margin-left:4px" onclick="GPDG()">PDG</button>
@@ -317,19 +323,19 @@
         <table id="tbl" style="display:none">
           <thead>
             <tr>
-              <th style="width:32px"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>
-              <th id="thDate" class="hid" onclick="SO('sdd')">Date</th>
-              <th onclick="SO('t')" style="width:50px">Time</th>
-              <th onclick="SO('name')" style="width:220px">Customer</th>
-              <th style="width:110px">RN</th>
-              <th onclick="SO('model')" style="width:75px">Vehicle<br><select class="fi" id="fVehicle" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:90px">Registration<br><select class="fi" id="fReg" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:75px">Payment<br><select class="fi" id="fPay" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:80px">Trade-In<br><select class="fi" id="fTI" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:120px">Vehicle Status<br><select class="fi" id="fVS" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:55px">Hold<br><select class="fi" id="fHold" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:75px">Insurance<br><select class="fi" id="fIns" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
-              <th style="width:45px"></th>
+              <th style="width:32px" data-col="ck"><input type="checkbox" class="ck" id="sa" onchange="SA(this)"/></th>
+              <th id="thDate" class="hid" onclick="SO('sdd')" data-col="date">Date</th>
+              <th onclick="SO('t')" data-col="time">Time</th>
+              <th onclick="SO('name')" data-col="customer">Customer</th>
+              <th data-col="rn">RN</th>
+              <th onclick="SO('model')" data-col="vehicle">Vehicle<br><select class="fi" id="fVehicle" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="reg">Registration<br><select class="fi" id="fReg" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="pay">Payment<br><select class="fi" id="fPay" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="ti">Trade-In<br><select class="fi" id="fTI" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="vs">Vehicle Status<br><select class="fi" id="fVS" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="hold">Hold<br><select class="fi" id="fHold" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th data-col="ins">Insurance<br><select class="fi" id="fIns" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:45px" data-col="print"></th>
             </tr>
           </thead>
           <tbody id="tb"></tbody>
@@ -430,8 +436,9 @@
 <!-- ============================================
      SCRIPTS
      ============================================ -->
-<script src="/js/app.js"></script>
-<script src="/filters.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/filters.js"></script>
+    <script src="/columns.js"></script>
 <script src="/tradein.js"></script>
 <script src="/dispatch.js"></script>
 <script src="/stock.js"></script>
