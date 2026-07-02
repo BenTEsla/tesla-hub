@@ -1140,6 +1140,22 @@ app.get('/api/config', (req, res) => {
 });
 
 // ============================================================
+// DELIVERY NOTES API
+// ============================================================
+const notesFile = path.join(__dirname, 'data', 'delivery-notes.json');
+let deliveryNotes = {};
+try { deliveryNotes = JSON.parse(fs.readFileSync(notesFile, 'utf8')); } catch(e) {}
+function saveNotes() { fs.writeFileSync(notesFile, JSON.stringify(deliveryNotes, null, 2)); }
+
+app.get('/api/notes', (req, res) => { res.json(deliveryNotes); });
+app.get('/api/notes/:rn', (req, res) => { res.json({ rn: req.params.rn, note: deliveryNotes[req.params.rn] || '' }); });
+app.post('/api/notes/:rn', (req, res) => {
+  deliveryNotes[req.params.rn] = req.body.note || '';
+  saveNotes();
+  res.json({ ok: true });
+});
+
+// ============================================================
 // DASHBOARD LIVE: Pre-generate the full dashboard HTML
 // ============================================================
 app.get('/dashboard-live', (req, res) => {

@@ -1356,6 +1356,7 @@ function LOADCALENDAR() {
   }
 
   Promise.all(promises).then(function() {
+    _calAllDays = days;
     // Collect all time slots
     var allSlots = {};
     days.forEach(function(d) { Object.keys(d.slots).forEach(function(s) { allSlots[s] = true; }); });
@@ -1418,7 +1419,7 @@ function LOADCALENDAR() {
         });
       } else {
         html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
-        days.forEach(function(d) {
+        days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
           var count = entries.length;
           var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
@@ -1433,7 +1434,7 @@ function LOADCALENDAR() {
               var line2 = details ? '<div style="font-size:10px;color:#71717a;margin-left:10px;margin-bottom:3px">' + details + '</div>' : '';
               return line1 + line2;
             }).join('');
-            html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'}" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
+            html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'};SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
             html += '<span class="cal-count" style="font-weight:700;color:' + color + '">' + count + '</span>';
             html += '<div class="cal-names" style="display:none;font-size:11px;margin-top:4px;color:#d4d4d8;line-height:1.4;font-weight:400">' + namesHtml + '</div>';
             html += '</td>';
@@ -2006,5 +2007,62 @@ function LOADDASH() {
     var onSite = (j.tracking || []).filter(function(t) { return !t.outDate; }).length;
     document.getElementById("dashTradeIn").textContent = onSite;
     document.getElementById("dashTradeInSub").textContent = 'vehicles on site';
+  }).catch(function() {});
+}
+
+/* ============================================
+   CALENDAR: Show detail panel for a time slot
+   ============================================ */
+var _calAllDays = [];
+
+function SHOWCALDETAIL(dayIdx, time) {
+  var panel = document.getElementById('calDetailPanel');
+  var title = document.getElementById('calDetailTitle');
+  var body = document.getElementById('calDetailBody');
+  if (!panel || !_calAllDays[dayIdx]) return;
+
+  var day = _calAllDays[dayIdx];
+  var items = day.slots[time] || [];
+  if (!items.length) return;
+
+  title.textContent = day.label + ' — ' + time;
+  panel.style.display = '';
+
+  fetch(SERVER + '/api/notes').then(function(r) { return r.json(); }).then(function(notes) {
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
+    html += '<thead><tr>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Model</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Host</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Status</th>';
+    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15);min-width:200px">Notes</th>';
+    html += '</tr></thead><tbody>';
+
+    items.forEach(function(it) {
+      var dotColor = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : it.status === 'Scheduled' ? '#3b82f6' : it.status === 'Delivered' ? '#71717a' : '#ef4444';
+      var note = notes[it.rn] || '';
+      html += '<tr>';
+      html += '<td style="padding:10px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06)">' + it.name + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + it.model + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)">' + (it.host || '-') + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
+      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:13px;font-family:inherit;color:inherit;background:transparent;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  }).catch(function() {
+    body.innerHTML = '<div style="color:#ef4444">Error loading notes</div>';
+  });
+}
+
+function SAVENOTE(rn, note) {
+  fetch(SERVER + '/api/notes/' + rn, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({note: note})
   }).catch(function() {});
 }
