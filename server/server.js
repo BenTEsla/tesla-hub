@@ -182,13 +182,19 @@ app.get('/api/auth/login-docgen', async (req, res) => {
 app.get('/api/print/status', (req, res) => { res.json(printStatus); });
 
 app.post('/api/print/status/:rn', (req, res) => {
-  printStatus[req.params.rn] = { printed: true, date: new Date().toISOString(), docs: req.body.docs || 0 };
+  printStatus[req.params.rn] = { printed: true, date: new Date().toISOString(), docs: req.body.docs || 0, sdd: req.body.sdd || '' };
   savePrintStatus();
   res.json({ ok: true });
 });
 
 app.delete('/api/print/status', (req, res) => {
   printStatus = {};
+  savePrintStatus();
+  res.json({ ok: true });
+});
+
+app.delete('/api/print/status/:rn', (req, res) => {
+  delete printStatus[req.params.rn];
   savePrintStatus();
   res.json({ ok: true });
 });
@@ -421,8 +427,8 @@ app.post('/api/print/send/:rn', async (req, res) => {
     try { await ptp.print(mergedPath, { printer }); results.printed = pdfPaths.length; results.files = pdfPaths.map(p => path.basename(p)); console.log('Printed merged PDF:', rn); }
     catch(e) { console.error('Print error:', e.message); }
     
-    // Mark as printed
-    printStatus[rn] = { printed: true, date: new Date().toISOString(), docs: results.printed };
+    // Mark as printed (store SDD for pushback detection)
+    printStatus[rn] = { printed: true, date: new Date().toISOString(), docs: results.printed, sdd: date };
     savePrintStatus();
     
     // Update DRO paperwork status

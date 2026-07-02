@@ -894,19 +894,30 @@ function RW() {
 
   if (WKMODE) showDateCol(true);
 
-  // Check print status
+  // Populate dynamic filter dropdowns
+  if (typeof populateFilters === 'function') populateFilters(DATA);
+
+  // Check print status (reset if SDD changed = pushback)
   fetch(SERVER + "/api/print/status").then(function(r) { return r.json(); }).then(function(ps) {
     document.querySelectorAll("#tb tr").forEach(function(r) {
       var ci = r.querySelector(".rc");
       if (!ci) return;
       var d = DATA[parseInt(ci.dataset.i)];
-      if (d && ps[d.rn]) {
+      if (!d) return;
+      var entry = ps[d.rn];
+      if (entry) {
+        // Check if SDD changed (pushback) → reset print status
+        if (entry.sdd && d.sddRaw && entry.sdd !== d.sddRaw) {
+          // SDD changed — delete print status for this RN
+          fetch(SERVER + "/api/print/status/" + d.rn, { method: "DELETE" }).catch(function() {});
+          return; // leave button in default (unprinted) state
+        }
         var btn = r.querySelector("button");
         if (btn) {
           btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>';
           btn.style.border = "1px solid rgba(34,197,94,.3)";
           btn.style.background = "rgba(34,197,94,.1)";
-          btn.title = "Reprint";
+          btn.title = "Printed " + new Date(entry.date).toLocaleString("fr-FR", {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) + " — Reprint";
         }
       }
     });

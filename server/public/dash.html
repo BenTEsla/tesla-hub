@@ -322,13 +322,13 @@
               <th onclick="SO('t')" style="width:50px">Time<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
               <th onclick="SO('name')" style="width:220px">Customer<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
               <th style="width:110px">RN<br><input class="fi" placeholder="..." oninput="CF();event.stopPropagation()" onclick="event.stopPropagation()"></th>
-              <th onclick="SO('model')" style="width:75px">Vehicle<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Model 3">M3</option><option value="Model Y">MY</option></select></th>
-              <th style="width:90px">Registration<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="Hold">Hold</option><option value="Pending">Pending</option></select></th>
-              <th style="width:75px">Payment<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>
-              <th style="width:80px">Trade-In<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Accepted">Yes</option><option value="No">No</option></select></th>
-              <th style="width:100px">Vehicle<br>Status<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Finished">FG</option><option value="Transit">Transit</option></select></th>
-              <th style="width:55px">Hold<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="Hold">Hold</option><option value="OK">OK</option></select></th>
-              <th style="width:75px">Insurance<br><select class="fi" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option><option value="OK">OK</option><option value="No">No</option></select></th>
+              <th onclick="SO('model')" style="width:75px">Vehicle<br><select class="fi" id="fVehicle" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:90px">Registration<br><select class="fi" id="fReg" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:75px">Payment<br><select class="fi" id="fPay" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:80px">Trade-In<br><select class="fi" id="fTI" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:120px">Vehicle Status<br><select class="fi" id="fVS" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:55px">Hold<br><select class="fi" id="fHold" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
+              <th style="width:75px">Insurance<br><select class="fi" id="fIns" onchange="CF()" onclick="event.stopPropagation()"><option value="">All</option></select></th>
               <th style="width:45px"></th>
             </tr>
           </thead>
