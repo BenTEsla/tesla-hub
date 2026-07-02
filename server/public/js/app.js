@@ -1,10 +1,10 @@
 /* DASH v4.0 - Delivery Automation Smart Hub - Application Logic */
 
 function fmtSDD(sp) {
-  var days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-  var dd = String(sp.getDate()).padStart(2, '0');
   var mm = String(sp.getMonth() + 1).padStart(2, '0');
-  return days[sp.getDay()] + ' ' + dd + '/' + mm;
+  var dd = String(sp.getDate()).padStart(2, '0');
+  var yy = sp.getFullYear();
+  return mm + '-' + dd + '-' + yy;
 }
 
 function ERRMSG(msg) {
