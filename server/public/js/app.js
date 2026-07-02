@@ -2381,6 +2381,46 @@ function LOADDASH() {
     var sub = document.getElementById("dashDueBillsSub");
     if (sub) sub.textContent = open > 0 ? open + ' open' : 'all clear';
   }).catch(function() {});
+
+  // 7. Load SV & Holds counts (requires DRO auth)
+  if (AUTH.token) {
+    var svH = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
+    var svPromises = [];
+    var svCount = 0, chCount = 0;
+    for (var si = 0; si < 7; si++) {
+      var sd = new Date(Date.now() + si * 864e5);
+      var sds = sd.getFullYear() + '-' + String(sd.getMonth()+1).padStart(2,'0') + '-' + String(sd.getDate()).padStart(2,'0');
+      (function(dateStr) {
+        svPromises.push(
+          fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+            method: "POST", headers: svH,
+            body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:[],Countries:[],DeliveryDate:dateStr,TrtId:String(CFG.trtId)}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+          }).then(function(r) { return r.json(); }).then(function(j) {
+            ((j.Data && j.Data.Dashboard) || []).forEach(function(a) {
+              if (a.ServiceVisitGate === 'Incomplete') svCount++;
+              if (a.IsContainmentHold || a.IsRepairOrderHold) chCount++;
+            });
+          }).catch(function() {})
+        );
+      })(sds);
+    }
+    Promise.all(svPromises).then(function() {
+      var svEl = document.getElementById("dashSV");
+      if (svEl) {
+        svEl.textContent = svCount;
+        document.getElementById("dashSVSub").textContent = svCount > 0 ? svCount + ' vehicle' + (svCount > 1 ? 's' : '') : 'all clear';
+      }
+      var chEl = document.getElementById("dashCH");
+      if (chEl) {
+        chEl.textContent = chCount;
+        document.getElementById("dashCHSub").textContent = chCount > 0 ? chCount + ' vehicle' + (chCount > 1 ? 's' : '') : 'all clear';
+      }
+    });
+  } else {
+    // Not authenticated — show dash
+    var svEl = document.getElementById("dashSV"); if (svEl) { svEl.textContent = '-'; document.getElementById("dashSVSub").textContent = 'login required'; }
+    var chEl = document.getElementById("dashCH"); if (chEl) { chEl.textContent = '-'; document.getElementById("dashCHSub").textContent = 'login required'; }
+  }
 }
 
 /* ============================================

@@ -1044,6 +1044,7 @@ tr:nth-child(even) td {
 .dash-red { color: #ef4444; }
 .dash-blue { color: #3b82f6; }
 .dash-purple { color: #a855f7; }
+.dash-yellow { color: #f59e0b; }
 
 .dash-charts {
   display: grid;
