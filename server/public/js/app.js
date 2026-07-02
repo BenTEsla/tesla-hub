@@ -629,6 +629,7 @@ async function L() {
   var loadBar = document.getElementById("loadingBar");
   if (loadBar) loadBar.classList.add("active");
   lg.style.display = "block";
+  lg.innerHTML = '<div style="padding:60px;text-align:center;color:#71717a;font-size:14px">Loading deliveries...</div>';
   tbl.style.display = "none";
 
   var h = {
@@ -670,7 +671,8 @@ async function L() {
     var rns = Object.keys(dm);
 
     if (!rns.length) {
-      lg.innerHTML = '<div style="padding:60px;text-align:center;color:#aaa">No deliveries found.</div>';
+      if (loadBar) loadBar.classList.remove("active");
+      lg.innerHTML = '<div style="padding:60px;text-align:center"><div style="font-size:18px;font-weight:500;margin-bottom:8px">No deliveries</div><div style="color:#71717a;font-size:14px">No deliveries scheduled for this date.</div></div>';
       return;
     }
 
