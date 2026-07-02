@@ -992,11 +992,12 @@ tr:nth-child(even) td {
 }
 
 .dash-card {
-  background: rgba(128, 128, 128, .08);
-  border: 1px solid rgba(128, 128, 128, .15);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 12px;
   padding: 20px;
   text-align: center;
+  backdrop-filter: blur(12px);
 }
 
 .dash-card-label {
@@ -1034,11 +1035,12 @@ tr:nth-child(even) td {
 }
 
 .dash-chart-card {
-  background: rgba(128, 128, 128, .08);
-  border: 1px solid rgba(128, 128, 128, .15);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 16px;
+  backdrop-filter: blur(12px);
 }
 
 .dash-chart-title {
