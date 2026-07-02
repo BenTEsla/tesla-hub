@@ -164,6 +164,8 @@ function applyLight() {
     + '.nav-item.on{color:#171a20!important;background:rgba(0,0,0,.05)!important;font-weight:600!important}'
     + '.sidebar-hbg{color:#9ca3af!important}'
     + '.sidebar-hbg:hover{color:#171a20!important}'
+    + '.col-resize-handle{background:rgba(0,0,0,.15)!important}'
+    + '.col-resize-handle:hover,.col-resize-handle:active{background:#3b82f6!important}'
   ;
   document.head.appendChild(s);
 }
