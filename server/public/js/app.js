@@ -1234,21 +1234,16 @@ function STAB(idx, btn) {
     }
   }
 
-  // Populate CES presence checkboxes
+  // Populate CES presence pills
   if (idx === 6) {
     var cpBlock = document.getElementById('cesPresence');
     if (cpBlock && !cpBlock.innerHTML.trim()) {
       var cpHtml = '';
       CES.forEach(function(c, i) {
         var first = c.split(' ')[0];
-        cpHtml += '<div style="display:flex;flex-direction:column;gap:6px;padding:12px 16px;border:1px solid rgba(128,128,128,.15);border-radius:10px;min-width:140px">'
-          + '<div style="font-weight:600;font-size:14px">' + first + '</div>'
-          + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'
-          + '<input type="checkbox" checked id="cesPresent' + i + '" style="width:16px;height:16px;accent-color:#22c55e"> Present'
-          + '</label>'
-          + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'
-          + '<input type="checkbox" id="cesAdmin' + i + '" style="width:16px;height:16px;accent-color:#f59e0b"> Admin'
-          + '</label>'
+        cpHtml += '<div style="display:flex;gap:4px">'
+          + '<button id="cesPresent' + i + '" data-active="1" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.opacity=this.dataset.active===\'1\'?\'1\':\'0.4\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(34,197,94,.4)\':\'rgba(128,128,128,.2)\'" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.08);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:inherit">' + first + '</button>'
+          + '<button id="cesAdmin' + i + '" data-active="0" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.background=this.dataset.active===\'1\'?\'rgba(245,158,11,.15)\':\'transparent\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(245,158,11,.4)\':\'rgba(128,128,128,.2)\'" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(128,128,128,.2);background:transparent;font-size:11px;font-family:inherit;cursor:pointer;color:inherit" title="Admin duty">A</button>'
           + '</div>';
       });
       cpBlock.innerHTML = cpHtml;
@@ -1353,9 +1348,9 @@ function RUNDISPATCH(mode) {
     CES.forEach(function(c, i) {
       var present = document.getElementById('cesPresent' + i);
       var admin = document.getElementById('cesAdmin' + i);
-      if (!present || present.checked) {
+      if (!present || present.dataset.active === '1') {
         activeCES.push(c);
-        adminPenalty[c] = (admin && admin.checked) ? 0.5 : 0;
+        adminPenalty[c] = (admin && admin.dataset.active === '1') ? 0.5 : 0;
       }
     });
 
@@ -1413,7 +1408,8 @@ function RUNDISPATCH(mode) {
     html += '</div>';
 
     if (isPreview) {
-      html = '<div style="padding:8px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:8px;color:#60a5fa;font-size:13px;font-weight:600;margin-bottom:16px;display:inline-block">PREVIEW MODE — Not saved to DRO</div>' + html;
+      html = '<div style="padding:8px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:8px;color:#60a5fa;font-size:13px;font-weight:600;margin-bottom:16px;display:inline-block">PREVIEW — Click Save to confirm</div>' + html;
+      html += '<div style="text-align:center;margin-top:20px"><button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3);padding:10px 32px;font-size:15px" onclick="RUNDISPATCH()">Save Dispatch</button></div>';
     }
 
     container.innerHTML = html;
