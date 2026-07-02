@@ -1723,15 +1723,15 @@ function LOADDASH() {
     var data = dash.Data || [];
     var total = data.length;
     var delivered = data.filter(function(d) { return d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete'; }).length;
-    var ready = total - delivered;
-    var notReady = 0;
+    var fg = data.filter(function(d) { return d.VehicleStage === 'Finished Goods' || (d.VehicleStage && d.VehicleStage.indexOf('Arrived') >= 0); }).length;
+    var notReady = data.filter(function(d) { return d.CustomerDeliveryStatus !== 'Delivered' && d.CustomerDeliveryStatus !== 'Complete' && d.VehicleStage !== 'Finished Goods'; }).length;
 
     document.getElementById("dashDeliveries").textContent = total;
     document.getElementById("dashDeliveriesSub").textContent = delivered + " delivered";
-    document.getElementById("dashReady").textContent = ready;
-    document.getElementById("dashReadySub").textContent = "to deliver";
+    document.getElementById("dashReady").textContent = fg;
+    document.getElementById("dashReadySub").textContent = "on the ground";
     document.getElementById("dashNotReady").textContent = notReady;
-    document.getElementById("dashNotReadySub").textContent = "alerts";
+    document.getElementById("dashNotReadySub").textContent = "not ready";
 
     // Schedule
     var scheduleHtml = '';
@@ -1770,14 +1770,10 @@ function LOADDASH() {
       if (total > maxVal) maxVal = total;
     });
     var html = '';
-    // Show up to 8 dates, skip days with 0
-    var shown = 0;
-    dates.forEach(function(d, i) {
-      if (shown >= 8) return;
+    // Show only next 7 calendar days
+    dates.slice(0, 7).forEach(function(d, i) {
       var a = arrived[i] || 0, c = confident[i] || 0, p = preliminary[i] || 0;
       var total = a + c + p;
-      if (total === 0 && shown > 2) return; // skip empty days after first few
-      shown++;
       var aH = Math.max(Math.round((a / maxVal) * 140), a > 0 ? 4 : 0);
       var cH = Math.max(Math.round((c / maxVal) * 140), c > 0 ? 4 : 0);
       var pH = Math.max(Math.round((p / maxVal) * 140), p > 0 ? 4 : 0);
