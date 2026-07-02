@@ -84,6 +84,13 @@ function COLPICKER() {
   html += '<div style="border-top:1px solid rgba(255,255,255,.08);margin:6px 0"></div>';
   html += '<div style="padding:4px 14px"><button onclick="colResetAll()" style="width:100%;padding:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#a1a1aa;font-size:12px;cursor:pointer;font-family:inherit">Reset to default</button></div>';
   menu.innerHTML = html;
+
+  // Position fixed relative to the button
+  var btn = menu.parentElement.querySelector('button');
+  var rect = btn.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.style.left = 'auto';
   menu.style.display = 'block';
 
   // Close on outside click
