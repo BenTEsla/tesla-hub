@@ -992,7 +992,7 @@ tr:nth-child(even) td {
 }
 
 .dash-card {
-  background: rgba(255, 255, 255, .04);
+  background: var(--tds-color--background-container, #fff);
   border: 1px solid rgba(128, 128, 128, .15);
   border-radius: 12px;
   padding: 20px;
@@ -1034,7 +1034,7 @@ tr:nth-child(even) td {
 }
 
 .dash-chart-card {
-  background: rgba(255, 255, 255, .04);
+  background: var(--tds-color--background-container, #fff);
   border: 1px solid rgba(128, 128, 128, .15);
   border-radius: 12px;
   padding: 20px;
