@@ -87,7 +87,18 @@ app.get('/api/auth/status', (req, res) => {
       docgenMinLeft = Math.round((json.exp * 1000 - Date.now()) / 60000);
     } catch(e) {}
   }
-  res.json({ hasDro: !!tokens.dro, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, userId: tokens.userId });
+  let droMinLeft = 0;
+  let droValid = false;
+  if (tokens.dro) {
+    try {
+      const payload = tokens.dro.split('.')[1];
+      let padded = payload; while (padded.length % 4) padded += '=';
+      const json = JSON.parse(Buffer.from(padded, 'base64').toString());
+      droMinLeft = Math.round((json.exp * 1000 - Date.now()) / 60000);
+      droValid = droMinLeft > 0;
+    } catch(e) { droValid = !!tokens.dro; }
+  }
+  res.json({ hasDro: droValid, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, droMinLeft, userId: tokens.userId });
 });
 
 app.get('/auth/callback', (req, res) => {
@@ -1327,13 +1338,14 @@ app.all('/api/dro/*', async (req, res) => {
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
     const text = await r.text();
+    console.log('[DRO]', req.method, req.params[0], 'status:', r.status, 'body:', text.substring(0, 200));
     if (r.status === 401 || r.status === 403) {
-      tokens.dro = ''; // clear expired token
+      tokens.dro = '';
       return res.status(401).json({ error: 'DRO token expired. Refresh from DRO tab.' });
     }
     try { res.status(r.status).json(JSON.parse(text)); }
-    catch(e) { res.status(502).json({ error: 'Invalid response from DRO API', status: r.status }); }
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    catch(e) { res.status(502).json({ error: 'Invalid response from DRO API', status: r.status, preview: text.substring(0, 200) }); }
+  } catch (e) { console.error('[DRO] Proxy error:', e.message); res.status(500).json({ error: e.message }); }
 });
 
 // ============================================================
