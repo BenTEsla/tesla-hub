@@ -1470,15 +1470,19 @@ function RUNDISPATCH(mode) {
 }
 
 function SAVEDISPATCH() {
-  // For now, just show confirmation
-  var btn = event.target;
-  btn.textContent = 'Saved!';
-  btn.style.background = 'rgba(34,197,94,.2)';
+  var btn = document.querySelector('#dispatchContent button');
+  if (!btn) return;
+  btn.textContent = 'Saving...';
   btn.disabled = true;
+  btn.style.opacity = '0.6';
+  // Simulate save (TODO: real DRO API call)
   setTimeout(function() {
-    btn.textContent = 'Save to DRO';
-    btn.style.background = 'rgba(34,197,94,.12)';
-    btn.disabled = false;
+    btn.textContent = '✓ Dispatch Saved!';
+    btn.style.background = 'rgba(34,197,94,.2)';
+    btn.style.color = '#22c55e';
+    btn.style.borderColor = 'rgba(34,197,94,.3)';
+    btn.style.opacity = '1';
+  }, 1000);
   }, 3000);
 }
 
