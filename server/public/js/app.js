@@ -2239,8 +2239,8 @@ function LOADDASH() {
     var data = dash.Data || [];
     var total = data.length;
     var delivered = data.filter(function(d) { return d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete'; }).length;
-    var fg = data.filter(function(d) { return d.VehicleStage === 'Finished Goods' || (d.VehicleStage && d.VehicleStage.indexOf('Arrived') >= 0); }).length;
-    var notReady = data.filter(function(d) { return d.CustomerDeliveryStatus !== 'Delivered' && d.CustomerDeliveryStatus !== 'Complete' && d.VehicleStage !== 'Finished Goods'; }).length;
+    var fg = data.filter(function(d) { var vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0; }).length;
+    var notReady = data.filter(function(d) { var vs = d.VehicleStage || ''; return d.CustomerDeliveryStatus !== 'Delivered' && d.CustomerDeliveryStatus !== 'Complete' && vs !== 'Finished Goods' && vs.indexOf('Arrived') < 0; }).length;
 
     document.getElementById("dashDeliveries").textContent = total;
     document.getElementById("dashDeliveriesSub").textContent = delivered + " delivered";
