@@ -1345,6 +1345,7 @@ function LOADCALENDAR() {
                 days[idx].slots[slot].push({
                   name: a.CustomerName || c.CustomerName || '?',
                   rn: c.ReferenceNumber || '',
+                  vin6: (a.Vin || '').slice(-6),
                   model: a.VehicleModel || c.VehicleModel || '',
                   host: c.HostName || a.DeliverySpecialistName || '',
                   status: a.AppointmentSystemStatus || a.AppointmentStatus || 'Scheduled'
@@ -2054,6 +2055,7 @@ function SHOWCALDETAIL(dayIdx, time) {
     html += '<thead><tr>';
     html += '<th>Customer</th>';
     html += '<th>RN</th>';
+    html += '<th>VIN</th>';
     html += '<th>Model</th>';
     html += '<th>Host</th>';
     html += '<th>Status</th>';
@@ -2066,6 +2068,7 @@ function SHOWCALDETAIL(dayIdx, time) {
       html += '<tr>';
       html += '<td style="font-weight:600">' + it.name + '</td>';
       html += '<td><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td style="font-family:monospace;font-size:13px;color:#71717a">' + (it.vin6 || '-') + '</td>';
       html += '<td>' + it.model + '</td>';
       html += '<td>' + (it.host || '-') + '</td>';
       html += '<td><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
