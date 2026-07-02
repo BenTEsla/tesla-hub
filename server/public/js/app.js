@@ -7,6 +7,7 @@ var WKMODE = false;
 var sortDir = {};
 var activeFilter = null;
 var _calWeekOffset = 0;
+var _calView = 'week';
 
 /* ============================================
    CES BLOCK INIT - Build CES stat cards
@@ -1298,6 +1299,13 @@ function NAVCALWEEK(dir) {
   LOADCALENDAR();
 }
 
+function SETCALVIEW(view) {
+  _calView = view;
+  document.getElementById('calViewWeek').style.fontWeight = view === 'week' ? '700' : '400';
+  document.getElementById('calViewDay').style.fontWeight = view === 'day' ? '700' : '400';
+  LOADCALENDAR();
+}
+
 function SHOWCALTODAY() {
   var now = new Date();
   var todayLabel = now.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
@@ -1368,12 +1376,17 @@ function LOADCALENDAR() {
   // Get Monday of current week, offset by _calWeekOffset
   var now = new Date();
   var mon = new Date(now);
-  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7) + (_calWeekOffset * 7));
+  if (_calView === 'day') {
+    mon.setDate(now.getDate() + (_calWeekOffset * 1));
+  } else {
+    mon.setDate(now.getDate() - ((now.getDay() + 6) % 7) + (_calWeekOffset * 7));
+  }
 
-  // Fetch 6 days (Mon-Sat)
+  // Fetch days
+  var numDays = _calView === 'day' ? 1 : 6;
   var days = [];
   var promises = [];
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < numDays; i++) {
     var d = new Date(mon);
     d.setDate(mon.getDate() + i);
     var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
