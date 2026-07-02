@@ -90,8 +90,8 @@ function COLPICKER() {
   html += '<div style="padding:4px 14px"><button onclick="colResetAll()" style="width:100%;padding:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#a1a1aa;font-size:12px;cursor:pointer;font-family:inherit">Reset to default</button></div>';
   menu.innerHTML = html;
 
-  // Position fixed relative to the button
-  var btn = menu.parentElement.querySelector('button');
+  // Position fixed relative to the icon
+  var btn = document.getElementById('colPickerBtn');
   var rect = btn.getBoundingClientRect();
   menu.style.top = (rect.bottom + 4) + 'px';
   menu.style.right = (window.innerWidth - rect.right) + 'px';
@@ -101,7 +101,7 @@ function COLPICKER() {
   // Close on outside click
   setTimeout(function() {
     document.addEventListener('click', function closer(e) {
-      if (!menu.contains(e.target) && !e.target.closest('[onclick*="COLPICKER"]')) {
+      if (!menu.contains(e.target) && !e.target.closest('#colPickerBtn')) {
         menu.style.display = 'none';
         document.removeEventListener('click', closer);
       }
