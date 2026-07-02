@@ -180,7 +180,6 @@ body {
 .nav-item svg {
   width: 20px;
   height: 20px;
-  opacity: .8;
   flex-shrink: 0;
 }
 
