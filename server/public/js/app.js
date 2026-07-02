@@ -1322,23 +1322,35 @@ function LOADCALENDAR() {
           method: "POST", headers: h,
           body: JSON.stringify({fromDeliveryDate: dateStr, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
         }).then(function(r) { return r.json(); }).then(function(j) {
-          (j.Data || []).forEach(function(c) {
-            var tm = (c.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-            if (tm) {
-              var hr = parseInt(tm[1]);
-              var ampm = tm[3].toUpperCase();
-              if (ampm === 'PM' && hr < 12) hr += 12;
-              if (ampm === 'AM' && hr === 12) hr = 0;
-              var slot = String(hr).padStart(2,'0') + ':' + tm[2];
-              if (!days[idx].slots[slot]) days[idx].slots[slot] = [];
-              days[idx].slots[slot].push({
-                name: c.CustomerName || '?',
-                rn: c.ReferenceNumber || '',
-                model: c.VehicleModel || '',
-                host: c.HostName || '',
-                status: c.CustomerDeliveryStatus || 'Scheduled'
-              });
-            }
+          var data = j.Data || [];
+          if (!data.length) return;
+          // Enrich with Advisor API for appointment status
+          var rns = data.map(function(c) { return c.ReferenceNumber; });
+          return fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+            method: "POST", headers: h,
+            body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:rns,Countries:[]}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+          }).then(function(r2) { return r2.json(); }).then(function(adv) {
+            var advMap = {};
+            ((adv.Data && adv.Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
+            data.forEach(function(c) {
+              var a = advMap[c.ReferenceNumber] || {};
+              var tm = (c.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+              if (tm) {
+                var hr = parseInt(tm[1]);
+                var ampm = tm[3].toUpperCase();
+                if (ampm === 'PM' && hr < 12) hr += 12;
+                if (ampm === 'AM' && hr === 12) hr = 0;
+                var slot = String(hr).padStart(2,'0') + ':' + tm[2];
+                if (!days[idx].slots[slot]) days[idx].slots[slot] = [];
+                days[idx].slots[slot].push({
+                  name: a.CustomerName || c.CustomerName || '?',
+                  rn: c.ReferenceNumber || '',
+                  model: a.VehicleModel || c.VehicleModel || '',
+                  host: c.HostName || a.DeliverySpecialistName || '',
+                  status: a.AppointmentSystemStatus || a.AppointmentStatus || 'Scheduled'
+                });
+              }
+            });
           });
         }).catch(function() {})
       );
