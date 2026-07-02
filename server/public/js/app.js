@@ -2032,26 +2032,26 @@ function SHOWCALDETAIL(dayIdx, time) {
   panel.style.display = 'flex';
 
   fetch(SERVER + '/api/notes').then(function(r) { return r.json(); }).then(function(notes) {
-    var html = '<table style="width:100%;border-collapse:collapse;font-size:14px;color:#171a20">';
+    var html = '<table>';
     html += '<thead><tr>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Model</th>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Host</th>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Status</th>';
-    html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15);min-width:200px">Notes</th>';
+    html += '<th>Customer</th>';
+    html += '<th>RN</th>';
+    html += '<th>Model</th>';
+    html += '<th>Host</th>';
+    html += '<th>Status</th>';
+    html += '<th style="min-width:250px">Notes</th>';
     html += '</tr></thead><tbody>';
 
     items.forEach(function(it) {
       var dotColor = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : it.status === 'Scheduled' ? '#3b82f6' : it.status === 'Delivered' ? '#71717a' : '#ef4444';
       var note = notes[it.rn] || '';
       html += '<tr>';
-      html += '<td style="padding:10px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + it.name + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#3b82f6;text-decoration:none">' + it.rn + '</a></td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + it.model + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06);color:#171a20">' + (it.host || '-') + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
-      html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.06)"><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:100%;padding:6px 10px;border:1px solid rgba(128,128,128,.2);border-radius:6px;font-size:13px;font-family:inherit;color:#171a20;background:#f9f9f9;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
+      html += '<td style="font-weight:600">' + it.name + '</td>';
+      html += '<td><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
+      html += '<td>' + it.model + '</td>';
+      html += '<td>' + (it.host || '-') + '</td>';
+      html += '<td><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
+      html += '<td><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
       html += '</tr>';
     });
 
