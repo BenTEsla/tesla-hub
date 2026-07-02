@@ -387,8 +387,13 @@ a.nav-item {
 .ttl {
   font-size: 32px;
   font-weight: 500;
-  color: #f4f4f5;
+  color: inherit;
   line-height: 40px;
+}
+
+/* Consistent spacing between title-row and content */
+#dashView, #mainView, #arrView, #stockView, #tiView, #csatView, #dispatchView, #pullupView {
+  padding-top: 24px;
 }
 
 #mainView,
