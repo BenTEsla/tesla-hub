@@ -685,11 +685,12 @@ table {
 .col-resize-handle {
   position: absolute;
   right: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
   cursor: col-resize;
-  background: transparent;
+  background: rgba(255, 255, 255, .12);
+  border-radius: 2px;
   transition: background .15s;
   z-index: 11;
 }
