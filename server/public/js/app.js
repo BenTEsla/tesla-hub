@@ -1483,7 +1483,7 @@ function LOADCALENDAR() {
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
     // Header row: Day names with total count
-    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px">TIME</th>';
+    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:50px">TIME</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
@@ -2107,10 +2107,14 @@ function SHOWCALDETAIL(dayIdx, time) {
     html += '<th>RN</th>';
     html += '<th>VIN</th>';
     html += '<th>Model</th>';
-    html += '<th>DA</th>';
+    html += '<th>Host</th>';
     html += '<th>Status</th>';
-    html += '<th style="min-width:250px">Notes</th>';
+    html += '<th style="min-width:220px">Notes</th>';
     html += '</tr></thead><tbody>';
+
+    // Build CES options for host dropdown
+    var cesOptions = '<option value="">-</option>';
+    CES.forEach(function(c) { cesOptions += '<option value="' + c + '">' + c.split(' ')[0] + '</option>'; });
 
     items.forEach(function(it) {
       var dotColor = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : it.status === 'Scheduled' ? '#3b82f6' : it.status === 'Delivered' ? '#71717a' : '#ef4444';
@@ -2118,10 +2122,17 @@ function SHOWCALDETAIL(dayIdx, time) {
       html += '<tr>';
       html += '<td style="font-weight:600">' + it.name + '</td>';
       html += '<td><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none">' + it.rn + '</a></td>';
-      html += '<td style="font-family:monospace;font-size:13px;color:#71717a">' + (it.vin || '-') + '</td>';
+      html += '<td style="font-family:monospace;font-size:12px;color:#71717a">' + (it.vin || '-') + '</td>';
       html += '<td>' + it.model + '</td>';
-      html += '<td>' + (it.host || '-') + '</td>';
-      html += '<td><span class="cal-dot" style="background:' + dotColor + '"></span>' + it.status + '</td>';
+      // Host dropdown
+      html += '<td><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">';
+      html += cesOptions.replace('value="' + (it.host || '') + '"', 'value="' + (it.host || '') + '" selected');
+      html += '</select></td>';
+      // Status dropdown
+      html += '<td><select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">';
+      html += '<option value="Scheduled"' + (it.status === 'Scheduled' ? ' selected' : '') + '>● Scheduled</option>';
+      html += '<option value="Confirmed"' + (it.status === 'Confirmed' ? ' selected' : '') + '>● Confirmed</option>';
+      html += '</select></td>';
       html += '<td><input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Add note..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" onfocus="this.style.borderColor=\'#3b82f6\'" /></td>';
       html += '</tr>';
     });
@@ -2139,4 +2150,20 @@ function SAVENOTE(rn, note) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({note: note})
   }).catch(function() {});
+}
+
+function UPDATEHOST(rn, host) {
+  // TODO: Call DRO API to update host assignment
+  // For now, save locally
+  console.log('Update host for', rn, '→', host);
+  fetch(SERVER + '/api/notes/' + rn, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({note: 'Host: ' + host})
+  }).catch(function() {});
+}
+
+function UPDATESTATUS(rn, status) {
+  // TODO: Call DRO/TSS API to update appointment status
+  console.log('Update status for', rn, '→', status);
 }
