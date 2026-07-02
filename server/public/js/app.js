@@ -1284,6 +1284,7 @@ function STAB(idx, btn) {
       LOADTI();
   }).catch(function() {});
 }
+}
 
 /* ============================================
    CALENDAR: Week navigation
@@ -1483,8 +1484,6 @@ function LOADCALENDAR() {
       document.getElementById("csatView").innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error loading CSAT: ' + e.message + '</div>';
     });
   }
-
-}
 
 /* ============================================
    DISPATCH PAGE: Auto-assign deliveries to CES
