@@ -1277,6 +1277,15 @@ function STAB(idx, btn) {
     }).catch(function() {});
   }
 
+  if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
+    fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {
+      document.getElementById("csatView").innerHTML = h;
+      LOADCSAT();
+    }).catch(function(e) {
+      document.getElementById("csatView").innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error loading CSAT: ' + e.message + '</div>';
+    });
+  }
+
 }
 
 /* ============================================
@@ -1500,11 +1509,14 @@ function LOADPULLUP() {
         }).then(function(r) { return r.json(); }).then(function(j) {
           (j.Data || []).forEach(function(c) {
             var hasPlate = !!(c.LicensePlate && c.LicensePlate.indexOf('-') >= 0);
+            var regStatus = c.RegistrationState || '';
+            var plateOrRTS = hasPlate || regStatus === 'RTS';
             var hasInsurance = c.InsuranceActionStatus === 'COMPLETE';
             var hasPay = c.AmountDueActionStatus === 'Yes' || c.FinalPaymentGate === 'Complete';
             var otg = c.VehicleStage === 'Finished Goods' || (c.VehicleStage && c.VehicleStage.indexOf('Arrived') >= 0);
-            var ready = hasPlate && hasInsurance && hasPay && otg;
-            allCandidates.push({ date: ds, dateLabel: label, name: c.CustomerName, rn: c.ReferenceNumber, model: c.VehicleModel, plate: hasPlate, insurance: hasInsurance, payment: hasPay, otg: otg, ready: ready });
+            // Ready = plate (or RTS) + payment + OTG. Insurance is NOT a blocker.
+            var ready = plateOrRTS && hasPay && otg;
+            allCandidates.push({ date: ds, dateLabel: label, name: c.CustomerName, rn: c.ReferenceNumber, model: c.VehicleModel, plate: plateOrRTS, insurance: hasInsurance, payment: hasPay, otg: otg, ready: ready });
           });
         }).catch(function() {})
       );
@@ -1554,15 +1566,6 @@ function LOADPULLUP() {
     container.innerHTML = html;
   });
 }
-
-  if (idx === 5 && !document.getElementById("csatView").innerHTML.trim()) {
-    fetch(SERVER + "/api/tab/csat").then(function(r) { return r.text(); }).then(function(h) {
-      document.getElementById("csatView").innerHTML = h;
-      LOADCSAT();
-    }).catch(function(e) {
-      document.getElementById("csatView").innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error loading CSAT: ' + e.message + '</div>';
-    });
-  }
 
 /* ============================================
    UPDATE COUNTS: total/ok/alert in stats row
