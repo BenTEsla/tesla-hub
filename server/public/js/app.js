@@ -1262,6 +1262,7 @@ function STAB(idx, btn) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
   }).catch(function() {});
+  }
 
   // Populate dispatch date picker
   if (idx === 6) {
