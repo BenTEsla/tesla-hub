@@ -1,5 +1,12 @@
 /* DASH v4.0 - Delivery Automation Smart Hub - Application Logic */
 
+function ERRMSG(msg) {
+  if (msg && (msg.indexOf('token') >= 0 || msg.indexOf('expired') >= 0 || msg.indexOf('401') >= 0 || msg.indexOf('Dashboard') >= 0 || msg.indexOf('undefined') >= 0)) {
+    return '<div style="padding:60px;text-align:center"><div style="color:#f59e0b;font-size:16px;font-weight:600;margin-bottom:12px">DRO Token Expired</div><div style="color:#71717a;font-size:14px">Open the <a href="https://dro.tesla.com" target="_blank" style="color:#3b82f6">DRO tab</a> to refresh your session, then reload.</div></div>';
+  }
+  return '<div style="padding:60px;text-align:center;color:#ef4444">Error: ' + (msg || 'Unknown') + '</div>';
+}
+
 /* ============================================
    GLOBAL STATE
    ============================================ */
@@ -366,7 +373,7 @@ async function QW(wk, el) {
     UC();
     UV();
   } catch (err) {
-    lg.innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error: ' + err.message + '</div>';
+    lg.innerHTML = ERRMSG(err.message); if (typeof loadBar !== 'undefined' && loadBar) loadBar.classList.remove("active");
   }
 }
 
@@ -560,7 +567,7 @@ async function QP(el) {
     UC();
     UV();
   } catch (err) {
-    lg.innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error: ' + err.message + '</div>';
+    lg.innerHTML = ERRMSG(err.message); if (typeof loadBar !== 'undefined' && loadBar) loadBar.classList.remove("active");
   }
 }
 
@@ -840,7 +847,7 @@ async function L() {
     UV();
   } catch (err) {
     if (loadBar) loadBar.classList.remove("active");
-    lg.innerHTML = '<div style="padding:60px;text-align:center;color:#c00">Error: ' + err.message + '</div>';
+    lg.innerHTML = ERRMSG(err.message); if (typeof loadBar !== 'undefined' && loadBar) loadBar.classList.remove("active");
   }
 }
 

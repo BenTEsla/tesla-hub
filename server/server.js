@@ -1320,12 +1320,19 @@ app.get('/dashboard-live', (req, res) => {
 // ============================================================
 app.all('/api/dro/*', async (req, res) => {
   try {
+    if (!tokens.dro) return res.status(401).json({ error: 'DRO token not set. Refresh from DRO tab.' });
     const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : '';
     const url = config.apis.dro + '/' + req.params[0] + qs;
     const opts = { method: req.method, headers: { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId } };
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
-    res.status(r.status).json(await r.json());
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) {
+      tokens.dro = ''; // clear expired token
+      return res.status(401).json({ error: 'DRO token expired. Refresh from DRO tab.' });
+    }
+    try { res.status(r.status).json(JSON.parse(text)); }
+    catch(e) { res.status(502).json({ error: 'Invalid response from DRO API', status: r.status }); }
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
