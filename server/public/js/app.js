@@ -210,7 +210,7 @@ async function QW(wk, el) {
       body: JSON.stringify(body)
     }).then(function(r) { return r.json(); });
 
-    var allAdv = adv.Data.Dashboard || [];
+     var allAdv = (adv.Data && adv.Data.Dashboard) || [];
     if (!allAdv.length) {
       lg.innerHTML = '<div style="padding:60px;text-align:center;color:#aaa">No scheduled deliveries found.</div>';
       return;
@@ -436,7 +436,7 @@ async function QP(el) {
       body: JSON.stringify(body)
     }).then(function(r) { return r.json(); });
 
-    var allAdv = adv.Data.Dashboard || [];
+    var allAdv = (adv.Data && adv.Data.Dashboard) || [];
     var now = new Date();
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     var tomorrow = new Date(today.getTime() + 864e5);
