@@ -399,6 +399,20 @@ a.nav-item {
 /* Override any inline padding-top from server-rendered tabs */
 #arrView > div, #stockView > div, #tiView > div, #csatView > div {
   padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Kill ALL first-child margins/padding inside views */
+#dashView > *:first-child,
+#mainView > *:first-child,
+#arrView > * > *:first-child,
+#stockView > * > *:first-child,
+#tiView > * > *:first-child,
+#csatView > * > *:first-child,
+#dispatchView > *:first-child,
+#pullupView > *:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 #mainView,
