@@ -1425,7 +1425,7 @@ function LOADCALENDAR() {
                   vin6: (a.Vin || '').slice(-6),
                   model: a.VehicleModel || c.VehicleModel || '',
                   host: c.HostName || a.DeliverySpecialistName || '',
-                  status: a.AppointmentSystemStatus || a.AppointmentStatus || 'Scheduled'
+                  status: a.AppointmentStatus || a.AppointmentSystemStatus || 'Scheduled'
                 });
               }
             });
