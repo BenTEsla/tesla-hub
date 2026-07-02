@@ -59,6 +59,7 @@ body {
 .sidebar.collapsed {
   width: 52px;
   min-width: 52px;
+  overflow: visible;
 }
 
 .sidebar.collapsed .sidebar-logo span,
