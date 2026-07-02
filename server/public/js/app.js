@@ -890,8 +890,8 @@ function RW() {
       + '<td data-col="vs"><span class="dt ' + vc + '"></span>' + d.vs + '</td>'
       + '<td data-col="hold">' + (d.hold ? '<span class="dt dr"></span><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank" style="color:#ef4444;font-weight:700;text-decoration:none">Hold</a>' : '<span class="dt dg"></span>OK') + '</td>'
       + '<td data-col="ins">' + (d.io ? '<span class="dt dg"></span>OK' : '<span class="su">No</span>') + '</td>'
-      + '<td data-col="print"><button onclick="P1(' + i + ',this)" style="padding:4px 10px;border:1px solid rgba(255,255,255,.1);border-radius:6px;cursor:pointer;background:rgba(255,255,255,.04);color:#a1a1aa;font-family:inherit;font-size:12px">'
-      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>'
+      + '<td data-col="print" style="text-align:center"><button onclick="P1(' + i + ',this)" style="padding:4px 6px;border:1px solid rgba(255,255,255,.1);border-radius:4px;cursor:pointer;background:none;color:#a1a1aa;font-family:inherit;font-size:12px;line-height:1">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" style="display:block"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>'
       + '</button></td></tr>';
   }
 
