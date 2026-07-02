@@ -1483,7 +1483,6 @@ function SAVEDISPATCH() {
     btn.style.borderColor = 'rgba(34,197,94,.3)';
     btn.style.opacity = '1';
   }, 1000);
-  }, 3000);
 }
 
 /* ============================================
