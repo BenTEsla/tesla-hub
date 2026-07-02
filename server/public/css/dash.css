@@ -1326,6 +1326,15 @@ select {
 }
 
 /* ============================================
+   CALENDAR: clickable cells with names
+   ============================================ */
+.cal-names {
+  text-align: left;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* ============================================
    TOOLTIP FOR COLLAPSED SIDEBAR
    ============================================ */
 .sidebar.collapsed .nav-item,

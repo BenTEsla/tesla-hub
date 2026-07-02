@@ -6,6 +6,7 @@
 var WKMODE = false;
 var sortDir = {};
 var activeFilter = null;
+var _calWeekOffset = 0;
 
 /* ============================================
    CES BLOCK INIT - Build CES stat cards
@@ -1285,6 +1286,14 @@ function STAB(idx, btn) {
 }
 
 /* ============================================
+   CALENDAR: Week navigation
+   ============================================ */
+function NAVCALWEEK(dir) {
+  _calWeekOffset += dir;
+  LOADCALENDAR();
+}
+
+/* ============================================
    CALENDAR: Weekly schedule grid
    ============================================ */
 function LOADCALENDAR() {
@@ -1292,10 +1301,10 @@ function LOADCALENDAR() {
   container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading week...</div>';
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
 
-  // Get Monday of current week
+  // Get Monday of current week, offset by _calWeekOffset
   var now = new Date();
   var mon = new Date(now);
-  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7) + (_calWeekOffset * 7));
 
   // Fetch 6 days (Mon-Sat)
   var days = [];
@@ -1330,6 +1339,16 @@ function LOADCALENDAR() {
     })(i, ds);
   }
 
+  // Update week label
+  var sat = new Date(mon);
+  sat.setDate(mon.getDate() + 5);
+  var weekLabel = document.getElementById('calWeekLabel');
+  if (weekLabel) {
+    var monLabel = mon.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+    var satLabel = sat.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+    weekLabel.textContent = monLabel + ' - ' + satLabel;
+  }
+
   Promise.all(promises).then(function() {
     // Collect all time slots
     var allSlots = {};
@@ -1355,10 +1374,19 @@ function LOADCALENDAR() {
         var count = d.slots[t] ? d.slots[t].length : 0;
         var bg = count === 0 ? 'transparent' : count <= 2 ? 'rgba(34,197,94,.1)' : count <= 4 ? 'rgba(59,130,246,.1)' : 'rgba(245,158,11,.15)';
         var color = count === 0 ? '#71717a' : count <= 2 ? '#22c55e' : count <= 4 ? '#3b82f6' : '#f59e0b';
-        var title = d.slots[t] ? d.slots[t].join(', ') : '';
-        html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:' + (count > 0 ? 'pointer' : 'default') + '" title="' + title + '">';
-        html += count > 0 ? '<span style="font-weight:700;color:' + color + '">' + count + '</span>' : '<span style="color:#d4d4d8">-</span>';
-        html += '</td>';
+        var names = d.slots[t] || [];
+        var title = names.join(', ');
+        if (count > 0) {
+          var namesHtml = names.join('<br>');
+          html += '<td onclick="var n=this.querySelector(\'.cal-names\');if(n){n.style.display=n.style.display===\'none\'?\'block\':\'none\'}" style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;vertical-align:top" title="' + title + '">';
+          html += '<span class="cal-count" style="font-weight:700;color:' + color + '">' + count + '</span>';
+          html += '<div class="cal-names" style="display:none;font-size:11px;margin-top:4px;color:#d4d4d8;line-height:1.4;font-weight:400">' + namesHtml + '</div>';
+          html += '</td>';
+        } else {
+          html += '<td style="padding:8px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:transparent">';
+          html += '<span style="color:#3f3f46">-</span>';
+          html += '</td>';
+        }
       });
       html += '</tr>';
     });
