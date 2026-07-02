@@ -1229,6 +1229,21 @@ function STAB(idx, btn) {
       document.getElementById("tiView").innerHTML = h;
       LOADTI();
   }).catch(function() {});
+
+  // Populate dispatch date picker
+  if (idx === 6) {
+    var dp = document.getElementById('dispatchDate');
+    if (dp && !dp.options.length) {
+      for (var ddi = 0; ddi < 10 && dp.options.length < 7; ddi++) {
+        var ddd = new Date(Date.now() + ddi * 864e5);
+        if (ddd.getDay() === 0) continue;
+        var dlbl = ddi === 0 ? 'Today' : ddi === 1 ? 'Tomorrow' : 'D+' + ddi;
+        var dfD = ddd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        var diD = ddd.getFullYear() + '-' + String(ddd.getMonth() + 1).padStart(2, '0') + '-' + String(ddd.getDate()).padStart(2, '0');
+        dp.add(new Option(dlbl + ' - ' + dfD, diD));
+      }
+    }
+  }
 }
 
 /* ============================================
@@ -1238,9 +1253,21 @@ function RUNDISPATCH(mode) {
   var container = document.getElementById('dispatchContent');
   container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading deliveries...</div>';
 
+  // Populate date picker if empty
+  var datePicker = document.getElementById('dispatchDate');
+  if (datePicker && !datePicker.options.length) {
+    for (var di = 0; di < 10 && datePicker.options.length < 7; di++) {
+      var dd = new Date(Date.now() + di * 864e5);
+      if (dd.getDay() === 0) continue;
+      var lbl = di === 0 ? 'Today' : di === 1 ? 'Tomorrow' : 'D+' + di;
+      var fD = dd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      var iD = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+      datePicker.add(new Option(lbl + ' - ' + fD, iD));
+    }
+  }
+
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
-  var ds = new Date();
-  var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
+  var today = datePicker ? datePicker.value : new Date().toISOString().split('T')[0];
 
   fetch(BASE + "/deliveryops/Customers/Dashboard", {
     method: "POST", headers: h,

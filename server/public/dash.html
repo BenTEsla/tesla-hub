@@ -290,7 +290,8 @@
   <!-- ========== DISPATCH VIEW ========== -->
   <div id="dispatchView" style="display:none;padding:0 32px 32px">
     <p style="color:var(--tds-color--foreground-low-contrast, #71717a);margin-bottom:20px">Assign deliveries to CES team members with balanced workload distribution.</p>
-    <div style="display:flex;gap:12px;margin-bottom:24px">
+    <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center">
+      <select id="dispatchDate" class="fi2" style="padding:8px 14px"></select>
       <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="RUNDISPATCH()">Auto-Assign</button>
       <button class="bt" onclick="RUNDISPATCH('preview')">Preview Only</button>
     </div>
