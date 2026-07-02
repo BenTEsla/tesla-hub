@@ -1360,9 +1360,14 @@ select {
   color: #e4e4e7;
 }
 
+#calModal h3 {
+  color: #f4f4f5 !important;
+}
+
 #calModal table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 #calModal th {
@@ -1375,10 +1380,18 @@ select {
   border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
+#calModal th:nth-child(1) { width: 25%; }
+#calModal th:nth-child(2) { width: 15%; }
+#calModal th:nth-child(3) { width: 10%; }
+#calModal th:nth-child(4) { width: 15%; }
+#calModal th:nth-child(5) { width: 10%; }
+#calModal th:nth-child(6) { width: 25%; }
+
 #calModal td {
   padding: 12px 14px;
   font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, .04);
+  word-break: break-word;
 }
 
 #calModal input {
