@@ -393,7 +393,12 @@ a.nav-item {
 
 /* Consistent spacing between title-row and content */
 #dashView, #mainView, #arrView, #stockView, #tiView, #csatView, #dispatchView, #pullupView {
-  padding-top: 24px;
+  padding-top: 28px;
+}
+
+/* Override any inline padding-top from server-rendered tabs */
+#arrView > div, #stockView > div, #tiView > div, #csatView > div {
+  padding-top: 0 !important;
 }
 
 #mainView,
