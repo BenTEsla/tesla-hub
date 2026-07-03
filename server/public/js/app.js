@@ -1608,16 +1608,18 @@ function LOADDISPATCHDATE() {
         var t = '?';
         var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+        var hasTI = (d.TradeInActionStatus || a.TradeInActionStatus) === 'COMPLETE_TRADE_IN';
+        var isEnt = !!(d.IsEnterpriseOrder || a.IsEnterpriseOrder);
         return {
           rn: d.ReferenceNumber,
-          name: a.CustomerName || d.CustomerName || '?',
+          name: d.CustomerName || a.CustomerName || '?',
           time: t,
           model: a.VehicleModel || d.VehicleModel || '',
-          host: a.DeliverySpecialist || d.HostName || '',
-          isEnt: !!a.IsEnterpriseOrder,
-          hasTI: a.TradeInActionStatus === 'COMPLETE_TRADE_IN',
+          host: d.HostName || a.DeliverySpecialist || '',
+          isEnt: isEnt,
+          hasTI: hasTI,
           isPM: parseInt(t) >= 13,
-          weight: a.IsEnterpriseOrder ? 1.5 : a.TradeInActionStatus === 'COMPLETE_TRADE_IN' ? 1.3 : 1.0,
+          weight: isEnt ? 1.5 : hasTI ? 1.3 : 1.0,
           delivered: !!(a.IsDelivered || d.CustomerDeliveryStatus === 'Delivered'),
           vs: String(a.VehicleStage || '')
         };
@@ -1660,8 +1662,10 @@ function RENDERDISPATCH() {
   columns['Unassigned'] = [];
   data.forEach(function(d) {
     var found = false;
+    var hostLower = (d.host || '').toLowerCase();
     CES.forEach(function(c) {
-      if (d.host && c.toLowerCase().indexOf(d.host.split(' ')[0].toLowerCase()) >= 0) { columns[c].push(d); found = true; }
+      if (hostLower && hostLower === c.toLowerCase()) { columns[c].push(d); found = true; }
+      else if (hostLower && c.toLowerCase().split(' ')[0] === hostLower.split(' ')[0]) { columns[c].push(d); found = true; }
     });
     if (!found) columns['Unassigned'].push(d);
   });
