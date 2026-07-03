@@ -2498,39 +2498,51 @@ function SHOWCALDETAIL(dayIdx, time) {
   var items = day.slots[time] || [];
   if (!items.length) return;
 
-  title.textContent = day.label + ' — ' + time;
+  title.innerHTML = '<span style="font-size:20px;font-weight:700">' + day.label + '</span> <span style="font-size:20px;color:#71717a;font-weight:400">— ' + time + '</span>';
   panel.style.display = 'flex';
   body.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading details...</div>';
 
-  // Fetch notes + enrich with Advisor API
+  // Fetch notes + enrich with Customer Dashboard (location-filtered) + Advisor (details)
   var rns = items.map(function(it) { return it.rn; });
   var notesP = fetch(SERVER + '/api/notes').then(function(r) { return r.json(); }).catch(function() { return {}; });
-  var advP = fetch(SERVER + '/api/dro/advisor/Dashboard?isSidePanelFullScreen=true', {
+  
+  // Customer Dashboard = source of truth for TradeIn, Host
+  var dateStr = day.date || '';
+  var custP = fetch(SERVER + '/api/dro/deliveryops/Customers/Dashboard', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({condition:'and',rules:[{condition:'and',ReferenceNumbers:rns,Countries:[]}],Skip:0,Take:50,SortOrder:[],SelectedColumns:[]})
+    body: JSON.stringify({fromDeliveryDate: dateStr, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: '00:00', toTime: '23:59', countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
   }).then(function(r) { return r.json(); }).catch(function() { return {}; });
 
-  Promise.all([notesP, advP]).then(function(results) {
+  // Advisor = vehicle details, readiness
+  var advP = fetch(SERVER + '/api/dro/advisor/Dashboard?isSidePanelFullScreen=true', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({condition:'and',rules:[{condition:'and',ReferenceNumbers:rns,Countries:[],TrtId:String(CFG.trtId)}],Skip:0,Take:50,SortOrder:[],SelectedColumns:[]})
+  }).then(function(r) { return r.json(); }).catch(function() { return {}; });
+
+  Promise.all([notesP, custP, advP]).then(function(results) {
     var notes = results[0] || {};
+    var custMap = {};
+    (results[1].Data || []).forEach(function(c) { custMap[c.ReferenceNumber] = c; });
     var advMap = {};
-    ((results[1].Data && results[1].Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
+    ((results[2].Data && results[2].Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
 
     var isDark = !document.getElementById('lightThemeCSS');
     var html = '';
 
     items.forEach(function(it, idx) {
       var a = advMap[it.rn] || {};
+      var c = custMap[it.rn] || {};
       var note = notes[it.rn] || '';
 
-      // Readiness dots
+      // Use Customer Dashboard for TradeIn + Hold (location-filtered)
       var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified');
-      var hold = !!(a.IsContainmentHold || a.IsRepairOrderHold);
+      var hold = !!(c.IsContainmentHold || c.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0;
-      var hasTI = a.TradeInActionStatus === 'COMPLETE_TRADE_IN';
-      var isEnt = !!a.IsEnterpriseOrder;
+      var hasTI = c.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+      var isEnt = !!(c.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
 
       // Status color
@@ -2544,47 +2556,36 @@ function SHOWCALDETAIL(dayIdx, time) {
       if (hold) { cardBg = isDark ? 'rgba(239,68,68,.06)' : '#fef2f2'; cardBdr = 'rgba(239,68,68,.15)'; }
       if (delivered) { cardBg = isDark ? 'rgba(34,197,94,.04)' : '#f0fdf4'; }
 
-      html += '<div style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:12px;padding:16px 20px;margin-bottom:12px">';
+      html += '<div style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:10px;padding:14px 18px;margin-bottom:10px">';
 
-      // Row 1: Name + Tags + Status
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-      html += '<div style="display:flex;align-items:center;gap:10px">';
-      html += '<span style="font-size:16px;font-weight:700">' + it.name + '</span>';
-      if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">B2B</span>';
-      if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:2px 8px;border-radius:10px;font-weight:600">Trade-In</span>';
-      if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
-      html += '</div>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:8px;height:8px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
-      html += '</div>';
-
-      // Row 2: Info grid
-      html += '<div style="display:grid;grid-template-columns:auto auto auto 1fr;gap:8px 20px;font-size:13px;margin-bottom:12px">';
-      html += '<div><span style="color:#71717a;font-size:11px">RN</span><br><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600">' + it.rn + '</a></div>';
-      html += '<div><span style="color:#71717a;font-size:11px">Model</span><br><span style="font-weight:600">' + it.model + '</span></div>';
-      html += '<div><span style="color:#71717a;font-size:11px">VIN</span><br><span style="font-family:monospace;font-size:11px">' + (it.vin || '-') + '</span></div>';
-      html += '<div><span style="color:#71717a;font-size:11px">Vehicle Status</span><br><span style="font-weight:600;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '-') + '</span></div>';
-      html += '</div>';
-
-      // Row 3: Readiness indicators
-      html += '<div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:' + (payOk ? '#22c55e' : '#ef4444') + '"></span>' + (payOk ? 'Payment OK' : 'Payment ✗') + '</span>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:' + (regOk ? '#22c55e' : '#f59e0b') + '"></span>' + (regOk ? 'Registration OK' : 'Reg Pending') + '</span>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:' + (insOk ? '#22c55e' : '#71717a') + '"></span>' + (insOk ? 'Insurance OK' : 'Insurance ✗') + '</span>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:' + (otg ? '#22c55e' : '#f59e0b') + '"></span>' + (otg ? 'OTG' : 'Not Ready') + '</span>';
-      html += '</div>';
-
-      // Row 4: Host + Quick links + Notes
-      html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
-      // Host
-      var cesOptions = '<option value="">-</option>';
-      CES.forEach(function(c) { cesOptions += '<option value="' + c + '"' + (it.host && c.indexOf(it.host) >= 0 ? ' selected' : '') + '>' + c.split(' ')[0] + '</option>'; });
-      html += '<div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:#71717a">Host:</span><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">' + cesOptions + '</select></div>';
-      // Quick links
-      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="font-size:11px;color:#60a5fa;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(59,130,246,.2);border-radius:4px">DRO</a>';
-      if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:4px">CEE</a>';
+      // Row 1: Name + Tags + Status + Readiness
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+      html += '<span style="font-size:15px;font-weight:700">' + it.name + '</span>';
+      html += '<span style="color:#71717a;font-size:12px">' + it.model + '</span>';
+      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
+      if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span>';
+      if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">Trade-In</span>';
+      if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:1px 6px;border-radius:10px;font-weight:700">HOLD</span>';
       html += '<div style="flex:1"></div>';
-      // Notes
-      html += '<input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Notes..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:250px;padding:6px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:12px;font-family:inherit;color:inherit;background:transparent;outline:none" onfocus="this.style.borderColor=\'#3b82f6\'">';
+      // Readiness dots inline
+      html += '<span style="display:flex;gap:8px;font-size:11px;font-weight:600">';
+      html += '<span style="color:' + (payOk ? '#22c55e' : '#ef4444') + '">● Pay</span>';
+      html += '<span style="color:' + (regOk ? '#22c55e' : '#f59e0b') + '">● Reg</span>';
+      html += '<span style="color:' + (insOk ? '#22c55e' : '#71717a') + '">● Ins</span>';
+      html += '<span style="color:' + (otg ? '#22c55e' : '#f59e0b') + '">● ' + (vs || 'N/A') + '</span>';
+      html += '</span>';
+      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:7px;height:7px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
+      html += '</div>';
+
+      // Row 2: Host + Links + Notes
+      html += '<div style="display:flex;align-items:center;gap:8px">';
+      var cesOptions = '<option value="">-</option>';
+      CES.forEach(function(c2) { cesOptions += '<option value="' + c2 + '"' + (it.host && c2.indexOf(it.host) >= 0 ? ' selected' : '') + '>' + c2.split(' ')[0] + '</option>'; });
+      html += '<span style="font-size:11px;color:#71717a">Host:</span><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:2px 6px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">' + cesOptions + '</select>';
+      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="font-size:10px;color:#60a5fa;text-decoration:none;font-weight:600;padding:2px 6px;border:1px solid rgba(59,130,246,.2);border-radius:4px">DRO</a>';
+      if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:2px 6px;border:1px solid rgba(34,197,94,.2);border-radius:4px">CEE</a>';
+      html += '<div style="flex:1"></div>';
+      html += '<input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Notes..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:300px;padding:5px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:12px;font-family:inherit;color:inherit;background:transparent;outline:none" onfocus="this.style.borderColor=\'#3b82f6\'">';
       html += '</div>';
 
       html += '</div>';
