@@ -951,7 +951,7 @@ app.get('/api/tab/tradein', (req, res) => {
     + '<button id="tiBtnOnsite" style="padding:8px 20px;background:#3e6ae1;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">On Site (0)</button>'
     + '<button id="tiBtnHistory" style="padding:8px 20px;background:#e0e0e0;color:#666;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">History (0)</button>'
     + '<div style="flex:1"></div>'
-    + '<input type="text" id="tiSearch" placeholder="Rechercher..." oninput="SEARCHTI(this.value)" style="padding:8px 14px;border:1px solid rgba(0,0,0,.15);border-radius:8px;font-size:13px;font-family:inherit;color:inherit;background:rgba(0,0,0,.03);outline:none;width:220px">'
+    + '<input type="text" id="tiSearch" placeholder="Rechercher..." oninput="SEARCHTI(this.value)" style="padding:8px 14px;border:1px solid rgba(128,128,128,.3);border-radius:8px;font-size:13px;font-family:inherit;color:inherit;background:rgba(128,128,128,.08);outline:none;width:220px">'
     + '<button onclick="TRIGGERSCAN(this)" style="padding:8px 20px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-left:8px">Scan</button>'
     + '<button onclick="ENRICHTI(this)" style="padding:8px 14px;background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2);border-radius:6px;font-size:12px;cursor:pointer;margin-left:4px;font-family:inherit">Enrich</button>'
     + '</div>'
