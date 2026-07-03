@@ -1458,6 +1458,14 @@ app.post('/api/scan/enrich', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/scan/update-plate', (req, res) => {
+  const { rn, plate } = req.body;
+  if (!rn || !plate) return res.json({ ok: false });
+  const entry = scanProcessor.tracking.find(t => t.rn === rn);
+  if (entry) { entry.plate = formatPlate(plate); scanProcessor.saveTracking(); }
+  res.json({ ok: true });
+});
+
 app.post('/api/scan/assign', async (req, res) => {
   try {
     const { filename, rn, plate } = req.body;

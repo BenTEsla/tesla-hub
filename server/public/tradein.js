@@ -112,7 +112,7 @@ function renderTI() {
     h += '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
       + '<td style="padding:10px">' + inDate + '</td>'
       + '<td style="padding:10px;font-family:monospace;font-size:11px;color:#60a5fa">' + (t.vin || "-") + '</td>'
-      + '<td style="padding:10px;font-weight:600">' + (t.plate || "-") + '</td>'
+      + '<td style="padding:10px;font-weight:600;cursor:pointer" onclick="EDITPLATE(this,\'' + t.rn + '\')" title="Cliquer pour modifier">' + (t.plate || '<span style="color:#71717a;font-weight:400">+ plaque</span>') + '</td>'
       + '<td style="padding:10px">' + (t.make || "-") + '</td>'
       + '<td style="padding:10px">' + (t.model || "-") + '</td>'
       + '<td style="padding:10px">' + rnLink + '</td>'
@@ -178,6 +178,31 @@ function MARKOUT(btn, rn) {
 function ENRICHTI() {
   if (!confirm("Enrich all entries with DRO data?")) return;
   fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/enrich", { method: "POST" }).then(function(r) { return r.json(); }).then(function(j) { alert("Enriched: " + j.enriched + " entries"); LOADTI(); }).catch(function(e) { alert("Error: " + e.message); });
+}
+
+function EDITPLATE(td, rn) {
+  var current = td.textContent.trim();
+  if (current === '+ plaque') current = '';
+  var isDark = !document.getElementById('lightThemeCSS');
+  td.innerHTML = '<input type="text" value="' + current + '" placeholder="AB-123-CD" style="width:100px;padding:4px 8px;border:1px solid ' + (isDark ? 'rgba(59,130,246,.4)' : '#3b82f6') + ';border-radius:4px;font-size:13px;font-weight:600;font-family:inherit;background:' + (isDark ? 'rgba(59,130,246,.1)' : '#eff6ff') + ';color:inherit;outline:none;text-transform:uppercase" autofocus>';
+  var input = td.querySelector('input');
+  input.focus();
+  input.select();
+  function save() {
+    var val = input.value.trim().toUpperCase();
+    if (!val) { td.innerHTML = '<span style="color:#71717a;font-weight:400">+ plaque</span>'; return; }
+    // Format plate
+    var clean = val.replace(/[-\s]/g, '');
+    if (clean.match(/^[A-Z]{2}\d{3}[A-Z]{2}$/)) val = clean.substring(0,2) + '-' + clean.substring(2,5) + '-' + clean.substring(5);
+    td.textContent = val;
+    fetch((typeof SERVER !== 'undefined' ? SERVER : '') + '/api/scan/update-plate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rn: rn, plate: val })
+    }).catch(function() {});
+  }
+  input.onblur = save;
+  input.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { td.textContent = current || '+ plaque'; } };
 }
 
 function ENRICHTI(btn) {
