@@ -1571,194 +1571,236 @@ function LOADCALENDAR() {
 var _dispatchData = null;
 
 function LOADDISPATCHDATE() {
-  var container = document.getElementById('dispatchSummary');
-  var contentEl = document.getElementById('dispatchContent');
-  var previewBtn = document.getElementById('dispatchPreviewBtn');
-  contentEl.innerHTML = '';
-  if (previewBtn) previewBtn.disabled = true;
+  var summary = document.getElementById('dispatchSummary');
+  var board = document.getElementById('dispatchBoard');
+  var balBtn = document.getElementById('dispatchBalanceBtn');
+  var saveBtn = document.getElementById('dispatchSaveBtn');
+  board.innerHTML = '';
+  if (balBtn) balBtn.disabled = true;
+  if (saveBtn) saveBtn.disabled = true;
 
   var dp = document.getElementById('dispatchDate');
   if (!dp || !dp.value) return;
   var ds = dp.value;
 
-  container.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a;font-size:13px">Loading...</div>';
+  summary.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a;font-size:13px">Loading...</div>';
 
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
 
-  // Step 1: Get delivery list
   fetch(BASE + "/deliveryops/Customers/Dashboard", {
     method: "POST", headers: h,
     body: JSON.stringify({fromDeliveryDate: ds, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
   }).then(function(r) { return r.json(); }).then(function(dash) {
     var data = (dash.Data || []);
+    if (!data.length) { _dispatchData = []; summary.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>'; return; }
 
-    if (!data.length) {
-      _dispatchData = [];
-      container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>';
-      return;
-    }
-
-    // Step 2: Enrich with Advisor API (has Trade-In, Enterprise details)
+    // Enrich with Advisor API
     var rns = data.map(function(d) { return d.ReferenceNumber; });
     return fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
       method: "POST", headers: h,
       body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:rns,Countries:[]}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
     }).then(function(r) { return r.json(); }).then(function(adv) {
-      // Merge: use advisor data (richer) with customer data (has schedule)
       var advMap = {};
       ((adv.Data && adv.Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
-      data.forEach(function(d) {
-        var a = advMap[d.ReferenceNumber];
-        if (a) {
-          d.TradeInActionStatus = a.TradeInActionStatus;
-          d.IsEnterpriseOrder = a.IsEnterpriseOrder;
-          d.VehicleModel = a.VehicleModel || d.VehicleModel;
-          d.CustomerName = a.CustomerName || d.CustomerName;
-        }
-      });
-      _dispatchData = data;
+      
+      _dispatchData = data.map(function(d) {
+        var a = advMap[d.ReferenceNumber] || {};
+        var t = '?';
+        var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+        return {
+          rn: d.ReferenceNumber,
+          name: a.CustomerName || d.CustomerName || '?',
+          time: t,
+          model: a.VehicleModel || d.VehicleModel || '',
+          host: a.DeliverySpecialist || d.HostName || '',
+          isEnt: !!a.IsEnterpriseOrder,
+          hasTI: a.TradeInActionStatus === 'COMPLETE_TRADE_IN',
+          isPM: parseInt(t) >= 13,
+          weight: a.IsEnterpriseOrder ? 1.5 : a.TradeInActionStatus === 'COMPLETE_TRADE_IN' ? 1.3 : 1.0,
+          delivered: !!(a.IsDelivered || d.CustomerDeliveryStatus === 'Delivered'),
+          vs: String(a.VehicleStage || '')
+        };
+      }).sort(function(a, b) { return a.time.localeCompare(b.time); });
 
-    if (!data.length) {
-      container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>';
-      return;
-    }
+      RENDERDISPATCH();
+      if (balBtn) balBtn.disabled = false;
+      if (saveBtn) saveBtn.disabled = false;
+    });
+  }).catch(function(e) {
+    summary.innerHTML = ERRMSG(e.message);
+  });
+}
 
-    // Count types
-    var total = data.length;
-    var enterprise = data.filter(function(d) { return d.IsEnterpriseOrder; }).length;
-    var tradein = data.filter(function(d) { return d.TradeInActionStatus === 'COMPLETE_TRADE_IN'; }).length;
-    var regular = total - enterprise;
-    var delivered = data.filter(function(d) { return d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete'; }).length;
-    var pending = total - delivered;
+function RENDERDISPATCH() {
+  var summary = document.getElementById('dispatchSummary');
+  var board = document.getElementById('dispatchBoard');
+  var data = _dispatchData || [];
 
-    // Summary cards
-    var cardStyle = 'text-align:center;padding:16px 20px;border-radius:10px;border:1px solid rgba(128,128,128,.12);min-width:100px';
-    var numStyle = 'font-size:28px;font-weight:700;line-height:1;margin-bottom:4px';
-    var lblStyle = 'font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.5px;font-weight:600';
+  // Summary cards
+  var total = data.length;
+  var delivered = data.filter(function(d) { return d.delivered; }).length;
+  var tradein = data.filter(function(d) { return d.hasTI; }).length;
+  var enterprise = data.filter(function(d) { return d.isEnt; }).length;
+  var unassigned = data.filter(function(d) { return !d.host; }).length;
 
-    var html = '<div style="display:flex;gap:12px;flex-wrap:wrap">';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + '">' + total + '</div><div style="' + lblStyle + '">Total</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#22c55e">' + pending + '</div><div style="' + lblStyle + '">To Deliver</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#3b82f6">' + delivered + '</div><div style="' + lblStyle + '">Delivered</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#a855f7">' + tradein + '</div><div style="' + lblStyle + '">Trade-In</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + ';color:#f59e0b">' + enterprise + '</div><div style="' + lblStyle + '">Enterprise</div></div>';
-    html += '<div style="' + cardStyle + '"><div style="' + numStyle + '">' + regular + '</div><div style="' + lblStyle + '">Regular</div></div>';
+  var cs = 'display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;border:1px solid rgba(128,128,128,.1);font-size:13px;font-weight:600';
+  summary.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    + '<div style="' + cs + '"><span style="font-size:20px;font-weight:700">' + total + '</span> Total</div>'
+    + '<div style="' + cs + ';color:#22c55e"><span style="font-size:20px">' + (total - delivered) + '</span> To Deliver</div>'
+    + '<div style="' + cs + ';color:#3b82f6"><span style="font-size:20px">' + delivered + '</span> Delivered</div>'
+    + '<div style="' + cs + ';color:#a855f7"><span style="font-size:20px">' + tradein + '</span> Trade-In</div>'
+    + '<div style="' + cs + ';color:#f59e0b"><span style="font-size:20px">' + enterprise + '</span> Enterprise</div>'
+    + (unassigned ? '<div style="' + cs + ';color:#ef4444"><span style="font-size:20px">' + unassigned + '</span> Unassigned</div>' : '')
+    + '</div>';
+
+  // Group by host
+  var columns = {};
+  CES.forEach(function(c) { columns[c] = []; });
+  columns['Unassigned'] = [];
+  data.forEach(function(d) {
+    var found = false;
+    CES.forEach(function(c) {
+      if (d.host && c.toLowerCase().indexOf(d.host.split(' ')[0].toLowerCase()) >= 0) { columns[c].push(d); found = true; }
+    });
+    if (!found) columns['Unassigned'].push(d);
+  });
+
+  // Render Kanban
+  var colKeys = CES.slice();
+  if (columns['Unassigned'].length) colKeys.push('Unassigned');
+  board.style.gridTemplateColumns = 'repeat(' + colKeys.length + ', 1fr)';
+
+  var isDark = !document.getElementById('lightThemeCSS');
+  var colBg = isDark ? 'rgba(255,255,255,.03)' : '#f8f9fa';
+  var colBdr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+  var cardBg = isDark ? 'rgba(255,255,255,.04)' : '#fff';
+  var cardBdr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.08)';
+
+  var html = '';
+  colKeys.forEach(function(ces) {
+    var items = columns[ces] || [];
+    var firstName = ces === 'Unassigned' ? 'Unassigned' : ces.split(' ')[0];
+    var amItems = items.filter(function(d) { return !d.isPM; });
+    var pmItems = items.filter(function(d) { return d.isPM; });
+    var totalWeight = items.reduce(function(s, d) { return s + d.weight; }, 0);
+    var headerColor = ces === 'Unassigned' ? '#ef4444' : '#60a5fa';
+
+    html += '<div style="background:' + colBg + ';border:1px solid ' + colBdr + ';border-radius:12px;padding:16px;min-height:300px">';
+    // Header
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+    html += '<div><span style="font-size:18px;font-weight:700;color:' + headerColor + '">' + firstName + '</span>';
+    html += '<span style="margin-left:8px;font-size:13px;color:#71717a">' + items.length + ' deliveries</span></div>';
+    html += '<div style="font-size:12px;color:#71717a;font-weight:600">Load: ' + totalWeight.toFixed(1) + '</div>';
     html += '</div>';
 
-    container.innerHTML = html;
-    if (previewBtn) previewBtn.disabled = false;
-    }); // close advisor .then
-  }).catch(function(e) {
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444">Error: ' + e.message + '</div>';
+    // AM section
+    html += '<div style="font-size:11px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(59,130,246,.15)">Morning — ' + amItems.length + '</div>';
+    amItems.forEach(function(d) {
+      var tags = '';
+      if (d.isEnt) tags += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span> ';
+      if (d.hasTI) tags += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">TI</span> ';
+      if (d.delivered) tags += '<span style="font-size:10px;background:rgba(34,197,94,.15);color:#22c55e;padding:1px 6px;border-radius:10px;font-weight:600">Done</span> ';
+      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span>' + tags + '</div>';
+      html += '<div style="font-size:11px;color:#71717a;margin-top:2px">' + d.model + ' · ' + d.rn + '</div>';
+      html += '</div>';
+    });
+
+    // PM section
+    html += '<div style="font-size:11px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(245,158,11,.15)">Afternoon — ' + pmItems.length + '</div>';
+    pmItems.forEach(function(d) {
+      var tags = '';
+      if (d.isEnt) tags += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span> ';
+      if (d.hasTI) tags += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">TI</span> ';
+      if (d.delivered) tags += '<span style="font-size:10px;background:rgba(34,197,94,.15);color:#22c55e;padding:1px 6px;border-radius:10px;font-weight:600">Done</span> ';
+      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span>' + tags + '</div>';
+      html += '<div style="font-size:11px;color:#71717a;margin-top:2px">' + d.model + ' · ' + d.rn + '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
   });
+  board.innerHTML = html;
+}
+
+// Click a card → pick new CES
+function REASSIGN(rn) {
+  var d = _dispatchData.find(function(x) { return x.rn === rn; });
+  if (!d) return;
+  var isDark = !document.getElementById('lightThemeCSS');
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:' + (isDark ? '#1a1a1a' : '#fff') + ';border-radius:12px;padding:24px;min-width:300px;border:1px solid ' + (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)') + ';box-shadow:0 12px 40px rgba(0,0,0,.3);color:inherit';
+  box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + d.name + '</div>'
+    + '<div style="font-size:12px;color:#71717a;margin-bottom:16px">' + d.rn + ' · ' + d.model + ' · ' + d.time + '</div>'
+    + '<div style="font-size:13px;font-weight:600;color:#71717a;margin-bottom:8px">Assign to:</div>';
+
+  CES.forEach(function(c) {
+    var firstName = c.split(' ')[0];
+    var isCurrent = d.host && c.toLowerCase().indexOf(d.host.split(' ')[0].toLowerCase()) >= 0;
+    var btn = document.createElement('button');
+    btn.textContent = firstName + (isCurrent ? ' (current)' : '');
+    btn.style.cssText = 'display:block;width:100%;padding:10px;margin-bottom:6px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid ' + (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)') + ';background:' + (isCurrent ? 'rgba(59,130,246,.1)' : isDark ? 'rgba(255,255,255,.03)' : '#f8f9fa') + ';color:' + (isCurrent ? '#3b82f6' : 'inherit');
+    btn.onclick = function() {
+      d.host = c.split(' ')[0];
+      modal.remove();
+      RENDERDISPATCH();
+    };
+    box.appendChild(btn);
+  });
+
+  var cancel = document.createElement('button');
+  cancel.textContent = 'Cancel';
+  cancel.style.cssText = 'display:block;width:100%;padding:8px;margin-top:8px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid ' + (isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)') + ';background:none;color:#71717a';
+  cancel.onclick = function() { modal.remove(); };
+  box.appendChild(cancel);
+  modal.appendChild(box);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
 }
 
 function RUNDISPATCH(mode) {
-  var container = document.getElementById('dispatchContent');
-  var isPreview = mode === 'preview';
+  if (mode === 'balance') {
+    // Auto-balance across CES with AM/PM weight
+    var data = _dispatchData || [];
+    var cesLoad = {};
+    CES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0 }; });
 
-  if (!_dispatchData || !_dispatchData.length) {
-    container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No delivery data. Select a date first.</div>';
-    return;
-  }
-
-  // Get active CES
-  var activeCES = [];
-  var adminPenalty = {};
-  CES.forEach(function(c, i) {
-    var btn = document.getElementById('cesToggle' + i);
-    var adminBtn = document.getElementById('cesAdminToggle' + i);
-    if (!btn || btn.dataset.active === '1') {
-      activeCES.push(c);
-      adminPenalty[c] = (adminBtn && adminBtn.dataset.active === '1') ? 0.5 : 0;
-    }
-  });
-
-  if (!activeCES.length) {
-    container.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">No CES selected.</div>';
-    return;
-  }
-
-  // Parse deliveries
-  var deliveries = _dispatchData.map(function(d) {
-    var t = '?';
-    var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-    var isEnt = !!d.IsEnterpriseOrder;
-    var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
-    var weight = isEnt ? 1.5 : hasTI ? 1.3 : 1.0;
-    var isPM = parseInt(t) >= 13;
-    return { name: d.CustomerName || '?', rn: d.ReferenceNumber, time: t, model: d.VehicleModel || '', host: d.HostName || '', isPM: isPM, weight: weight, isEnt: isEnt, hasTI: hasTI };
-  }).sort(function(a, b) { return a.time.localeCompare(b.time); });
-
-  // Auto-assign by weight balancing
-  var cesLoad = {};
-  activeCES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0, total: adminPenalty[c] || 0, items: [] }; });
-
-  deliveries.forEach(function(d) {
-    var slot = d.isPM ? 'pm' : 'am';
-    var minCES = activeCES[0], minLoad = Infinity;
-    activeCES.forEach(function(c) {
-      if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
+    // Sort by weight descending for better distribution
+    var sorted = data.slice().sort(function(a, b) { return b.weight - a.weight; });
+    sorted.forEach(function(d) {
+      var slot = d.isPM ? 'pm' : 'am';
+      var minCES = CES[0], minLoad = Infinity;
+      CES.forEach(function(c) {
+        if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
+      });
+      d.host = minCES.split(' ')[0];
+      cesLoad[minCES][slot] += d.weight;
     });
-    d.assignedTo = minCES;
-    cesLoad[minCES][slot] += d.weight;
-    cesLoad[minCES].total += d.weight;
-    cesLoad[minCES].items.push(d);
-  });
-
-  // Render grid
-  var html = '<div style="display:grid;grid-template-columns:repeat(' + activeCES.length + ',1fr);gap:16px">';
-  activeCES.forEach(function(c) {
-    var load = cesLoad[c];
-    var firstName = c.split(' ')[0];
-    var isAdmin = adminPenalty[c] > 0;
-    html += '<div style="border:1px solid rgba(128,128,128,.12);border-radius:12px;padding:16px">';
-    html += '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + firstName + (isAdmin ? ' <span style="font-size:11px;color:#f59e0b;font-weight:600">ADMIN</span>' : '') + '</div>';
-    html += '<div style="font-size:12px;color:#71717a;margin-bottom:12px">Load: ' + load.total.toFixed(1) + ' (' + load.items.length + ' deliveries)</div>';
-
-    var amItems = load.items.filter(function(d) { return !d.isPM; });
-    html += '<div style="font-size:11px;color:#3b82f6;font-weight:600;text-transform:uppercase;margin-bottom:6px">AM (' + amItems.length + ')</div>';
-    amItems.forEach(function(d) {
-      html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(59,130,246,.06);font-size:13px">';
-      html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
-      html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
-      html += '</div>';
-    });
-
-    var pmItems = load.items.filter(function(d) { return d.isPM; });
-    html += '<div style="font-size:11px;color:#f59e0b;font-weight:600;text-transform:uppercase;margin:12px 0 6px">PM (' + pmItems.length + ')</div>';
-    pmItems.forEach(function(d) {
-      html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,158,11,.06);font-size:13px">';
-      html += '<div style="font-weight:600">' + d.time + ' — ' + d.name + '</div>';
-      html += '<div style="font-size:11px;color:#71717a">' + d.model + (d.isEnt ? ' (Enterprise)' : '') + (d.hasTI ? ' + TI' : '') + '</div>';
-      html += '</div>';
-    });
-
-    html += '</div>';
-  });
-  html += '</div>';
-
-  if (isPreview) {
-    html += '<div style="text-align:center;margin-top:24px"><button class="bt" style="padding:10px 32px;font-size:15px;background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="SAVEDISPATCH()">Save to DRO</button></div>';
+    RENDERDISPATCH();
   }
-
-  container.innerHTML = html;
 }
 
 function SAVEDISPATCH() {
-  var btn = document.querySelector('#dispatchContent button');
+  var btn = document.getElementById('dispatchSaveBtn');
   if (!btn) return;
   btn.textContent = 'Saving...';
   btn.disabled = true;
-  btn.style.opacity = '0.6';
-  // Simulate save (TODO: real DRO API call)
+  // TODO: real DRO API calls (UPDATEHOST per delivery)
   setTimeout(function() {
-    btn.textContent = '✓ Dispatch Saved!';
+    btn.textContent = 'Saved!';
     btn.style.background = 'rgba(34,197,94,.2)';
     btn.style.color = '#22c55e';
-    btn.style.borderColor = 'rgba(34,197,94,.3)';
-    btn.style.opacity = '1';
+    setTimeout(function() {
+      btn.textContent = 'Save to DRO';
+      btn.style.background = 'rgba(34,197,94,.12)';
+      btn.style.color = '#22c55e';
+      btn.disabled = false;
+    }, 2000);
   }, 1000);
 }
 

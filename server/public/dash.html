@@ -276,8 +276,6 @@
         <div class="si" onclick="SFV('fg',this)"><div class="sn" id="sFg">-</div><div class="sl">Finished<br>Goods</div></div>
         <div class="si" onclick="SFV('del',this)"><div class="sn" id="sDel">-</div><div class="sl">Delivered</div></div>
       </div>
-      <!-- CES (dynamically populated) -->
-      <div class="sb" style="margin-left:auto" id="cesBlock"></div>
     </div>
 
     <!-- TOOLBAR -->
@@ -349,25 +347,19 @@
 
   <!-- ========== DISPATCH VIEW ========== -->
   <div id="dispatchView" style="display:none;padding:0 32px 32px">
-    <!-- Date picker + auto-load -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <!-- Top bar: Date + Actions -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <select id="dispatchDate" class="fi2" style="padding:8px 14px" onchange="LOADDISPATCHDATE()"></select>
       <div style="flex:1"></div>
+      <button class="bt" onclick="RUNDISPATCH('balance')" id="dispatchBalanceBtn" disabled style="background:rgba(139,92,246,.12);color:#a78bfa;border-color:rgba(139,92,246,.25)">Auto-Balance</button>
+      <button class="bt" onclick="SAVEDISPATCH()" id="dispatchSaveBtn" disabled style="background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25)">Save to DRO</button>
     </div>
 
-    <!-- Summary cards (populated by JS) -->
-    <div id="dispatchSummary" style="margin-bottom:24px"></div>
+    <!-- Summary cards -->
+    <div id="dispatchSummary" style="margin-bottom:20px"></div>
 
-    <!-- Team selection -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <span style="font-size:13px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:.5px">Team</span>
-      <div id="cesTeam" style="display:flex;gap:8px"></div>
-      <div style="flex:1"></div>
-      <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3)" onclick="RUNDISPATCH('preview')" id="dispatchPreviewBtn" disabled>Preview Assignment</button>
-    </div>
-
-    <!-- Grid result -->
-    <div id="dispatchContent"></div>
+    <!-- Kanban board -->
+    <div id="dispatchBoard" style="display:grid;gap:16px"></div>
   </div>
 
   <!-- ========== PULL-UP VIEW ========== -->
