@@ -376,19 +376,19 @@
   </div>
 
   <!-- ========== CALENDAR VIEW ========== -->
-  <div id="calendarView" style="display:none;padding:0 32px 16px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <button class="bt" onclick="NAVCALWEEK(-1)" style="padding:5px 12px">&larr;</button>
+  <div id="calendarView" style="display:none;padding:0 32px 20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button class="bt" onclick="NAVCALWEEK(-1)" style="padding:6px 14px">&larr;</button>
       <span id="calWeekLabel" style="font-size:14px;font-weight:600"></span>
-      <button class="bt" onclick="NAVCALWEEK(1)" style="padding:5px 12px">&rarr;</button>
-      <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()" style="padding:5px 12px">Today</button>
+      <button class="bt" onclick="NAVCALWEEK(1)" style="padding:6px 14px">&rarr;</button>
+      <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()" style="padding:6px 14px">Today</button>
       <div style="flex:1"></div>
       <span style="font-size:11px;display:flex;align-items:center;gap:10px;color:#71717a">
-        <span style="color:#3b82f6;font-weight:600">● S</span>
-        <span style="color:#22c55e;font-weight:600">● C</span>
+        <span style="color:#3b82f6;font-weight:600">● Scheduled</span>
+        <span style="color:#22c55e;font-weight:600">● Confirmed</span>
       </span>
-      <button class="bt" id="calViewWeek" onclick="SETCALVIEW('week')" style="padding:5px 12px;font-weight:700">Week</button>
-      <button class="bt" id="calViewDay" onclick="SETCALVIEW('day')" style="padding:5px 12px">Day</button>
+      <button class="bt" id="calViewWeek" onclick="SETCALVIEW('week')" style="padding:6px 14px;font-weight:700">Week</button>
+      <button class="bt" id="calViewDay" onclick="SETCALVIEW('day')" style="padding:6px 14px">Day</button>
     </div>
     <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
     <div id="calLoadingBar" class="loading-bar"></div>
