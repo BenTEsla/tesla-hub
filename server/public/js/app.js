@@ -1518,7 +1518,7 @@ function LOADCALENDAR() {
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
     // Header row: Day names with total count
-    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:50px">TIME</th>';
+    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px;white-space:nowrap">TIME</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
@@ -1546,7 +1546,7 @@ function LOADCALENDAR() {
           html += '<td colspan="2" style="padding:8px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);font-style:italic;color:#71717a;font-size:12px">BREAK</td>';
         });
       } else {
-        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
+        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px;white-space:nowrap">' + t + '</td>';
         days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
           var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; });
