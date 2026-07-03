@@ -2607,11 +2607,10 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' No Hold</span>';
       html += '</div>';
 
-      // Row 4: Host + Links
+      // Row 4: Status + Links
       html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
-      var cesOpts = '<option value="">-</option>';
-      CES.forEach(function(cc) { cesOpts += '<option value="' + cc + '"' + (it.host && cc.indexOf(it.host) >= 0 ? ' selected' : '') + '>' + cc.split(' ')[0] + '</option>'; });
-      html += '<span style="font-size:11px;color:#71717a">Host:</span><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">' + cesOpts + '</select>';
+      var stOpts = '<option value="Scheduled"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
+      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-weight:600;font-family:inherit;color:' + statusDot + ';background:transparent;cursor:pointer">' + stOpts + '</select>';
       html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="font-size:11px;color:#60a5fa;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(59,130,246,.2);border-radius:6px">DRO</a>';
       if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
       html += '</div>';
