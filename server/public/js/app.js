@@ -1608,7 +1608,7 @@ function LOADDISPATCHDATE() {
         var t = '?';
         var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-        var hasTI = (d.TradeInActionStatus || a.TradeInActionStatus) === 'COMPLETE_TRADE_IN';
+        var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
         var isEnt = !!(d.IsEnterpriseOrder || a.IsEnterpriseOrder);
         return {
           rn: d.ReferenceNumber,
