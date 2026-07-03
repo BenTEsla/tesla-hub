@@ -487,10 +487,16 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
     let ti = null, battery = '';
     const promises = [];
     if (a.TradeInActionStatus === 'COMPLETE_TRADE_IN') {
-      promises.push(fetch(config.apis.dro + '/widget/GetTradeInWidgetInfo?referenceNumber=' + rn + '&vehicleMapId=' + (a.VehicleMapId || '') + '&deliveryState=' + encodeURIComponent(a.DeliveryState || ''), { headers: droHeaders }).then(r => r.json()).then(d => { if (d.Data) ti = { make: d.Data.Make, model: d.Data.Model, plate: d.Data.LicensePlate, status: d.Data.AMPStatusFromC360 }; }).catch(() => {}));
+      promises.push(fetch(config.apis.dro + '/widget/GetTradeInWidgetInfo?referenceNumber=' + rn + '&vehicleMapId=' + (a.VehicleMapId || '') + '&deliveryState=' + encodeURIComponent(a.DeliveryState || ''), { headers: droHeaders }).then(r => r.json()).then(d => { if (d.Data) ti = { make: d.Data.Make, model: d.Data.Model, vin: d.Data.VIN, plate: d.Data.LicensePlate, status: d.Data.AMPStatusFromC360, acquisitionId: d.Data.AcquisitionId }; }).catch(() => {}));
     }
     promises.push(fetch(config.apis.dro + '/widget/overview/' + rn + '/info?vin=' + (a.Vin || ''), { headers: droHeaders }).then(r => r.json()).then(d => { if (d.Data?.VinCharge) battery = d.Data.VinCharge + '%'; }).catch(() => {}));
     await Promise.all(promises);
+    
+    // Enrich trade-in plate from tracking data if not from DRO
+    if (ti && !ti.plate) {
+      const tracked = scanProcessor.tracking.find(t => t.rn === rn && t.plate);
+      if (tracked) ti.plate = tracked.plate;
+    }
     
     // Mappings
     const FC = { 'Pearl White': 'Blanc Perle', 'Diamond Black': 'Noir Diamant', 'Stealth Grey': 'Gris Stealth', 'Ultra Red': 'Rouge Ultra', 'Quicksilver': 'Quicksilver', 'Solid Black': 'Noir', 'Glacier Blue': 'Bleu Glacier', 'Marine Blue': 'Bleu Marine' };
@@ -520,7 +526,10 @@ app.get('/api/print/page-de-garde/:rn', async (req, res) => {
     // Trade-in block
     let tiBlock = '<div class="box" style="display:flex;flex-direction:column;background:#fce4ec;border-color:#f8bbd0"><div class="bt">Trade-In</div><div style="display:flex;align-items:center;justify-content:center;flex:1"><div class="pay-label" style="color:#c62828;font-size:22px;font-weight:700">NON</div></div></div>';
     if (ti && (ti.make || ti.model)) {
-      tiBlock = `<div class="box ti-box"><div class="bt">Trade-In</div><div class="ti-car">${ti.make || ''} ${ti.model || ''}</div>${ti.plate ? '<div class="lb">IMMATRICULATION</div><div class="ti-plate">' + ti.plate + '</div>' : ''}${ti.status ? '<div class="ti-status">' + ti.status + '</div>' : ''}</div>`;
+      const plateDisplay = ti.plate 
+        ? '<div class="ti-plate">' + ti.plate + '</div>' 
+        : '<div class="ti-plate" style="border:2px dashed #ccc;color:#999;font-size:16px;padding:8px 16px">__ __ __ - __ __ __ - __ __</div>';
+      tiBlock = `<div class="box ti-box"><div class="bt">Trade-In</div><div class="ti-car">${ti.make || ''} ${ti.model || ''}</div><div class="lb">IMMATRICULATION</div>${plateDisplay}${ti.vin ? '<div class="lb" style="margin-top:6px">VIN</div><div style="font-family:monospace;font-size:11px;color:#555;letter-spacing:1px">' + ti.vin + '</div>' : ''}${ti.status ? '<div class="ti-status">' + ti.status + '</div>' : ''}</div>`;
     }
     
     // FSD + Accessories
@@ -1450,7 +1459,7 @@ app.post('/api/scan/enrich', async (req, res) => {
 
 app.post('/api/scan/assign', async (req, res) => {
   try {
-    const { filename, rn } = req.body;
+    const { filename, rn, plate } = req.body;
     if (!filename || !rn) return res.json({ ok: false, error: 'Missing filename or rn' });
     const oldPath = path.join(__dirname, 'scans', filename);
     if (!fs.existsSync(oldPath)) return res.json({ ok: false, error: 'File not found' });
@@ -1461,6 +1470,11 @@ app.post('/api/scan/assign', async (req, res) => {
     // Process it (with full enrichment)
     try {
       await scanProcessor.processScan(newPath, tokens, getPdfBrowser, PORT, null);
+      // If plate was provided manually, update tracking
+      if (plate) {
+        const entry = scanProcessor.tracking.find(t => t.rn === rn);
+        if (entry) { entry.plate = plate; scanProcessor.saveTracking(); }
+      }
     } catch(e) { console.log('Process error:', e.message); }
     res.json({ ok: true, filename: newFilename });
   } catch(e) { res.json({ ok: false, error: e.message }); }

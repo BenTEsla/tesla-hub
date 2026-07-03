@@ -290,6 +290,7 @@ function showRNPicker(filename) {
 
   html += '<div style="display:flex;gap:8px;align-items:center">'
     + '<input type="text" id="rnManual" placeholder="Ou saisir un RN..." style="flex:1;padding:10px 14px;border:1px solid ' + (isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.12)') + ';border-radius:8px;font-size:13px;font-family:inherit;background:' + (isDark ? 'rgba(255,255,255,.04)' : '#fff') + ';color:inherit;outline:none">'
+    + '<input type="text" id="plateManual" placeholder="Plaque (ex: AB-123-CD)" style="width:160px;padding:10px 14px;border:1px solid ' + (isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.12)') + ';border-radius:8px;font-size:13px;font-family:inherit;background:' + (isDark ? 'rgba(255,255,255,.04)' : '#fff') + ';color:inherit;outline:none;text-transform:uppercase">'
     + '<button id="rnOk" style="padding:10px 20px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">OK</button>'
     + '</div>'
     + '<button id="rnCancel" style="margin-top:12px;width:100%;padding:8px;background:none;border:1px solid ' + (isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.08)') + ';border-radius:8px;font-size:12px;color:' + (isDark ? '#71717a' : '#999') + ';cursor:pointer;font-family:inherit">Annuler</button>';
@@ -300,24 +301,27 @@ function showRNPicker(filename) {
 
   // Bind RN pick buttons
   box.querySelectorAll(".rn-pick").forEach(function(b) {
-    b.onclick = function() { assignScan(filename, b.dataset.rn, modal); };
+    b.onclick = function() {
+      var plate = (document.getElementById("plateManual") || {}).value || "";
+      assignScan(filename, b.dataset.rn, modal, plate.trim().toUpperCase());
+    };
   });
 
   document.getElementById("rnOk").onclick = function() {
     var rn = document.getElementById("rnManual").value.trim().toUpperCase();
     if (!rn.match(/^RN\d{6,}/)) { alert("RN invalide"); return; }
-    assignScan(filename, rn, modal);
+    var plate = (document.getElementById("plateManual").value || "").trim().toUpperCase();
+    assignScan(filename, rn, modal, plate);
   };
 
   document.getElementById("rnCancel").onclick = function() { modal.remove(); };
 }
 
-function assignScan(filename, rn, modal) {
-  // Rename file to include RN and process
+function assignScan(filename, rn, modal, plate) {
   fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/assign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ filename: filename, rn: rn })
+    body: JSON.stringify({ filename: filename, rn: rn, plate: plate || '' })
   }).then(function(r) { return r.json(); }).then(function(j) {
     modal.remove();
     if (j.ok) {
