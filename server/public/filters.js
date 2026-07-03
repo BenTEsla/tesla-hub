@@ -5,6 +5,7 @@
 function populateFilters(DATA) {
   var filters = {
     fVehicle: function(d) { return d.model || ''; },
+    fHost:    function(d) { return d.host || ''; },
     fReg:     function(d) { return d.regOk ? 'OK' : (d.regTxt || 'Pending'); },
     fPay:     function(d) { return d.amtOk ? 'OK' : 'No'; },
     fTI:      function(d) {
@@ -54,6 +55,7 @@ function initFilters(DATA) {
 function applyFilters(DATA) {
   // Gather filter values by id
   var fVehicle = (document.getElementById('fVehicle') || {}).value || '';
+  var fHost    = (document.getElementById('fHost') || {}).value || '';
   var fReg     = (document.getElementById('fReg') || {}).value || '';
   var fPay     = (document.getElementById('fPay') || {}).value || '';
   var fTI      = (document.getElementById('fTI') || {}).value || '';
@@ -73,6 +75,9 @@ function applyFilters(DATA) {
 
     // Vehicle Model
     if (fVehicle && d.model !== fVehicle) ok = false;
+
+    // Host
+    if (fHost && d.host !== fHost) ok = false;
 
     // Registration
     if (fReg) {

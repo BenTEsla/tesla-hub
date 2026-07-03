@@ -870,6 +870,7 @@ function RW() {
       + '<td data-col="rn"><a class="rl" href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank">' + d.rn + '</a>'
       + (d.b2b ? '' : '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + d.rn + '" target="_blank" style="margin-left:4px;font-size:10px;background:rgba(34,197,94,.12);color:#22c55e;padding:1px 6px;border-radius:10px;text-decoration:none;font-weight:600" title="Verifier CEE sur Trustia">CEE</a>')
       + '</td>'
+      + '<td data-col="host" style="font-size:12px;color:#a1a1aa">' + d.host + '</td>'
       + '<td data-col="vehicle">' + d.model + '</td>'
       + '<td data-col="reg">' + rc + '</td>'
       + '<td data-col="pay">' + (d.amtOk ? '<span class="dt dg"></span>OK' : '<span class="dt dr"></span>No') + '</td>'

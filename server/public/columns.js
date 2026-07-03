@@ -7,6 +7,7 @@ var COL_CONFIG = {
   time:     { label: 'Time',           width: 55,  hideable: true,  visible: true },
   customer: { label: 'Customer',       width: 200, hideable: false, visible: true },
   rn:       { label: 'RN',             width: 120, hideable: false, visible: true },
+  host:     { label: 'Host',           width: 90,  hideable: true,  visible: true },
   vehicle:  { label: 'Vehicle',        width: 80,  hideable: true,  visible: true },
   reg:      { label: 'Registration',   width: 95,  hideable: true,  visible: true },
   pay:      { label: 'Payment',        width: 80,  hideable: true,  visible: true },
@@ -118,7 +119,8 @@ function colToggle(key, visible) {
 function colResetAll() {
   var defaults = {
     ck: { w: 32, v: true }, date: { w: 90, v: false }, time: { w: 55, v: true },
-    customer: { w: 200, v: true }, rn: { w: 120, v: true }, vehicle: { w: 80, v: true },
+    customer: { w: 200, v: true }, rn: { w: 120, v: true }, host: { w: 90, v: true },
+    vehicle: { w: 80, v: true },
     reg: { w: 95, v: true }, pay: { w: 80, v: true }, ti: { w: 85, v: true },
     vs: { w: 125, v: true }, hold: { w: 60, v: true }, ins: { w: 80, v: true },
     print: { w: 45, v: true }
