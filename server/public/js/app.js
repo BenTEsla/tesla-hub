@@ -1557,10 +1557,9 @@ function LOADCALENDAR() {
           if (total === 0) {
             html += '<td style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06)"></td>';
           } else {
-            var bg = conf === total ? (isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.08)') : sched === total ? (isDark ? 'rgba(59,130,246,.1)' : 'rgba(59,130,246,.08)') : (isDark ? 'rgba(245,158,11,.08)' : 'rgba(245,158,11,.06)');
             var numColor = conf === total ? '#22c55e' : sched === total ? '#3b82f6' : '#f59e0b';
-            html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;border-radius:4px">';
-            html += '<span style="font-weight:700;font-size:14px;color:' + numColor + '">' + total + '</span>';
+            html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);cursor:pointer">';
+            html += '<span style="font-weight:700;font-size:15px;color:' + numColor + '">' + total + '</span>';
             if (sched > 0 && conf > 0) html += '<div style="font-size:9px;color:#71717a;margin-top:1px">' + sched + 'S ' + conf + 'C</div>';
             html += '</td>';
           }
