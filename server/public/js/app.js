@@ -1521,17 +1521,26 @@ function LOADCALENDAR() {
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
     var isDark = !document.getElementById('lightThemeCSS');
     // Header row
-    html += '<thead><tr><th style="padding:6px 10px;text-align:left;font-size:10px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:60px;text-transform:uppercase">Time</th>';
+    html += '<thead>';
+    // Row 1: Day name + total
+    html += '<tr><th style="padding:4px 10px;font-size:10px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:55px"></th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
+      d._sched = daySched; d._conf = dayConf;
       var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#111827');
-      html += '<th colspan="2" style="padding:6px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
-      html += '<div style="font-size:10px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#6b7280') + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
-      html += '<div style="font-size:26px;font-weight:800;color:' + headerCol + ';line-height:1.1">' + dayTotal + '</div>';
-      html += '<div style="display:flex;justify-content:center;gap:10px;margin-top:2px"><span style="font-size:13px;font-weight:700;color:#3b82f6">' + daySched + '</span><span style="font-size:13px;font-weight:700;color:#22c55e">' + dayConf + '</span></div>';
+      html += '<th colspan="2" style="padding:4px 2px 0;text-align:center;border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
+      html += '<div style="font-size:10px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#6b7280') + ';text-transform:uppercase;letter-spacing:.3px">' + d.label + '</div>';
+      html += '<div style="font-size:24px;font-weight:800;color:' + headerCol + ';line-height:1.1">' + dayTotal + '</div>';
       html += '</th>';
+    });
+    html += '</tr>';
+    // Row 2: S | C aligned above columns
+    html += '<tr><th style="padding:0 10px 4px;border-bottom:2px solid rgba(128,128,128,.15)"></th>';
+    days.forEach(function(d) {
+      html += '<th style="padding:0 2px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12)"><span style="font-size:15px;font-weight:700;color:#3b82f6">' + d._sched + '</span></th>';
+      html += '<th style="padding:0 2px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15)"><span style="font-size:15px;font-weight:700;color:#22c55e">' + d._conf + '</span></th>';
     });
     html += '</tr></thead><tbody>';
 
