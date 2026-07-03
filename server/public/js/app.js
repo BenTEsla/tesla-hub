@@ -2549,62 +2549,87 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
 
     items.forEach(function(it, idx) {
       var a = advMap[it.rn] || {};
-      var c = custMap[it.rn] || {};
-      var note = notes[it.rn] || '';
+      var c2 = custMap[it.rn] || {};
+      var noteData = notes[it.rn];
+      var noteHistory = [];
+      if (typeof noteData === 'string' && noteData) noteHistory = [{text: noteData, date: ''}];
+      else if (Array.isArray(noteData)) noteHistory = noteData;
 
-      // Use Customer Dashboard for TradeIn + Hold (location-filtered)
       var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified');
-      var hold = !!(c.IsContainmentHold || c.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
+      var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0;
-      var hasTI = c.TradeInActionStatus === 'COMPLETE_TRADE_IN';
-      var isEnt = !!(c.IsEnterpriseOrder || a.IsEnterpriseOrder);
+      var hasTI = c2.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+      var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
+      var allReady = payOk && regOk && otg && !hold;
 
-      // Status color
       var statusDot = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : '#3b82f6';
       var statusLabel = it.status || 'Scheduled';
       if (delivered) { statusDot = '#71717a'; statusLabel = 'Delivered'; }
 
-      // Card
-      var cardBg = isDark ? 'rgba(255,255,255,.03)' : '#fafafa';
-      var cardBdr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
-      if (hold) { cardBg = isDark ? 'rgba(239,68,68,.06)' : '#fef2f2'; cardBdr = 'rgba(239,68,68,.15)'; }
-      if (delivered) { cardBg = isDark ? 'rgba(34,197,94,.04)' : '#f0fdf4'; }
+      var cardBg, cardBdr, leftBar;
+      if (delivered) { cardBg = isDark ? 'rgba(34,197,94,.04)' : '#f0fdf4'; cardBdr = isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.12)'; leftBar = '#22c55e'; }
+      else if (hold) { cardBg = isDark ? 'rgba(239,68,68,.06)' : '#fef2f2'; cardBdr = isDark ? 'rgba(239,68,68,.1)' : 'rgba(239,68,68,.12)'; leftBar = '#ef4444'; }
+      else if (allReady) { cardBg = isDark ? 'rgba(34,197,94,.03)' : '#fafffe'; cardBdr = isDark ? 'rgba(34,197,94,.06)' : 'rgba(34,197,94,.08)'; leftBar = '#22c55e'; }
+      else { cardBg = isDark ? 'rgba(255,255,255,.03)' : '#fafafa'; cardBdr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'; leftBar = '#f59e0b'; }
 
-      html += '<div style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:10px;padding:14px 18px;margin-bottom:10px">';
+      html += '<div style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-left:4px solid ' + leftBar + ';border-radius:10px;padding:16px 20px;margin-bottom:12px">';
 
-      // Row 1: Name + Tags + Status + Readiness
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
-      html += '<span style="font-size:15px;font-weight:700">' + it.name + '</span>';
-      html += '<span style="color:#71717a;font-size:12px">' + it.model + '</span>';
-      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
-      if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span>';
-      if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">Trade-In</span>';
-      if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:1px 6px;border-radius:10px;font-weight:700">HOLD</span>';
+      // Row 1: Name + Tags + Status
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+      html += '<span style="font-size:16px;font-weight:700">' + it.name + '</span>';
+      if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">B2B</span>';
+      if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:2px 8px;border-radius:10px;font-weight:600">Trade-In</span>';
+      if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
       html += '<div style="flex:1"></div>';
-      // Readiness dots inline
-      html += '<span style="display:flex;gap:8px;font-size:11px;font-weight:600">';
-      html += '<span style="color:' + (payOk ? '#22c55e' : '#ef4444') + '">● Pay</span>';
-      html += '<span style="color:' + (regOk ? '#22c55e' : '#f59e0b') + '">● Reg</span>';
-      html += '<span style="color:' + (insOk ? '#22c55e' : '#71717a') + '">● Ins</span>';
-      html += '<span style="color:' + (otg ? '#22c55e' : '#f59e0b') + '">● ' + (vs || 'N/A') + '</span>';
-      html += '</span>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:7px;height:7px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
+      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:8px;height:8px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
       html += '</div>';
 
-      // Row 2: Host + Links + Notes
-      html += '<div style="display:flex;align-items:center;gap:8px">';
-      var cesOptions = '<option value="">-</option>';
-      CES.forEach(function(c2) { cesOptions += '<option value="' + c2 + '"' + (it.host && c2.indexOf(it.host) >= 0 ? ' selected' : '') + '>' + c2.split(' ')[0] + '</option>'; });
-      html += '<span style="font-size:11px;color:#71717a">Host:</span><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:2px 6px;border-radius:4px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">' + cesOptions + '</select>';
-      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="font-size:10px;color:#60a5fa;text-decoration:none;font-weight:600;padding:2px 6px;border:1px solid rgba(59,130,246,.2);border-radius:4px">DRO</a>';
-      if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:2px 6px;border:1px solid rgba(34,197,94,.2);border-radius:4px">CEE</a>';
-      html += '<div style="flex:1"></div>';
-      html += '<input type="text" value="' + note.replace(/"/g, '&quot;') + '" placeholder="Notes..." onblur="SAVENOTE(\'' + it.rn + '\',this.value)" style="width:300px;padding:5px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:12px;font-family:inherit;color:inherit;background:transparent;outline:none" onfocus="this.style.borderColor=\'#3b82f6\'">';
+      // Row 2: Info with VIN
+      html += '<div style="display:flex;gap:24px;font-size:13px;margin-bottom:12px;flex-wrap:wrap">';
+      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">RN</span><br><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600">' + it.rn + '</a></div>';
+      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">Model</span><br><span style="font-weight:600">' + it.model + '</span></div>';
+      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">VIN</span><br><span style="font-family:monospace;font-size:12px;letter-spacing:.5px">' + (it.vin || a.Vin || '-') + '</span></div>';
+      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">Vehicle</span><br><span style="font-weight:600;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '-') + '</span></div>';
       html += '</div>';
+
+      // Row 3: Readiness checklist
+      var ckG = isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.06)';
+      var ckR = isDark ? 'rgba(239,68,68,.08)' : 'rgba(239,68,68,.04)';
+      html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (payOk?ckG:ckR) + ';color:' + (payOk?'#22c55e':'#ef4444') + '">' + (payOk?'\u2713':'\u2717') + ' Payment</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (regOk?ckG:ckR) + ';color:' + (regOk?'#22c55e':'#ef4444') + '">' + (regOk?'\u2713':'\u2717') + ' Registration</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (insOk?ckG:ckR) + ';color:' + (insOk?'#22c55e':'#ef4444') + '">' + (insOk?'\u2713':'\u2717') + ' Insurance</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (otg?ckG:ckR) + ';color:' + (otg?'#22c55e':'#f59e0b') + '">' + (otg?'\u2713':'\u2717') + ' OTG</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' No Hold</span>';
+      html += '</div>';
+
+      // Row 4: Host + Links
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+      var cesOpts = '<option value="">-</option>';
+      CES.forEach(function(cc) { cesOpts += '<option value="' + cc + '"' + (it.host && cc.indexOf(it.host) >= 0 ? ' selected' : '') + '>' + cc.split(' ')[0] + '</option>'; });
+      html += '<span style="font-size:11px;color:#71717a">Host:</span><select onchange="UPDATEHOST(\'' + it.rn + '\',this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-family:inherit;color:inherit;background:transparent;cursor:pointer">' + cesOpts + '</select>';
+      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="font-size:11px;color:#60a5fa;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(59,130,246,.2);border-radius:6px">DRO</a>';
+      if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
+      html += '</div>';
+
+      // Row 5: Notes history
+      html += '<div style="border-top:1px solid rgba(128,128,128,.08);padding-top:10px">';
+      html += '<div style="font-size:10px;color:#71717a;text-transform:uppercase;font-weight:600;margin-bottom:6px">Notes</div>';
+      if (noteHistory.length) {
+        noteHistory.forEach(function(n) {
+          html += '<div style="padding:3px 0;font-size:12px;color:' + (isDark ? '#a1a1aa' : '#52525b') + '">';
+          if (n.date) html += '<span style="color:#71717a;font-size:10px;margin-right:6px">' + new Date(n.date).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) + '</span>';
+          html += n.text + '</div>';
+        });
+      }
+      html += '<div style="display:flex;gap:6px;margin-top:6px">';
+      html += '<input type="text" id="noteInput_' + idx + '" placeholder="Ajouter une note..." style="flex:1;padding:6px 10px;border:1px solid rgba(128,128,128,.15);border-radius:6px;font-size:12px;font-family:inherit;color:inherit;background:transparent;outline:none" onkeydown="if(event.key===\'Enter\')ADDNOTE(\'' + it.rn + '\',' + idx + ')">';
+      html += '<button onclick="ADDNOTE(\'' + it.rn + '\',' + idx + ')" style="padding:6px 14px;background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Add</button>';
+      html += '</div></div>';
 
       html += '</div>';
     });
