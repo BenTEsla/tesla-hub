@@ -1523,15 +1523,15 @@ function LOADCALENDAR() {
     // Header row
     html += '<thead>';
     // Row 1: Day name + total
-    html += '<tr><th style="padding:8px 12px;font-size:11px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:60px;text-transform:uppercase">Time</th>';
+    html += '<tr><th style="padding:8px 12px;font-size:11px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:75px;text-transform:uppercase">Time</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
       d._sched = daySched; d._conf = dayConf;
-      var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#111827');
+      var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#000000');
       html += '<th colspan="2" style="padding:14px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.1);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
-      html += '<div style="font-size:12px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#6b7280') + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
+      html += '<div style="font-size:12px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#374151') + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
       html += '<div style="font-size:36px;font-weight:800;color:' + headerCol + ';line-height:1.2">' + dayTotal + '</div>';
       html += '</th>';
     });
