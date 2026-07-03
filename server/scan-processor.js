@@ -45,7 +45,83 @@ async function extractRNFromPDFText(pdfPath) {
   return null;
 }
 
-// Extract QR code from first page of PDF using Puppeteer screenshot
+// OCR scan using Tesseract.js — extract RN, plate, VIN from scanned images
+async function ocrScan(pdfPath, getPdfBrowser, PORT) {
+  try {
+    const Tesseract = require('tesseract.js');
+    const pcc = require('puppeteer-core');
+    
+    const fileName = path.basename(pdfPath);
+    const pdfUrl = 'http://localhost:' + PORT + '/scan-file/' + encodeURIComponent(fileName);
+    
+    const browser = await getPdfBrowser();
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1200, height: 1700 });
+    
+    // Load PDF with pdf.js in browser
+    const html = `<html><body><canvas id="cv"></canvas><script type="module">
+      import{getDocument,GlobalWorkerOptions}from"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
+      GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+      const t=await getDocument("${pdfUrl}").promise;
+      window._pdf=t;window._numPages=t.numPages;window._ready=true;
+    </script></body></html>`;
+    
+    await page.setContent(html);
+    await page.waitForFunction('window._ready', { timeout: 20000 });
+    const numPages = await page.evaluate(() => window._numPages);
+    console.log('  OCR: PDF has', numPages, 'pages');
+    
+    let allText = '';
+    // OCR first 4 pages max (trade-in docs are usually 2-3 pages)
+    for (let p = 1; p <= Math.min(numPages, 4); p++) {
+      await page.evaluate(async (pageNum) => {
+        const pg = await window._pdf.getPage(pageNum);
+        const vp = pg.getViewport({ scale: 2 });
+        const c = document.getElementById('cv');
+        c.width = vp.width; c.height = vp.height;
+        await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      }, p);
+      
+      const canvasEl = await page.evaluateHandle(() => document.getElementById('cv'));
+      const img = await canvasEl.asElement().screenshot({ type: 'png' });
+      
+      const { data } = await Tesseract.recognize(img, 'fra');
+      allText += data.text + '\n';
+      console.log('  OCR page', p, ':', data.text.length, 'chars');
+    }
+    
+    await page.close();
+    
+    // Extract RN
+    const rnMatch = allText.match(/RN\d{6,}/i);
+    const rn = rnMatch ? rnMatch[0].toUpperCase() : null;
+    
+    // Extract French plate — permissive regex then validate format
+    // French plates: AA-NNN-AA (letters-digits-letters)
+    const plateMatches = allText.match(/[A-Z0-9]{2}[-\s]?\d{3}[-\s]?[A-Z0-9]{2,3}/g) || [];
+    let plate = null;
+    for (const m of plateMatches) {
+      const clean = m.replace(/[-\s]/g, '').toUpperCase();
+      // French SIV format: 2 letters, 3 digits, 2 letters
+      if (clean.match(/^[A-Z]{2}\d{3}[A-Z]{2}$/)) {
+        plate = clean.substring(0,2) + '-' + clean.substring(2,5) + '-' + clean.substring(5);
+        break;
+      }
+    }
+    
+    // Extract VIN (17 chars, excludes I, O, Q)
+    const vinMatch = allText.match(/[A-HJ-NPR-Z0-9]{17}/);
+    const vin = vinMatch ? vinMatch[0] : null;
+    
+    console.log('  OCR results — RN:', rn || 'none', '| Plate:', plate || 'none', '| VIN:', vin || 'none');
+    return { rn, plate, vin, text: allText };
+  } catch(e) {
+    console.log('  OCR error:', e.message);
+    return { rn: null, plate: null, vin: null };
+  }
+}
+
+// Extract QR code from first page of PDF using Puppeteer screenshot (legacy)
 async function extractQRFromPDF(pdfPath, getPdfBrowser, PORT) {
   if (!getPdfBrowser || typeof getPdfBrowser !== 'function') {
     console.log('  No browser available for QR extraction');
@@ -115,20 +191,29 @@ async function processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN) {
   
   let vin = null;
   let rn = null;
+  let ocrPlate = null;
 
-  // Method 1: Extract RN/VIN from PDF text (fastest, most reliable)
+  // Method 1: Extract RN/VIN from PDF text (for text-based PDFs)
   const textResult = await extractRNFromPDFText(filePath);
   if (textResult) {
     if (textResult.rn) rn = textResult.rn;
     if (textResult.vin) vin = textResult.vin;
   }
 
-  // Method 2: Try QR code extraction (fallback)
+  // Method 2: OCR (for scanned image PDFs) — finds RN, plate, VIN
+  if (!rn && getPdfBrowser && PORT) {
+    const ocrResult = await ocrScan(filePath, getPdfBrowser, PORT);
+    if (ocrResult.rn && !rn) rn = ocrResult.rn;
+    if (ocrResult.vin && !vin) vin = ocrResult.vin;
+    if (ocrResult.plate) ocrPlate = ocrResult.plate;
+  }
+
+  // Method 3: Try QR code extraction (legacy fallback)
   if (!rn && !vin) {
     vin = await extractQRFromPDF(filePath, getPdfBrowser, PORT);
   }
 
-  // Method 3: Check filename for RN pattern
+  // Method 4: Check filename for RN pattern
   if (!rn) {
     const match = fileName.match(/RN\d{9}/i);
     if (match) { rn = match[0].toUpperCase(); console.log('  RN from filename:', rn); }
@@ -162,7 +247,7 @@ async function processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN) {
   console.log('  RN:', rn);
   
   // Fetch trade-in details from DRO
-  let plate = '', make = '', model = '', tiVin = vin || '', acquisitionId = '';
+  let plate = ocrPlate || '', make = '', model = '', tiVin = vin || '', acquisitionId = '';
   try {
     const fetch = require('node-fetch');
     const advResp = await fetch('https://mytdeliveryopsapi.tesla.com/api/advisor/Dashboard?isSidePanelFullScreen=true', {

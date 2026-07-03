@@ -1393,7 +1393,8 @@ app.get('/api/scan/status', (req, res) => { res.json({ tracking: scanProcessor.t
 
 // Serve scanned PDFs for Puppeteer QR reading
 app.get('/scan-file/:name', (req, res) => {
-  const filePath = path.join(__dirname, 'scans', req.params.name);
+  let filePath = path.join(__dirname, 'scans', req.params.name);
+  if (!fs.existsSync(filePath)) filePath = path.join(__dirname, 'scans', 'processed', req.params.name);
   if (fs.existsSync(filePath)) res.sendFile(filePath);
   else res.status(404).send('Not found');
 });
