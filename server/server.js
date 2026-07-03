@@ -953,6 +953,7 @@ app.get('/api/tab/tradein', (req, res) => {
     + '<div style="flex:1"></div>'
     + '<input type="text" id="tiSearch" placeholder="Rechercher..." oninput="SEARCHTI(this.value)" style="padding:8px 14px;border:1px solid rgba(0,0,0,.15);border-radius:8px;font-size:13px;font-family:inherit;color:inherit;background:rgba(0,0,0,.03);outline:none;width:220px">'
     + '<button onclick="TRIGGERSCAN(this)" style="padding:8px 20px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-left:8px">Scan</button>'
+    + '<button onclick="ENRICHTI(this)" style="padding:8px 14px;background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2);border-radius:6px;font-size:12px;cursor:pointer;margin-left:4px;font-family:inherit">Enrich</button>'
     + '</div>'
     + '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow-x:auto">'
     + '<table style="width:100%;border-collapse:collapse;font-size:13px">'
@@ -1431,10 +1432,11 @@ app.post('/api/scan/enrich', async (req, res) => {
           if (tiData.Data) {
             t.make = tiData.Data.Make || t.make || '';
             t.model = tiData.Data.Model || t.model || '';
+            t.plate = tiData.Data.LicensePlate || tiData.Data.Registration?.LicensePlate || t.plate || '';
             if (tiData.Data.VIN && !tiData.Data.VIN.startsWith('XP7') && !tiData.Data.VIN.startsWith('LRW') && !tiData.Data.VIN.startsWith('5YJ')) {
               t.vin = tiData.Data.VIN;
             }
-            t.acquisitionId = tiData.Data.AcquisitionId || '';
+            t.acquisitionId = tiData.Data.AcquisitionId || t.acquisitionId || '';
             enriched++;
           }
         }
@@ -1455,9 +1457,9 @@ app.post('/api/scan/assign', async (req, res) => {
     const newPath = path.join(__dirname, 'scans', newFilename);
     fs.renameSync(oldPath, newPath);
     console.log('Scan assigned:', filename, '->', newFilename);
-    // Process it
+    // Process it (with full enrichment)
     try {
-      await scanProcessor.processScan(newPath, tokens, null, PORT, null);
+      await scanProcessor.processScan(newPath, tokens, getPdfBrowser, PORT, null);
     } catch(e) { console.log('Process error:', e.message); }
     res.json({ ok: true, filename: newFilename });
   } catch(e) { res.json({ ok: false, error: e.message }); }

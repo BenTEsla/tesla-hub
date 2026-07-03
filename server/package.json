@@ -13,6 +13,7 @@
     "multer": "^2.2.0",
     "node-fetch": "^2.7.0",
     "pdf-merger-js": "^5.1.2",
+    "pdf-parse": "^2.4.5",
     "pdf-to-printer": "^5.8.0",
     "pdfjs-dist": "^6.0.227",
     "puppeteer-core": "^25.2.0",

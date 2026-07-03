@@ -180,6 +180,28 @@ function ENRICHTI() {
   fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/enrich", { method: "POST" }).then(function(r) { return r.json(); }).then(function(j) { alert("Enriched: " + j.enriched + " entries"); LOADTI(); }).catch(function(e) { alert("Error: " + e.message); });
 }
 
+function ENRICHTI(btn) {
+  btn.textContent = "Enriching...";
+  btn.disabled = true;
+  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/enrich", { method: "POST" })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      btn.textContent = j.enriched ? j.enriched + " enriched" : "Up to date";
+      btn.style.color = "#22c55e";
+      setTimeout(function() {
+        btn.textContent = "Enrich";
+        btn.style.color = "#60a5fa";
+        btn.disabled = false;
+      }, 3000);
+      if (j.enriched) LOADTI();
+    })
+    .catch(function() {
+      btn.textContent = "Error";
+      btn.style.color = "#ef4444";
+      setTimeout(function() { btn.textContent = "Enrich"; btn.style.color = "#60a5fa"; btn.disabled = false; }, 3000);
+    });
+}
+
 function TRIGGERSCAN(btn) {
   btn.textContent = "Scanning...";
   btn.disabled = true;
