@@ -438,8 +438,8 @@ a.nav-item {
    ============================================ */
 .srow {
   display: flex;
-  gap: 12px;
-  margin: 0 32px 16px;
+  gap: 16px;
+  margin: 0 32px 20px;
   align-items: stretch;
 }
 
@@ -449,18 +449,20 @@ a.nav-item {
   background: rgba(255, 255, 255, .04);
   border: 1px solid rgba(255, 255, 255, .06);
   backdrop-filter: blur(12px);
+  flex: 1;
 }
 
 .si {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 26px 14px;
+  justify-content: center;
+  padding: 22px 20px 16px;
   cursor: pointer;
   transition: all .15s;
   position: relative;
-  min-width: 110px;
-  height: 120px;
+  flex: 1;
+  min-height: 120px;
 }
 
 .si:not(:last-child)::after {
@@ -482,8 +484,8 @@ a.nav-item {
 }
 
 .sn {
-  font-size: 30px;
-  font-weight: 600;
+  font-size: 36px;
+  font-weight: 700;
   line-height: 1;
   color: #3b82f6;
   margin-top: 8px;
