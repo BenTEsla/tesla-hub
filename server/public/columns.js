@@ -14,7 +14,7 @@ var COL_CONFIG = {
   vs:       { label: 'Vehicle Status', width: 125, hideable: true,  visible: true },
   hold:     { label: 'Hold',           width: 60,  hideable: true,  visible: true },
   ins:      { label: 'Insurance',      width: 80,  hideable: true,  visible: true },
-  print:    { label: 'Print',          width: 45,  hideable: true,  visible: true }
+  print:    { label: 'Print',          width: 45,  hideable: false, visible: true }
 };
 
 var COL_KEYS = Object.keys(COL_CONFIG);
