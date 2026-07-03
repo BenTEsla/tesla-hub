@@ -16,10 +16,12 @@ function saveTracking() { fs.writeFileSync(TRACKING_FILE, JSON.stringify(trackin
 // Extract RN from PDF text content using pdf-parse
 async function extractRNFromPDFText(pdfPath) {
   try {
-    const pdfParse = require('pdf-parse');
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const data = await pdfParse(dataBuffer);
-    const text = data.text || '';
+    const { PDFParse } = require('pdf-parse');
+    const dataBuffer = new Uint8Array(fs.readFileSync(pdfPath));
+    const parser = new PDFParse(dataBuffer);
+    const result = await parser.getText();
+    const text = result.text || '';
+    await parser.destroy();
     console.log('  PDF text extracted:', text.length, 'chars');
 
     // Look for RN pattern (RN followed by 9+ digits)
