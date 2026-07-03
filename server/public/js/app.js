@@ -1517,50 +1517,53 @@ function LOADCALENDAR() {
 
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-    // Header row: Day names with total count
-    html += '<thead><tr><th style="padding:10px 12px;text-align:center;font-size:12px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px;white-space:nowrap">TIME</th>';
+    var isDark = !document.getElementById('lightThemeCSS');
+    // Header row
+    html += '<thead><tr><th style="padding:12px 14px;text-align:left;font-size:11px;color:#71717a;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);width:70px;text-transform:uppercase">Time</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
-      html += '<th colspan="2" style="padding:10px 6px;text-align:center;font-size:12px;font-weight:600;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'color:#3b82f6' : 'color:#71717a') + '">' + d.label + '<div style="font-size:18px;font-weight:700;margin-top:2px;color:inherit">' + dayTotal + '</div><div style="font-size:10px;margin-top:2px"><span style="color:#3b82f6">' + daySched + ' S</span> · <span style="color:#22c55e">' + dayConf + ' C</span></div></th>';
+      var headerCol = isToday ? '#3b82f6' : (isDark ? '#d4d4d8' : '#374151');
+      html += '<th style="padding:12px 8px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
+      html += '<div style="font-size:11px;font-weight:600;color:' + headerCol + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
+      html += '<div style="font-size:24px;font-weight:700;color:' + headerCol + ';margin-top:2px">' + dayTotal + '</div>';
+      html += '<div style="font-size:10px;margin-top:3px"><span style="color:#3b82f6;font-weight:600">' + daySched + '</span><span style="color:#71717a"> S </span><span style="color:#22c55e;font-weight:600">' + dayConf + '</span><span style="color:#71717a"> C</span></div>';
+      html += '</th>';
     });
     html += '</tr></thead><tbody>';
 
     times.forEach(function(t) {
       var isLunch = !!lunchSlots[t];
-      // Check if any day has real data in this lunch slot
       var lunchHasData = false;
-      if (isLunch) {
-        days.forEach(function(d) { if (d.slots[t] && d.slots[t].length) lunchHasData = true; });
-      }
+      if (isLunch) { days.forEach(function(d) { if (d.slots[t] && d.slots[t].length) lunchHasData = true; }); }
       var isBreakRow = isLunch && !lunchHasData;
-
-      // Merge 4 break rows into 1: only render at 12:00, skip 12:30/13:00/13:30
       if (isBreakRow && t !== '12:00') return;
 
-      html += '<tr' + (isBreakRow ? ' class="cal-break"' : '') + '>';
+      html += '<tr>';
       if (isBreakRow) {
-        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;font-style:italic">12:00 - 13:30</td>';
+        html += '<td style="padding:6px 14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:11px;font-style:italic;color:#71717a">12:00-13:30</td>';
         days.forEach(function() {
-          html += '<td colspan="2" style="padding:8px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);font-style:italic;color:#71717a;font-size:12px">BREAK</td>';
+          html += '<td style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:11px;font-style:italic;background:' + (isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)') + '">BREAK</td>';
         });
       } else {
-        html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px;white-space:nowrap">' + t + '</td>';
+        html += '<td style="padding:6px 14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
         days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
-          var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; });
-          var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; });
-          // Scheduled column
-          var sBg = sched.length === 0 ? 'transparent' : 'rgba(59,130,246,.08)';
-          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + sBg + ';cursor:pointer" title="Scheduled">';
-          html += sched.length > 0 ? '<span style="font-weight:700;color:#3b82f6">' + sched.length + '</span>' : '<span style="color:#3f3f46">-</span>';
-          html += '</td>';
-          // Confirmed column
-          var cBg = conf.length === 0 ? 'transparent' : 'rgba(34,197,94,.08)';
-          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + cBg + ';cursor:pointer" title="Confirmed">';
-          html += conf.length > 0 ? '<span style="font-weight:700;color:#22c55e">' + conf.length + '</span>' : '<span style="color:#3f3f46">-</span>';
-          html += '</td>';
+          var total = entries.length;
+          var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; }).length;
+          var sched = total - conf;
+
+          if (total === 0) {
+            html += '<td style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06)"></td>';
+          } else {
+            var bg = conf === total ? (isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.08)') : sched === total ? (isDark ? 'rgba(59,130,246,.1)' : 'rgba(59,130,246,.08)') : (isDark ? 'rgba(245,158,11,.08)' : 'rgba(245,158,11,.06)');
+            var numColor = conf === total ? '#22c55e' : sched === total ? '#3b82f6' : '#f59e0b';
+            html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\')" style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';cursor:pointer;border-radius:4px">';
+            html += '<span style="font-weight:700;font-size:14px;color:' + numColor + '">' + total + '</span>';
+            if (sched > 0 && conf > 0) html += '<div style="font-size:9px;color:#71717a;margin-top:1px">' + sched + 'S ' + conf + 'C</div>';
+            html += '</td>';
+          }
         });
       }
       html += '</tr>';
