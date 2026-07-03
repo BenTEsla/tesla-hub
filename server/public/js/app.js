@@ -1469,12 +1469,18 @@ function LOADCALENDAR() {
   sat.setDate(mon.getDate() + (numDays - 1));
   var weekLabel = document.getElementById('calWeekLabel');
   if (weekLabel) {
+    // Calculate ISO week number
+    var thu = new Date(mon);
+    thu.setDate(mon.getDate() + 3);
+    var yearStart = new Date(thu.getFullYear(), 0, 1);
+    var weekNum = Math.ceil((((thu - yearStart) / 86400000) + yearStart.getDay() + 1) / 7);
+
     if (_calView === 'day') {
-      weekLabel.textContent = mon.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+      weekLabel.textContent = mon.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}) + '  ·  W' + weekNum;
     } else {
       var monLabel = mon.toLocaleDateString('en-US', {month:'short', day:'numeric'});
       var satLabel = sat.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-      weekLabel.textContent = monLabel + ' - ' + satLabel;
+      weekLabel.textContent = monLabel + ' - ' + satLabel + '  ·  W' + weekNum;
     }
   }
 
