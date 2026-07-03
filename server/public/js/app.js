@@ -1478,11 +1478,11 @@ function LOADCALENDAR() {
     var weekNum = Math.ceil((((thu - yearStart) / 86400000) + yearStart.getDay() + 1) / 7);
 
     if (_calView === 'day') {
-      weekLabel.textContent = mon.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}) + '  ·  W' + weekNum;
+      weekLabel.textContent = mon.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}) + '  | W' + weekNum;
     } else {
       var monLabel = mon.toLocaleDateString('en-US', {month:'short', day:'numeric'});
       var satLabel = sat.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-      weekLabel.textContent = monLabel + ' - ' + satLabel + '  ·  W' + weekNum;
+      weekLabel.textContent = monLabel + ' - ' + satLabel + '  | W' + weekNum;
     }
   }
 
@@ -1495,11 +1495,12 @@ function LOADCALENDAR() {
     // Insert lunch break slots (12:00-13:30) so they always appear
     ['12:00','12:30','13:00','13:30'].forEach(function(t) { allSlots[t] = true; });
 
-    var times = Object.keys(allSlots).sort();
+    // Always show full time range
+    var defaultTimes = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+    var dataKeys = Object.keys(allSlots);
+    dataKeys.forEach(function(k) { if (defaultTimes.indexOf(k) < 0) defaultTimes.push(k); });
+    var times = defaultTimes.sort();
     var lunchSlots = {'12:00':true,'12:30':true,'13:00':true,'13:30':true};
-
-    // If no slots, show default range
-    if (!times.length) times = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
 
     // Compute daily totals
     var dayTotals = days.map(function(d) {
@@ -1530,7 +1531,7 @@ function LOADCALENDAR() {
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
       d._sched = daySched; d._conf = dayConf;
       var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#000000');
-      html += '<th colspan="2" style="padding:14px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.1);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
+      html += '<th colspan="2" style="padding:16px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.1);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
       html += '<div style="font-size:12px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#374151') + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
       html += '<div style="font-size:36px;font-weight:800;color:' + headerCol + ';line-height:1.2">' + dayTotal + '</div>';
       html += '</th>';
