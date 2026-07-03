@@ -1183,6 +1183,20 @@ app.post('/api/notes/:rn', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/notes/:rn/add', (req, res) => {
+  const rn = req.params.rn;
+  const text = req.body.text || '';
+  if (!text) return res.json({ ok: false });
+  // Convert string to array if needed
+  if (typeof deliveryNotes[rn] === 'string') {
+    deliveryNotes[rn] = deliveryNotes[rn] ? [{ text: deliveryNotes[rn], date: '' }] : [];
+  }
+  if (!Array.isArray(deliveryNotes[rn])) deliveryNotes[rn] = [];
+  deliveryNotes[rn].push({ text, date: new Date().toISOString() });
+  saveNotes();
+  res.json({ ok: true });
+});
+
 // ============================================================
 // DUE BILLS API
 // ============================================================

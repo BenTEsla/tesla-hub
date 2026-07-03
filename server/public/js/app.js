@@ -2621,6 +2621,26 @@ function SAVENOTE(rn, note) {
   }).catch(function() {});
 }
 
+function ADDNOTE(rn, idx) {
+  var input = document.getElementById('noteInput_' + idx);
+  if (!input || !input.value.trim()) return;
+  var text = input.value.trim();
+  input.value = '';
+  fetch(SERVER + '/api/notes/' + rn + '/add', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: text})
+  }).then(function() {
+    // Refresh notes display
+    var container = input.parentElement.parentElement;
+    var noteDiv = document.createElement('div');
+    noteDiv.style.cssText = 'padding:3px 0;font-size:12px;color:#a1a1aa';
+    var now = new Date();
+    noteDiv.innerHTML = '<span style="color:#71717a;font-size:10px;margin-right:6px">' + now.toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) + '</span>' + text;
+    container.insertBefore(noteDiv, input.parentElement);
+  }).catch(function() {});
+}
+
 function UPDATEHOST(rn, host) {
   // TODO: Call DRO API to update host assignment
   // For now, save locally
