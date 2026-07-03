@@ -950,6 +950,7 @@ app.get('/api/tab/tradein', (req, res) => {
     + '<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">'
     + '<button id="tiBtnOnsite" style="padding:8px 20px;background:#3e6ae1;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">On Site (0)</button>'
     + '<button id="tiBtnHistory" style="padding:8px 20px;background:#e0e0e0;color:#666;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">History (0)</button>'
+    + '<button onclick="TRIGGERSCAN(this)" style="padding:8px 20px;background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-left:8px">Scan</button>'
     + '<div style="flex:1"></div>'
     + '<input type="text" id="tiSearch" placeholder="Rechercher..." oninput="SEARCHTI(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:13px;font-family:inherit;color:#d4d4d8;background:rgba(255,255,255,.04);outline:none;width:220px">'
     + '</div>'
