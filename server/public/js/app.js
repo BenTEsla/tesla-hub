@@ -1525,7 +1525,7 @@ function LOADCALENDAR() {
       var dayTotal = 0, daySched = 0, dayConf = 0;
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
       var headerCol = isToday ? '#3b82f6' : (isDark ? '#e4e4e7' : '#1f2937');
-      html += '<th colspan="2" style="padding:12px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
+      html += '<th colspan="2" style="padding:12px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
       html += '<div style="font-size:12px;font-weight:700;color:' + headerCol + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
       html += '<div style="font-size:32px;font-weight:700;color:' + headerCol + ';margin-top:2px">' + dayTotal + '</div>';
       html += '<div style="display:flex;justify-content:center;gap:14px;margin-top:4px"><span style="font-size:16px;font-weight:700;color:#3b82f6">' + daySched + '</span><span style="font-size:16px;font-weight:700;color:#22c55e">' + dayConf + '</span></div>';
@@ -1544,7 +1544,7 @@ function LOADCALENDAR() {
       if (isBreakRow) {
         html += '<td style="padding:6px 14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:11px;font-style:italic;color:#71717a">12:00-13:30</td>';
         days.forEach(function() {
-          html += '<td colspan="2" style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:11px;font-style:italic;background:' + (isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)') + '">BREAK</td>';
+          html += '<td colspan="2" style="padding:6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);color:#71717a;font-size:11px;font-style:italic;background:' + (isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)') + '">BREAK</td>';
         });
       } else {
         html += '<td style="padding:6px 14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:#71717a;font-size:12px">' + t + '</td>';
@@ -1553,7 +1553,7 @@ function LOADCALENDAR() {
           var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; }).length;
           var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; }).length;
           // Scheduled column (left)
-          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'scheduled\')" style="padding:6px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-right:1px solid rgba(128,128,128,.04);cursor:pointer;width:40px">';
+          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'scheduled\')" style="padding:6px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);border-right:1px solid rgba(128,128,128,.04);cursor:pointer;width:40px">';
           html += sched > 0 ? '<span style="font-weight:700;font-size:18px;color:#3b82f6">' + sched + '</span>' : '';
           html += '</td>';
           // Confirmed column (right)
