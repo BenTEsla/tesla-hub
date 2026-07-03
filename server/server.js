@@ -1398,6 +1398,7 @@ app.all('/api/intrepid/*', async (req, res) => {
 const multer = require('multer');
 const scanUpload = multer({ dest: path.join(__dirname, 'scans') });
 const scanProcessor = require('./scan-processor');
+function formatPlate(raw) { if (!raw) return ''; var c = raw.replace(/[-\s]/g, '').toUpperCase(); return c.match(/^[A-Z]{2}\d{3}[A-Z]{2}$/) ? c.substring(0,2)+'-'+c.substring(2,5)+'-'+c.substring(5) : raw.toUpperCase(); }
 app.get('/api/scan/status', (req, res) => { res.json({ tracking: scanProcessor.tracking }); });
 
 // Serve scanned PDFs for Puppeteer QR reading
@@ -1442,7 +1443,7 @@ app.post('/api/scan/enrich', async (req, res) => {
           if (tiData.Data) {
             t.make = tiData.Data.Make || t.make || '';
             t.model = tiData.Data.Model || t.model || '';
-            t.plate = tiData.Data.LicensePlate || tiData.Data.Registration?.LicensePlate || t.plate || '';
+            t.plate = formatPlate(tiData.Data.LicensePlate || tiData.Data.Registration?.LicensePlate || t.plate || '');
             if (tiData.Data.VIN && !tiData.Data.VIN.startsWith('XP7') && !tiData.Data.VIN.startsWith('LRW') && !tiData.Data.VIN.startsWith('5YJ')) {
               t.vin = tiData.Data.VIN;
             }
@@ -1473,7 +1474,7 @@ app.post('/api/scan/assign', async (req, res) => {
       // If plate was provided manually, update tracking
       if (plate) {
         const entry = scanProcessor.tracking.find(t => t.rn === rn);
-        if (entry) { entry.plate = plate; scanProcessor.saveTracking(); }
+        if (entry) { entry.plate = formatPlate(plate); scanProcessor.saveTracking(); }
       }
     } catch(e) { console.log('Process error:', e.message); }
     res.json({ ok: true, filename: newFilename });

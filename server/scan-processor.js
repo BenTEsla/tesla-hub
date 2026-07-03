@@ -8,6 +8,16 @@ const SCAN_DIR = path.join(__dirname, 'scans');
 const PROCESSED_DIR = path.join(SCAN_DIR, 'processed');
 const TRACKING_FILE = path.join(__dirname, 'data', 'tradein-tracking.json');
 
+// Format French plate: DE743HH → DE-743-HH
+function formatPlate(raw) {
+  if (!raw) return '';
+  var clean = raw.replace(/[-\s]/g, '').toUpperCase();
+  if (clean.match(/^[A-Z]{2}\d{3}[A-Z]{2}$/)) {
+    return clean.substring(0,2) + '-' + clean.substring(2,5) + '-' + clean.substring(5);
+  }
+  return raw.toUpperCase();
+}
+
 // Load tracking data
 let tracking = [];
 try { tracking = JSON.parse(fs.readFileSync(TRACKING_FILE, 'utf8')); } catch(e) {}
@@ -317,7 +327,7 @@ async function processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN) {
       rn,
       vin: tiVin || '',
       teslaVin: vin || '',
-      plate: plate || '',
+      plate: formatPlate(plate),
       make: make || '',
       model: model || '',
       acquisitionId: acquisitionId || '',
