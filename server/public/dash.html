@@ -376,22 +376,22 @@
   </div>
 
   <!-- ========== CALENDAR VIEW ========== -->
-  <div id="calendarView" style="display:none;padding:0 32px 20px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button class="bt" onclick="NAVCALWEEK(-1)" style="padding:6px 14px">&larr;</button>
-      <span id="calWeekLabel" style="font-size:14px;font-weight:600"></span>
-      <button class="bt" onclick="NAVCALWEEK(1)" style="padding:6px 14px">&rarr;</button>
-      <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()" style="padding:6px 14px">Today</button>
+  <div id="calendarView" style="display:none;padding:0 32px 32px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button class="bt" onclick="NAVCALWEEK(-1)" style="padding:7px 16px">&larr;</button>
+      <span id="calWeekLabel" style="font-size:15px;font-weight:600"></span>
+      <button class="bt" onclick="NAVCALWEEK(1)" style="padding:7px 16px">&rarr;</button>
+      <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()" style="padding:7px 16px">Today</button>
       <div style="flex:1"></div>
-      <span style="font-size:11px;display:flex;align-items:center;gap:10px;color:#71717a">
+      <span style="font-size:12px;display:flex;align-items:center;gap:12px;color:#71717a">
         <span style="color:#3b82f6;font-weight:600">● Scheduled</span>
         <span style="color:#22c55e;font-weight:600">● Confirmed</span>
       </span>
-      <button class="bt" id="calViewWeek" onclick="SETCALVIEW('week')" style="padding:6px 14px;font-weight:700">Week</button>
-      <button class="bt" id="calViewDay" onclick="SETCALVIEW('day')" style="padding:6px 14px">Day</button>
+      <button class="bt" id="calViewWeek" onclick="SETCALVIEW('week')" style="padding:7px 16px;font-weight:700">Week</button>
+      <button class="bt" id="calViewDay" onclick="SETCALVIEW('day')" style="padding:7px 16px">Day</button>
     </div>
-    <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
     <div id="calLoadingBar" class="loading-bar"></div>
+    <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
     <!-- Detail modal: shows when clicking a time slot -->
     <div id="calDetailOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
       <div id="calModal" style="border-radius:16px;padding:28px 32px;max-width:1200px;width:95%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);border:1px solid rgba(128,128,128,.15);position:relative">

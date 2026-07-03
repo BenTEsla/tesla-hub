@@ -1523,24 +1523,24 @@ function LOADCALENDAR() {
     // Header row
     html += '<thead>';
     // Row 1: Day name + total
-    html += '<tr><th style="padding:4px 10px;font-size:10px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:55px">TIME</th>';
+    html += '<tr><th style="padding:8px 12px;font-size:11px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:60px;text-transform:uppercase">Time</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
       var dayTotal = 0, daySched = 0, dayConf = 0;
       Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
       d._sched = daySched; d._conf = dayConf;
       var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#111827');
-      html += '<th colspan="2" style="padding:4px 2px 0;text-align:center;border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
-      html += '<div style="font-size:10px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#6b7280') + ';text-transform:uppercase;letter-spacing:.3px">' + d.label + '</div>';
-      html += '<div style="font-size:24px;font-weight:800;color:' + headerCol + ';line-height:1.1">' + dayTotal + '</div>';
+      html += '<th colspan="2" style="padding:10px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.1);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
+      html += '<div style="font-size:11px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#6b7280') + ';text-transform:uppercase;letter-spacing:.3px">' + d.label + '</div>';
+      html += '<div style="font-size:28px;font-weight:800;color:' + headerCol + ';line-height:1.2">' + dayTotal + '</div>';
       html += '</th>';
     });
     html += '</tr>';
     // Row 2: S | C aligned above columns
-    html += '<tr><th style="padding:0 10px 4px;border-bottom:2px solid rgba(128,128,128,.15)"></th>';
+    html += '<tr><th style="padding:4px 12px;border-bottom:2px solid rgba(128,128,128,.15)"></th>';
     days.forEach(function(d) {
-      html += '<th style="padding:0 2px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12)"><span style="font-size:15px;font-weight:700;color:#3b82f6">' + d._sched + '</span></th>';
-      html += '<th style="padding:0 2px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15)"><span style="font-size:15px;font-weight:700;color:#22c55e">' + d._conf + '</span></th>';
+      html += '<th style="padding:4px 2px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12)"><span style="font-size:16px;font-weight:700;color:#3b82f6">' + d._sched + '</span></th>';
+      html += '<th style="padding:4px 2px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15)"><span style="font-size:16px;font-weight:700;color:#22c55e">' + d._conf + '</span></th>';
     });
     html += '</tr></thead><tbody>';
 
@@ -1553,22 +1553,20 @@ function LOADCALENDAR() {
 
       html += '<tr>';
       if (isBreakRow) {
-        html += '<td style="padding:3px 10px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:10px;font-style:italic;color:#71717a;white-space:nowrap">12-13:30</td>';
+        html += '<td style="padding:4px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);font-size:10px;font-style:italic;color:#71717a;white-space:nowrap">12:00-13:30</td>';
         days.forEach(function() {
-          html += '<td colspan="2" style="padding:2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);color:#71717a;font-size:9px;font-style:italic;background:' + (isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.015)') + '"></td>';
+          html += '<td colspan="2" style="padding:4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);color:#71717a;font-size:10px;font-style:italic;background:' + (isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.015)') + '">BREAK</td>';
         });
       } else {
-        html += '<td style="padding:3px 10px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:' + (isDark ? '#a1a1aa' : '#6b7280') + ';font-size:12px">' + t + '</td>';
+        html += '<td style="padding:5px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:' + (isDark ? '#a1a1aa' : '#6b7280') + ';font-size:12px">' + t + '</td>';
         days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
           var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; }).length;
           var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; }).length;
-          // Scheduled column (left)
-          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'scheduled\')" style="padding:3px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);border-right:1px solid rgba(128,128,128,.04);cursor:pointer">';
+          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'scheduled\')" style="padding:5px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);border-right:1px solid rgba(128,128,128,.04);cursor:pointer">';
           html += sched > 0 ? '<span style="font-weight:700;font-size:17px;color:#3b82f6">' + sched + '</span>' : '';
           html += '</td>';
-          // Confirmed column (right)
-          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'confirmed\')" style="padding:3px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);cursor:pointer">';
+          html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'confirmed\')" style="padding:5px 2px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);cursor:pointer">';
           html += conf > 0 ? '<span style="font-weight:700;font-size:17px;color:#22c55e">' + conf + '</span>' : '';
           html += '</td>';
         });
