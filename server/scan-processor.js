@@ -193,24 +193,34 @@ async function processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN) {
   let rn = null;
   let ocrPlate = null;
 
-  // Method 1: Extract RN/VIN from PDF text (for text-based PDFs)
-  const textResult = await extractRNFromPDFText(filePath);
-  if (textResult) {
-    if (textResult.rn) rn = textResult.rn;
-    if (textResult.vin) vin = textResult.vin;
+  // Method 1: QR code extraction (fast, reliable — reads QR from page de garde)
+  if (getPdfBrowser && PORT) {
+    vin = await extractQRFromPDF(filePath, getPdfBrowser, PORT);
+    if (vin) console.log('  QR found VIN:', vin);
   }
 
-  // Method 2: OCR (for scanned image PDFs) — finds RN, plate, VIN
-  if (!rn && getPdfBrowser && PORT) {
+  // Method 2: Extract RN/VIN from PDF text (for text-based PDFs)
+  if (!rn && !vin) {
+    const textResult = await extractRNFromPDFText(filePath);
+    if (textResult) {
+      if (textResult.rn) rn = textResult.rn;
+      if (textResult.vin && !vin) vin = textResult.vin;
+    }
+  }
+
+  // Method 3: OCR (for scanned image PDFs) — finds RN, plate, VIN
+  if (!rn && !vin && getPdfBrowser && PORT) {
     const ocrResult = await ocrScan(filePath, getPdfBrowser, PORT);
-    if (ocrResult.rn && !rn) rn = ocrResult.rn;
+    if (ocrResult.rn) rn = ocrResult.rn;
     if (ocrResult.vin && !vin) vin = ocrResult.vin;
     if (ocrResult.plate) ocrPlate = ocrResult.plate;
   }
-
-  // Method 3: Try QR code extraction (legacy fallback)
-  if (!rn && !vin) {
-    vin = await extractQRFromPDF(filePath, getPdfBrowser, PORT);
+  // Also try OCR just for plate if we have RN but no plate
+  if (rn && !ocrPlate && getPdfBrowser && PORT) {
+    try {
+      const ocrResult = await ocrScan(filePath, getPdfBrowser, PORT);
+      if (ocrResult.plate) ocrPlate = ocrResult.plate;
+    } catch(e) {}
   }
 
   // Method 4: Check filename for RN pattern
