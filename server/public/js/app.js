@@ -2314,6 +2314,7 @@ function LOADSVHOLDS() {
 
       if (!allItems.length) {
         container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-size:16px;font-weight:600">All clear — No active SVs or Holds</div>';
+        if (typeof svBar !== 'undefined' && svBar) svBar.classList.remove('active');
         return;
       }
 
@@ -2347,7 +2348,7 @@ function LOADSVHOLDS() {
 
     html += '</tbody></table>';
     container.innerHTML = html;
-      if (typeof vrsBar !== 'undefined' && vrsBar) vrsBar.classList.remove('active');
+      if (typeof svBar !== 'undefined' && svBar) svBar.classList.remove('active');
     }); // close advisor .then
   }); // close Promise.all
 }
