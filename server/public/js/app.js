@@ -2257,32 +2257,20 @@ function LOADSVHOLDS() {
   container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading...</div>';
 
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
-  // Get next 7 days of deliveries and filter for SV/CH
+  // Step 1: Get RNs from Customer Dashboard (location-filtered) for next 7 days
   var promises = [];
-  var allItems = [];
+  var allRNs = [];
   for (var i = 0; i < 7; i++) {
     var d = new Date(Date.now() + i * 864e5);
     var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     (function(dateStr) {
       promises.push(
-        fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+        fetch(BASE + "/deliveryops/Customers/Dashboard", {
           method: "POST", headers: h,
-          body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:[],Countries:[],DeliveryDate:dateStr,TrtId:String(CFG.trtId)}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+          body: JSON.stringify({fromDeliveryDate: dateStr, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
         }).then(function(r) { return r.json(); }).then(function(j) {
-          ((j.Data && j.Data.Dashboard) || []).forEach(function(a) {
-            if (a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete') {
-              allItems.push({
-                name: a.CustomerName,
-                rn: a.ReferenceNumber,
-                model: a.VehicleModel,
-                vin: a.Vin || '',
-                stage: a.VehicleStage || '',
-                sv: a.ServiceVisitGate === 'Incomplete' ? 'Active SV' : '',
-                ch: a.IsContainmentHold ? 'Containment Hold' : '',
-                hold: a.IsRepairOrderHold ? 'Repair Order Hold' : '',
-                date: dateStr
-              });
-            }
+          (j.Data || []).forEach(function(d) {
+            if (allRNs.indexOf(d.ReferenceNumber) < 0) allRNs.push(d.ReferenceNumber);
           });
         }).catch(function() {})
       );
@@ -2290,12 +2278,38 @@ function LOADSVHOLDS() {
   }
 
   Promise.all(promises).then(function() {
-    if (!allItems.length) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-size:16px;font-weight:600">All clear — No active SVs or Holds</div>';
+    if (!allRNs.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-size:16px;font-weight:600">All clear — No deliveries found</div>';
       return;
     }
 
-    var svCount = allItems.filter(function(it) { return it.sv; }).length;
+    // Step 2: Check those specific RNs via Advisor for SV/Holds
+    return fetch(BASE + "/advisor/Dashboard?isSidePanelFullScreen=true", {
+      method: "POST", headers: h,
+      body: JSON.stringify({condition:"and",rules:[{condition:"and",ReferenceNumbers:allRNs,Countries:[]}],Skip:0,Take:200,SortOrder:[],SelectedColumns:[]})
+    }).then(function(r) { return r.json(); }).then(function(j) {
+      var allItems = [];
+      ((j.Data && j.Data.Dashboard) || []).forEach(function(a) {
+        if (a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete') {
+          allItems.push({
+            name: a.CustomerName,
+            rn: a.ReferenceNumber,
+            model: a.VehicleModel,
+            vin: a.Vin || '',
+            stage: a.VehicleStage || '',
+            sv: a.ServiceVisitGate === 'Incomplete' ? 'Active SV' : '',
+            ch: a.IsContainmentHold ? 'Containment Hold' : '',
+            hold: a.IsRepairOrderHold ? 'Repair Order Hold' : ''
+          });
+        }
+      });
+
+      if (!allItems.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-size:16px;font-weight:600">All clear — No active SVs or Holds</div>';
+        return;
+      }
+
+      var svCount = allItems.filter(function(it) { return it.sv; }).length;
     var chCount = allItems.filter(function(it) { return it.ch || it.hold; }).length;
 
     var html = '<div style="display:flex;gap:16px;margin-bottom:24px">';
@@ -2325,7 +2339,8 @@ function LOADSVHOLDS() {
 
     html += '</tbody></table>';
     container.innerHTML = html;
-  });
+    }); // close advisor .then
+  }); // close Promise.all
 }
 
 /* ============================================
