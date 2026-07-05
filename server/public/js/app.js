@@ -2599,7 +2599,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
   if (!items.length) return;
 
   var filterLabel = filter === 'scheduled' ? ' · Scheduled' : filter === 'confirmed' ? ' · Confirmed' : '';
-  title.innerHTML = '<span style="font-size:20px;font-weight:700">' + day.label + '</span> <span style="font-size:20px;color:#71717a;font-weight:400">— ' + time + '</span>' + (filterLabel ? '<span style="font-size:14px;color:' + (filter === 'scheduled' ? '#3b82f6' : '#22c55e') + ';font-weight:600;margin-left:8px">' + filterLabel + '</span>' : '');
+  var titleCol = !document.getElementById('lightThemeCSS') ? '#f4f4f5' : '#111827'; title.innerHTML = '<span style="font-size:20px;font-weight:700;color:' + titleCol + '">' + day.label + '</span> <span style="font-size:20px;color:' + titleCol + ';opacity:.5;font-weight:400">— ' + time + '</span>' + (filterLabel ? '<span style="font-size:14px;color:' + (filter === 'scheduled' ? '#3b82f6' : '#22c55e') + ';font-weight:600;margin-left:8px">' + filterLabel + '</span>' : '');
   panel.style.display = 'flex';
   body.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading details...</div>';
 
