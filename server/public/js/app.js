@@ -1785,21 +1785,20 @@ function REASSIGN(rn) {
 
 function RUNDISPATCH(mode) {
   if (mode === 'balance') {
-    // Auto-balance across CES with AM/PM weight
     var data = _dispatchData || [];
     var cesLoad = {};
-    CES.forEach(function(c) { cesLoad[c] = { am: 0, pm: 0 }; });
+    CES.forEach(function(c) { cesLoad[c] = 0; });
 
     // Sort by weight descending for better distribution
     var sorted = data.slice().sort(function(a, b) { return b.weight - a.weight; });
     sorted.forEach(function(d) {
-      var slot = d.isPM ? 'pm' : 'am';
+      // Assign to CES with lowest TOTAL load
       var minCES = CES[0], minLoad = Infinity;
       CES.forEach(function(c) {
-        if (cesLoad[c][slot] < minLoad) { minLoad = cesLoad[c][slot]; minCES = c; }
+        if (cesLoad[c] < minLoad) { minLoad = cesLoad[c]; minCES = c; }
       });
       d.host = minCES.split(' ')[0];
-      cesLoad[minCES][slot] += d.weight;
+      cesLoad[minCES] += d.weight;
     });
     RENDERDISPATCH();
   }
