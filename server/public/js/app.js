@@ -1814,33 +1814,52 @@ function SAVEDISPATCH() {
   btn.textContent = 'Saving...';
   btn.disabled = true;
 
-  // Map CES first names to usernames from config
+  var dp = document.getElementById('dispatchDate');
+  var ds = dp ? dp.value : '';
+
   fetch(SERVER + '/api/config').then(function(r) { return r.json(); }).then(function(cfg) {
     var cesUserMap = {};
     (cfg.hub && cfg.hub.ces || []).forEach(function(c) {
       cesUserMap[c.name.split(' ')[0]] = c.username;
     });
 
-    // Call DRO UpdateHost for each delivery
-    var promises = data.filter(function(d) { return d.host; }).map(function(d) {
+    // Group by host → vehicleMapIds
+    var hostGroups = {};
+    data.forEach(function(d) {
+      if (!d.host || !d.vehicleMapId) return;
       var username = cesUserMap[d.host] || d.host;
-      return fetch(SERVER + '/api/dro/deliveryops/customers/updatehost?referenceNumber=' + d.rn + '&value=0&unassignedUserName=' + username, {
-        method: 'POST',
+      if (!hostGroups[username]) hostGroups[username] = [];
+      hostGroups[username].push(d.vehicleMapId);
+    });
+
+    var promises = Object.keys(hostGroups).map(function(username) {
+      return fetch(SERVER + '/api/planner/assign-host', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}'
-      }).then(function(r) { return { rn: d.rn, ok: r.ok, status: r.status }; })
-        .catch(function() { return { rn: d.rn, ok: false }; });
+        body: JSON.stringify({
+          trtId: CFG.trtId,
+          date: ds,
+          hostsToAdd: [username],
+          hostsToRemove: [],
+          vehicleMapIds: hostGroups[username]
+        })
+      }).then(function(r) {
+        return { username: username, ok: r.ok, status: r.status, count: hostGroups[username].length };
+      }).catch(function() { return { username: username, ok: false, count: 0 }; });
     });
 
     Promise.all(promises).then(function(results) {
-      var ok = results.filter(function(r) { return r.ok; }).length;
-      var fail = results.filter(function(r) { return !r.ok; }).length;
-      if (fail === 0) {
-        btn.textContent = ok + ' assigned!';
+      var totalOk = results.filter(function(r) { return r.ok; }).reduce(function(s, r) { return s + r.count; }, 0);
+      var fail = results.filter(function(r) { return !r.ok; });
+      if (fail.length === 0) {
+        btn.textContent = totalOk + ' assigned!';
         btn.style.background = 'rgba(34,197,94,.2)';
         btn.style.color = '#22c55e';
+      } else if (fail[0].status === 401) {
+        btn.textContent = 'OS token expired';
+        btn.style.color = '#ef4444';
       } else {
-        btn.textContent = ok + ' OK, ' + fail + ' failed';
+        btn.textContent = totalOk + ' OK, ' + fail.length + ' failed';
         btn.style.background = 'rgba(245,158,11,.2)';
         btn.style.color = '#f59e0b';
       }
