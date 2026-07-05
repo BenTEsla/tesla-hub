@@ -6,6 +6,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "compression": "^1.8.1",
     "express": "^4.18.0",
     "form-data": "^4.0.6",
     "ftp-srv": "^4.6.3",
@@ -19,6 +20,7 @@
     "puppeteer-core": "^25.2.0",
     "qrcode": "^1.5.4",
     "sharp": "^0.35.2",
+    "terser": "^5.48.0",
     "tesseract.js": "^7.0.0"
   }
 }

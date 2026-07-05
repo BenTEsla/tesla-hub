@@ -4,6 +4,7 @@
 // ============================================================
 
 const express = require('express');
+const compression = require('compression');
 const fetch = require('node-fetch');
 const path = require('path');
 const fs = require('fs');
@@ -41,8 +42,9 @@ async function getPdfBrowser() {
 // ============================================================
 // MIDDLEWARE
 // ============================================================
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0, setHeaders: (res) => { res.set('Cache-Control', 'no-store, no-cache'); } }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
