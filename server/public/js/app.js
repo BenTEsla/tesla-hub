@@ -1578,6 +1578,25 @@ function LOADCALENDAR() {
     html += '</tbody></table></div>';
     container.innerHTML = html;
     if (calBar) calBar.classList.remove('active');
+
+    // Update week stats
+    var statsEl = document.getElementById('calWeekStats');
+    if (statsEl) {
+      var totalWeek = 0, totalSched = 0, totalConf = 0;
+      days.forEach(function(d) {
+        Object.keys(d.slots).forEach(function(s) {
+          d.slots[s].forEach(function(e) {
+            totalWeek++;
+            if (e.status === 'Confirmed' || e.status === 'Complete') totalConf++;
+            else totalSched++;
+          });
+        });
+      });
+      var ss = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid rgba(128,128,128,.1);font-size:13px;font-weight:600';
+      statsEl.innerHTML = '<div style="' + ss + '"><span style="font-size:22px;font-weight:700">' + totalWeek + '</span> Deliveries</div>'
+        + '<div style="' + ss + ';color:#3b82f6"><span style="font-size:22px">' + totalSched + '</span> Scheduled</div>'
+        + '<div style="' + ss + ';color:#22c55e"><span style="font-size:22px">' + totalConf + '</span> Confirmed</div>';
+    }
   });
 }
 
