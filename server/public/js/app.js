@@ -2099,10 +2099,10 @@ function LOADVRS() {
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json"};
   var INTREPID = SERVER + '/api/intrepid/cogs/api/cogs';
 
-  // Fetch next 7 days of appointments with COG info
+  // Fetch next 7 days of appointments with COG info (today + 6 days)
   var allVehicles = [];
   var promises = [];
-  for (var i = -1; i < 7; i++) {
+  for (var i = 0; i < 7; i++) {
     var d = new Date(Date.now() + i * 864e5);
     if (d.getDay() === 0) continue;
     var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
