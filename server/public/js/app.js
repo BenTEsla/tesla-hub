@@ -2023,7 +2023,8 @@ function UC() {
     var n = DATA.filter(function(d) {
       return (d.host || "").toLowerCase().indexOf(c.split(" ")[0].toLowerCase()) >= 0;
     }).length;
-    document.getElementById("c" + i).textContent = n;
+    var el = document.getElementById("c" + i);
+    if (el) el.textContent = n;
   });
 }
 
