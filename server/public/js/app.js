@@ -1853,16 +1853,6 @@ function SAVEDISPATCH() {
     });
   });
 }
-      }
-      setTimeout(function() {
-        btn.textContent = 'Save to DRO';
-        btn.style.background = 'rgba(34,197,94,.12)';
-        btn.style.color = '#22c55e';
-        btn.disabled = false;
-      }, 3000);
-    });
-  });
-}
 
 /* ============================================
    PULL-UP PAGE: Find candidates to pull forward
