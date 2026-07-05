@@ -146,7 +146,7 @@ function applyLight() {
     + '.bt-red{background:rgba(239,68,68,.1)!important;color:#dc2626!important;border-color:rgba(239,68,68,.3)!important}'
     + '.dash-card{background:#fff!important;border-color:rgba(0,0,0,.08)!important;box-shadow:0 1px 4px rgba(0,0,0,.04)!important}'
     + '.dash-chart-card{background:#fff!important;border-color:rgba(0,0,0,.08)!important;box-shadow:0 1px 4px rgba(0,0,0,.04)!important}'
-    + '#calModal{background:#fff!important;color:#171a20!important}'
+    + '#calModal{background:#fff!important;color:#111827!important}'
     + '#calModal td{border-bottom-color:rgba(0,0,0,.06)!important}'
     + '#calModal th{border-bottom-color:rgba(0,0,0,.1)!important;color:#6b7280!important}'
     + '#calModal input{background:#f9f9f9!important;border-color:rgba(0,0,0,.12)!important;color:#333!important}'

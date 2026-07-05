@@ -2599,7 +2599,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
   if (!items.length) return;
 
   var filterLabel = filter === 'scheduled' ? ' · Scheduled' : filter === 'confirmed' ? ' · Confirmed' : '';
-  title.innerHTML = '<span style="font-size:20px;font-weight:700;color:inherit">' + day.label + '</span> <span style="font-size:20px;color:#71717a;font-weight:400">— ' + time + '</span>' + (filterLabel ? '<span style="font-size:14px;color:' + (filter === 'scheduled' ? '#3b82f6' : '#22c55e') + ';font-weight:600;margin-left:8px">' + filterLabel + '</span>' : '');
+  title.innerHTML = '<span style="font-size:20px;font-weight:700">' + day.label + '</span> <span style="font-size:20px;color:#71717a;font-weight:400">— ' + time + '</span>' + (filterLabel ? '<span style="font-size:14px;color:' + (filter === 'scheduled' ? '#3b82f6' : '#22c55e') + ';font-weight:600;margin-left:8px">' + filterLabel + '</span>' : '');
   panel.style.display = 'flex';
   body.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading details...</div>';
 
@@ -2644,7 +2644,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0 || vs.indexOf('service center') >= 0;
-      var hasTI = a.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(a.VehicleTitleSubStatus || '') !== 'TRADEIN';
+      var hasTI = a.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(a.VehicleTitleStatus || '') !== 'USED';
       var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
       var allReady = payOk && regOk && otg && !hold;
