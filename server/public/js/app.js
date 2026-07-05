@@ -2693,8 +2693,8 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
 
       // Row 4: Status + Links
       html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
-      var stOpts = '<option value="Scheduled"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
-      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-weight:600;font-family:inherit;color:' + statusDot + ';background:transparent;cursor:pointer">' + stOpts + '</select>';
+      var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
+      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value);this.style.color=this.value===\'Confirmed\'?\'#22c55e\':\'#3b82f6\'" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer">' + stOpts + '</select>';
       if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
       html += '</div>';
 
