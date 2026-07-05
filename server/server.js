@@ -72,6 +72,7 @@ app.post('/api/auth/tokens', (req, res) => {
   if (req.body.docgenToken) tokens.docgen = req.body.docgenToken;
   if (req.body.docgenAuth) tokens.docgenAuth = req.body.docgenAuth;
   if (req.body.userId) tokens.userId = req.body.userId.replace(/^"|"$/g, '');
+  if (req.body.osToken) tokens.osToken = req.body.osToken;
   saveTokens();
   res.json({ ok: true });
 });
@@ -98,11 +99,12 @@ app.get('/api/auth/status', (req, res) => {
       droValid = droMinLeft > 0;
     } catch(e) { droValid = !!tokens.dro; }
   }
-  res.json({ hasDro: droValid, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, droMinLeft, userId: tokens.userId });
+  res.json({ hasDro: droValid, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, droMinLeft, hasOs: !!tokens.osToken, userId: tokens.userId });
 });
 
 app.get('/auth/callback', (req, res) => {
   if (req.query.token) {
+    tokens.dro = req.query.token.replace(/^"|"$/g, '');
     tokens.dro = req.query.token.replace(/^"|"$/g, '');
     tokens.userId = (req.query.userId || '').replace(/^"|"$/g, '');
     saveTokens();
@@ -1392,6 +1394,27 @@ app.all('/api/docgen/*', async (req, res) => {
     }
     res.status(r.status).json(await r.json());
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
+// PROXY: Planner API (os.tesla.com) — assign hosts
+// ============================================================
+app.put('/api/planner/assign-host', async (req, res) => {
+  try {
+    if (!tokens.osToken) return res.status(401).json({ error: 'OS token not set. Open Delivery Planner to capture token.' });
+    const { trtId, date, hostsToAdd, hostsToRemove, vehicleMapIds } = req.body;
+    const url = `https://os.tesla.com/vehicle-order/deliveries/delivery-planner-app/api/v1/dashboard/orders/${trtId || config.hubs[config.defaultHub].trtId}/${date}/assign-host`;
+    const r = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Os-Access-Token': tokens.osToken, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ hostsToAdd: hostsToAdd || [], hostsToRemove: hostsToRemove || [], vehicleMapIds: vehicleMapIds || [] })
+    });
+    const text = await r.text();
+    console.log('[Planner] assign-host', r.status, text.substring(0, 200));
+    if (r.status === 401 || r.status === 403) { tokens.osToken = ''; return res.status(401).json({ error: 'OS token expired' }); }
+    try { res.status(r.status).json(JSON.parse(text)); }
+    catch(e) { res.status(r.status).json({ ok: r.ok, status: r.status }); }
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // ============================================================
