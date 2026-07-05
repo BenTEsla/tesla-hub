@@ -175,11 +175,6 @@ function MARKOUT(btn, rn) {
   fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/out/" + rn, { method: "POST" }).then(function(r) { return r.json(); }).then(function() { LOADTI(); }).catch(function() { btn.textContent = "ERR"; });
 }
 
-function ENRICHTI() {
-  if (!confirm("Enrich all entries with DRO data?")) return;
-  fetch((typeof SERVER !== 'undefined' ? SERVER : '') + "/api/scan/enrich", { method: "POST" }).then(function(r) { return r.json(); }).then(function(j) { alert("Enriched: " + j.enriched + " entries"); LOADTI(); }).catch(function(e) { alert("Error: " + e.message); });
-}
-
 function EDITPLATE(td, rn) {
   var current = td.textContent.trim();
   if (current === '+ plaque') current = '';

@@ -139,13 +139,11 @@ app.get('/api/auth/login-docgen', async (req, res) => {
         tokens.docgen = headers.token;
         saveTokens();
         captured = true;
-        console.log('DocGen tokens captured!');
       }
       request.continue();
     });
     
     // Go directly to a documents page to trigger DocGen API call
-    console.log('DocGen login: navigating to WarpBilling...');
     await page.goto('https://warpbilling.tesla.com', { waitUntil: 'networkidle2', timeout: 60000 });
     
     // Wait for SSO if needed (user may need to log in manually)
@@ -155,23 +153,20 @@ app.get('/api/auth/login-docgen', async (req, res) => {
         !window.location.href.includes('sso.tesla.com'), 
         { timeout: 120000 }
       );
-    } catch(e) { console.log('DocGen login: SSO wait timeout'); }
+    } catch(e) {}
     
     await new Promise(r => setTimeout(r, 2000));
     
     // Try to navigate to documents page to trigger DocGen API
     if (!captured && page.url().includes('warpbilling.tesla.com')) {
-      console.log('DocGen login: searching for invoice...');
-      
       // Try multiple approaches to trigger a DocGen API call
       const testRNs = ['RN127990689', 'RN127612649', 'RN128188598'];
       for (const rn of testRNs) {
         if (captured) break;
         try {
           await page.goto('https://warpbilling.tesla.com/invoice/' + rn + '/documents', { waitUntil: 'networkidle2', timeout: 20000 });
-          console.log('DocGen login: tried ' + rn + ', captured=' + captured);
           if (!captured) await new Promise(r => setTimeout(r, 3000));
-        } catch(e) { console.log('DocGen login: navigation error for ' + rn); }
+        } catch(e) {}
       }
       
       // Final wait
@@ -228,7 +223,6 @@ async function downloadDoc(API, h, rn, docId, fileName, maxRetries) {
         const buffer = await resp.buffer();
         if (buffer.length > 100) {
           fs.writeFileSync(path.join(DL_DIR, fileName), buffer);
-          console.log('  Downloaded:', fileName, buffer.length, 'bytes');
           return true;
         }
       }
@@ -261,7 +255,6 @@ app.post('/api/print/docgen', async (req, res) => {
           body: JSON.stringify({ documentCodes: [{ documentCode: "TRADE_IN_ANNEX", defaultSignType: "N/A" }], referenceNumber: rn, triggerRelatedDocumentsCall: true, forceGenerate: true })
         });
         results.generated++;
-        console.log('Generated TRADE_IN_ANNEX for', rn);
       } catch (e) { results.errors.push(rn + ':gen:' + e.message); }
     }
     
@@ -292,15 +285,12 @@ app.post('/api/print/docgen', async (req, res) => {
             return false;
           });
           
-          console.log('Trade-In docs for ' + rn + ' (round ' + round + '):', tiDocs.map(d => d.name).join(', '));
-          
           for (const d of tiDocs) {
             const id = d.cgsContentId || d.dmsContentId;
             if (!id) continue;
             const fileName = rn + '_' + d.name.replace(/[^a-zA-Z0-9-]/g, '_') + '.pdf';
             const filePath = path.join(DL_DIR, fileName);
             if (fs.existsSync(filePath) && fs.statSync(filePath).size > 100) {
-              console.log('  Already downloaded:', fileName);
               continue;
             }
             if (await downloadDoc(API, h, rn, id, fileName)) {
@@ -315,7 +305,6 @@ app.post('/api/print/docgen', async (req, res) => {
           cerfaCount = dlFiles.filter(f => f.toLowerCase().includes('cerfa')).length;
           
           if (hasAnnex && cerfaCount >= 2) {
-            console.log('  All trade-in docs verified for', rn);
             break;
           }
           console.log('  Missing docs for', rn, '- annex:', hasAnnex, 'cerfas:', cerfaCount);
@@ -435,10 +424,9 @@ app.post('/api/print/send/:rn', async (req, res) => {
     for (const p of pdfPaths) await merger.add(p);
     const mergedPath = path.join(DL_DIR, rn + '_MERGED.pdf');
     await merger.save(mergedPath);
-    console.log('Merged', pdfPaths.length, 'PDFs into', mergedPath);
     
     // Step 4: Print single merged file
-    try { await ptp.print(mergedPath, { printer }); results.printed = pdfPaths.length; results.files = pdfPaths.map(p => path.basename(p)); console.log('Printed merged PDF:', rn); }
+    try { await ptp.print(mergedPath, { printer }); results.printed = pdfPaths.length; results.files = pdfPaths.map(p => path.basename(p)); }
     catch(e) { console.error('Print error:', e.message); }
     
     // Mark as printed (store SDD for pushback detection)
@@ -1366,7 +1354,7 @@ app.all('/api/dro/*', async (req, res) => {
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
     const text = await r.text();
-    console.log('[DRO]', req.method, req.params[0], 'status:', r.status, 'body:', text.substring(0, 200));
+
     if (r.status === 401 || r.status === 403) {
       tokens.dro = '';
       return res.status(401).json({ error: 'DRO token expired. Refresh from DRO tab.' });
@@ -1411,7 +1399,6 @@ app.put('/api/planner/assign-host', async (req, res) => {
       body: JSON.stringify({ hostsToAdd: hostsToAdd || [], hostsToRemove: hostsToRemove || [], vehicleMapIds: vehicleMapIds || [] })
     });
     const text = await r.text();
-    console.log('[Planner] assign-host', r.status, text.substring(0, 200));
     if (r.status === 401 || r.status === 403) { tokens.osToken = ''; return res.status(401).json({ error: 'OS token expired' }); }
     try { res.status(r.status).json(JSON.parse(text)); }
     catch(e) { res.status(r.status).json({ ok: r.ok, status: r.status }); }
@@ -1430,7 +1417,6 @@ app.all('/api/tss/*', async (req, res) => {
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
     const text = await r.text();
-    console.log('[TSS]', req.method, path, r.status);
     if (r.status === 401 || r.status === 403) { tokens.tssToken = ''; return res.status(401).json({ error: 'TSS token expired' }); }
     try { res.status(r.status).json(JSON.parse(text)); }
     catch(e) { res.status(r.status).json({ ok: r.ok }); }
@@ -1532,7 +1518,7 @@ app.post('/api/scan/assign', async (req, res) => {
     const newFilename = 'TRADEIN_' + rn + '.pdf';
     const newPath = path.join(__dirname, 'scans', newFilename);
     fs.renameSync(oldPath, newPath);
-    console.log('Scan assigned:', filename, '->', newFilename);
+
     // Process it (with full enrichment)
     try {
       await scanProcessor.processScan(newPath, tokens, getPdfBrowser, PORT, null);
@@ -1595,7 +1581,6 @@ app.post('/api/scan/trigger', async (req, res) => {
     }
 
     const jobUrl = jobRes.location;
-    console.log('Scan job created:', jobUrl);
     res.json({ ok: true, status: 'scanning', jobUrl });
 
   } catch (e) {
@@ -1631,7 +1616,6 @@ app.get('/api/scan/download/:jobId', async (req, res) => {
     const filename = rn ? 'TRADEIN_' + rn + '.pdf' : 'SCAN_' + Date.now() + '.pdf';
     const filePath = path.join(__dirname, 'scans', filename);
     fs.writeFileSync(filePath, pdfRes.data);
-    console.log('Scan saved:', filename, pdfRes.data.length, 'bytes');
 
     // Auto-process: try QR code extraction to find RN
     let processResult = { ok: false };
@@ -1640,7 +1624,6 @@ app.get('/api/scan/download/:jobId', async (req, res) => {
       const vinToRN = {};
       scanProcessor.tracking.forEach(t => { if (t.vin) vinToRN[t.vin] = t.rn; });
       processResult = await scanProcessor.processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN);
-      console.log('Scan auto-processed:', processResult);
     } catch(e) {
       console.log('Scan auto-process error:', e.message);
     }
@@ -1671,7 +1654,6 @@ function startFtp() {
   });
 
   ftpServer.on('login', ({ connection, username }, resolve) => {
-    console.log(`FTP login: ${username}`);
     resolve({ root: scanDir });
   });
 

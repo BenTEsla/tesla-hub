@@ -2786,9 +2786,6 @@ function ADDNOTE(rn, idx) {
 }
 
 function UPDATEHOST(rn, host) {
-  // TODO: Call DRO API to update host assignment
-  // For now, save locally
-  console.log('Update host for', rn, '→', host);
   fetch(SERVER + '/api/notes/' + rn, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -2834,10 +2831,9 @@ function UPDATESTATUS(rn, status) {
         changeSubReasons: []
       })
     });
-  }).then(function(r) { if (r) return r.json(); }).then(function(j) {
-    if (j) console.log('Status updated to', status, 'for', rn);
+  }).then(function(r) { if (r) return r.json(); }).then(function() {
   }).catch(function(e) {
-    console.log('UPDATESTATUS error:', e.message);
+    console.error('UPDATESTATUS error:', e.message);
   });
 }
 
