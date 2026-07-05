@@ -172,6 +172,8 @@ function applyLight() {
     + '.bt-q{background:rgba(0,0,0,.04)!important;color:#52525b!important;border-color:rgba(0,0,0,.12)!important}'
     + '.bt-q.on{background:rgba(59,130,246,.1)!important;color:#2563eb!important;border-color:rgba(59,130,246,.3)!important}'
     + '.bt{border-color:rgba(0,0,0,.12)!important}'
+    + '#dispatchBalanceBtn{background:rgba(139,92,246,.1)!important;color:#7c3aed!important;border-color:rgba(139,92,246,.3)!important}'
+    + '#dispatchSaveBtn{background:rgba(34,197,94,.1)!important;color:#16a34a!important;border-color:rgba(34,197,94,.3)!important}'
     + '#colPickerMenu{background:#fff!important;border-color:rgba(0,0,0,.1)!important;box-shadow:0 8px 24px rgba(0,0,0,.12)!important}'
   ;
   document.head.appendChild(s);
