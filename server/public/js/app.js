@@ -866,7 +866,7 @@ function RW() {
       + '<td data-col="ck"><input type="checkbox" class="ck rc" data-i="' + i + '" ' + (d.al.length === 0 ? 'checked' : '') + '></td>'
       + '<td data-col="date" class="dtc">' + (d.sdd || '') + '</td>'
       + '<td data-col="time">' + d.t + '</td>'
-      + '<td data-col="customer"><span class="nm">' + d.name + '</span></td>'
+      + '<td data-col="customer"><span class="nm">' + d.name + '</span>' + (d.used ? ' <span style="font-size:9px;background:rgba(113,113,122,.15);color:#a1a1aa;padding:1px 5px;border-radius:8px;font-weight:600;vertical-align:middle">USED</span>' : '') + '</td>'
       + '<td data-col="rn"><a class="rl" href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank">' + d.rn + '</a>'
       + (d.b2b || !d.inc ? '' : '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + d.rn + '" target="_blank" style="margin-left:4px;font-size:10px;background:rgba(34,197,94,.12);color:#22c55e;padding:1px 6px;border-radius:10px;text-decoration:none;font-weight:600" title="Verifier CEE sur Trustia">CEE</a>')
       + '</td>'
@@ -2667,6 +2667,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">B2B</span>';
       if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:2px 8px;border-radius:10px;font-weight:600">Trade-In</span>';
       if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
+      if (String(a.VehicleTitleStatus || '') === 'USED') html += '<span style="font-size:10px;background:rgba(113,113,122,.15);color:#a1a1aa;padding:2px 8px;border-radius:10px;font-weight:600">USED</span>';
       html += '<div style="flex:1"></div>';
       html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:8px;height:8px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
       html += '</div>';
