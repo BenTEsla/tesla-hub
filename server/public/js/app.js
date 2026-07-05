@@ -277,7 +277,7 @@ async function QW(wk, el) {
       var hp = !!(a.LicensePlate && a.LicensePlate.trim() && a.LicensePlate.indexOf("-") >= 0);
       var hold = !!a.IsContainmentHold;
       var io = a.InsuranceActionStatus === "COMPLETE";
-      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
+      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("service center") >= 0) || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
       var amtOk = a.AmountDueActionStatus === "Yes" || a.FinalPaymentGate === "Complete";
       var delivered = !!a.IsDelivered || !!(a.VehicleStage && a.VehicleStage.toLowerCase().indexOf("delivered") >= 0);
 
@@ -451,7 +451,7 @@ async function QP(el) {
       if (sd < tomorrow || sd.getDay() === 0) return false;
       if (a.IsEnterpriseOrder) return false;
       if (a.HasHold) return false;
-      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
+      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("service center") >= 0) || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
       if (!otg) return false;
       var amtOk = a.AmountDueActionStatus === "Yes" || a.FinalPaymentGate === "Complete";
       if (!amtOk) return false;
@@ -734,7 +734,7 @@ async function L() {
 
       var hold = !!a.IsContainmentHold;
       var io = a.InsuranceActionStatus === "COMPLETE";
-      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
+      var otg = a.VehicleStage === "Finished Goods" || a.VehicleStage === "Arrived at VRL" || (a.VehicleStage && a.VehicleStage.indexOf("service center") >= 0) || (a.VehicleStage && a.VehicleStage.indexOf("Arrived") >= 0);
       var amtOk = a.AmountDueActionStatus === "Yes" || a.FinalPaymentGate === "Complete";
       var delivered = !!a.IsDelivered || !!(a.VehicleStage && a.VehicleStage.toLowerCase().indexOf("delivered") >= 0);
 
@@ -2002,7 +2002,7 @@ function UV() {
   DATA.forEach(function(d) {
     if (d.vs.indexOf("Transit") >= 0) tr++;
     if (d.otg && !d.delivered) cotg++;
-    if (d.vs === "Finished Goods") fg++;
+    if (d.vs === "Finished Goods" || d.vs.indexOf("service center") >= 0 || d.vs.indexOf("Arrived") >= 0) fg++;
     if (d.delivered) del++;
   });
   document.getElementById("sTr").textContent = tr;
