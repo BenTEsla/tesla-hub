@@ -329,10 +329,10 @@ async function QW(wk, el) {
         al: al,
         used: a.VehicleTitleStatus === "USED",
         tims: tms,
-        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN"),
+        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN" && a.VehicleTitleStatus !== "USED"),
         amtOk: amtOk,
         delivered: delivered,
-        inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder,
+        inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
         vin: a.Vin || "",
         uid: a.AccountUid || ""
       };
@@ -787,9 +787,9 @@ async function L() {
         al: al,
         used: a.VehicleTitleStatus === "USED",
         tims: tms,
-        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN"),
+        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN" && a.VehicleTitleStatus !== "USED"),
         amtOk: amtOk,
-        inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder,
+        inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
         vin: a.Vin || "",
         uid: a.AccountUid || ""
       };
@@ -868,7 +868,7 @@ function RW() {
       + '<td data-col="time">' + d.t + '</td>'
       + '<td data-col="customer"><span class="nm">' + d.name + '</span></td>'
       + '<td data-col="rn"><a class="rl" href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank">' + d.rn + '</a>'
-      + (d.b2b ? '' : '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + d.rn + '" target="_blank" style="margin-left:4px;font-size:10px;background:rgba(34,197,94,.12);color:#22c55e;padding:1px 6px;border-radius:10px;text-decoration:none;font-weight:600" title="Verifier CEE sur Trustia">CEE</a>')
+      + (d.b2b || !d.inc ? '' : '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + d.rn + '" target="_blank" style="margin-left:4px;font-size:10px;background:rgba(34,197,94,.12);color:#22c55e;padding:1px 6px;border-radius:10px;text-decoration:none;font-weight:600" title="Verifier CEE sur Trustia">CEE</a>')
       + '</td>'
       + '<td data-col="host" style="font-size:12px;color:#a1a1aa">' + d.host + '</td>'
       + '<td data-col="vehicle">' + d.model + '</td>'
@@ -1624,7 +1624,7 @@ function LOADDISPATCHDATE() {
         var t = '?';
         var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-        var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+        var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(d.VehicleTitleStatus || a.VehicleTitleStatus || '') !== 'USED';
         var isEnt = !!(d.IsEnterpriseOrder || a.IsEnterpriseOrder);
         return {
           rn: d.ReferenceNumber,
@@ -2644,7 +2644,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0;
-      var hasTI = c2.TradeInActionStatus === 'COMPLETE_TRADE_IN';
+      var hasTI = c2.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(a.VehicleTitleStatus || '') !== 'USED';
       var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
       var allReady = payOk && regOk && otg && !hold;
@@ -2694,7 +2694,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
       var stOpts = '<option value="Scheduled"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
       html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-weight:600;font-family:inherit;color:' + statusDot + ';background:transparent;cursor:pointer">' + stOpts + '</select>';
-      if (!isEnt) html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
+      if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
       html += '</div>';
 
       // Row 5: Notes history
