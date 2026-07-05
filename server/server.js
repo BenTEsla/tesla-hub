@@ -1361,7 +1361,7 @@ app.all('/api/dro/*', async (req, res) => {
     if (!tokens.dro) return res.status(401).json({ error: 'DRO token not set. Refresh from DRO tab.' });
     const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : '';
     const url = config.apis.dro + '/' + req.params[0] + qs;
-    const opts = { method: req.method, headers: { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId } };
+    const opts = { method: req.method, headers: { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId, 'role': 'Customer Experience Specialist, Delivery' } };
     if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
     const r = await fetch(url, opts);
     const text = await r.text();

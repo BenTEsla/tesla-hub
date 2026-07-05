@@ -1815,60 +1815,44 @@ function SAVEDISPATCH() {
   btn.disabled = true;
 
   // Map CES first names to usernames from config
-  var cesUserMap = {};
   fetch(SERVER + '/api/config').then(function(r) { return r.json(); }).then(function(cfg) {
+    var cesUserMap = {};
     (cfg.hub && cfg.hub.ces || []).forEach(function(c) {
       cesUserMap[c.name.split(' ')[0]] = c.username;
     });
 
-    // Get dispatch date
-    var dp = document.getElementById('dispatchDate');
-    var ds = dp ? dp.value : '';
-
-    // Group assignments by host
-    var hostGroups = {};
-    data.forEach(function(d) {
-      if (!d.host || !d.vehicleMapId) return;
+    // Call DRO UpdateHost for each delivery
+    var promises = data.filter(function(d) { return d.host; }).map(function(d) {
       var username = cesUserMap[d.host] || d.host;
-      if (!hostGroups[username]) hostGroups[username] = [];
-      hostGroups[username].push(d.vehicleMapId);
-    });
-
-    // Call Planner API for each host
-    var promises = Object.keys(hostGroups).map(function(username) {
-      return fetch(SERVER + '/api/planner/assign-host', {
-        method: 'PUT',
+      return fetch(SERVER + '/api/dro/deliveryops/customers/updatehost?referenceNumber=' + d.rn + '&value=0&unassignedUserName=' + username, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trtId: CFG.trtId,
-          date: ds,
-          hostsToAdd: [username],
-          hostsToRemove: [],
-          vehicleMapIds: hostGroups[username]
-        })
-      }).then(function(r) { return r.json(); }).then(function(j) {
-        return { username: username, ok: !j.error, count: hostGroups[username].length };
-      }).catch(function(e) { return { username: username, ok: false, error: e.message }; });
+        body: '{}'
+      }).then(function(r) { return { rn: d.rn, ok: r.ok, status: r.status }; })
+        .catch(function() { return { rn: d.rn, ok: false }; });
     });
 
     Promise.all(promises).then(function(results) {
-      var ok = results.filter(function(r) { return r.ok; });
-      var fail = results.filter(function(r) { return !r.ok; });
-      var totalOk = ok.reduce(function(s, r) { return s + r.count; }, 0);
-      if (fail.length === 0) {
-        btn.textContent = totalOk + ' assigned!';
+      var ok = results.filter(function(r) { return r.ok; }).length;
+      var fail = results.filter(function(r) { return !r.ok; }).length;
+      if (fail === 0) {
+        btn.textContent = ok + ' assigned!';
         btn.style.background = 'rgba(34,197,94,.2)';
         btn.style.color = '#22c55e';
       } else {
-        var errMsg = fail[0].error || 'API error';
-        if (errMsg.indexOf('token') >= 0 || errMsg.indexOf('401') >= 0) {
-          btn.textContent = 'OS token expired';
-          btn.style.color = '#ef4444';
-        } else {
-          btn.textContent = (ok.length ? ok.length + ' OK, ' : '') + fail.length + ' failed';
-          btn.style.background = 'rgba(245,158,11,.2)';
-          btn.style.color = '#f59e0b';
-        }
+        btn.textContent = ok + ' OK, ' + fail + ' failed';
+        btn.style.background = 'rgba(245,158,11,.2)';
+        btn.style.color = '#f59e0b';
+      }
+      setTimeout(function() {
+        btn.textContent = 'Save to DRO';
+        btn.style.background = 'rgba(34,197,94,.12)';
+        btn.style.color = '#22c55e';
+        btn.disabled = false;
+      }, 3000);
+    });
+  });
+}
       }
       setTimeout(function() {
         btn.textContent = 'Save to DRO';
