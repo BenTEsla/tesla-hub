@@ -1807,20 +1807,51 @@ function RUNDISPATCH(mode) {
 function SAVEDISPATCH() {
   var btn = document.getElementById('dispatchSaveBtn');
   if (!btn) return;
+  var data = _dispatchData || [];
+  if (!data.length) return;
+
   btn.textContent = 'Saving...';
   btn.disabled = true;
-  // TODO: real DRO API calls (UPDATEHOST per delivery)
-  setTimeout(function() {
-    btn.textContent = 'Saved!';
-    btn.style.background = 'rgba(34,197,94,.2)';
-    btn.style.color = '#22c55e';
+
+  // Map first names back to full CES names for DRO
+  var cesMap = {};
+  CES.forEach(function(c) { cesMap[c.split(' ')[0]] = c; });
+
+  // Build assignment list
+  var assignments = data.filter(function(d) { return d.host; }).map(function(d) {
+    return { rn: d.rn, host: cesMap[d.host] || d.host };
+  });
+
+  // Call DRO API for each assignment
+  var promises = assignments.map(function(a) {
+    return fetch(SERVER + '/api/dro/deliveryops/Customers/UpdateHost', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referenceNumber: a.rn, hostName: a.host })
+    }).then(function(r) { return r.json(); }).then(function(j) {
+      return { rn: a.rn, ok: !j.error };
+    }).catch(function() { return { rn: a.rn, ok: false }; });
+  });
+
+  Promise.all(promises).then(function(results) {
+    var ok = results.filter(function(r) { return r.ok; }).length;
+    var fail = results.filter(function(r) { return !r.ok; }).length;
+    if (fail === 0) {
+      btn.textContent = ok + ' assigned!';
+      btn.style.background = 'rgba(34,197,94,.2)';
+      btn.style.color = '#22c55e';
+    } else {
+      btn.textContent = ok + ' OK, ' + fail + ' failed';
+      btn.style.background = 'rgba(245,158,11,.2)';
+      btn.style.color = '#f59e0b';
+    }
     setTimeout(function() {
       btn.textContent = 'Save to DRO';
       btn.style.background = 'rgba(34,197,94,.12)';
       btn.style.color = '#22c55e';
       btn.disabled = false;
-    }, 2000);
-  }, 1000);
+    }, 3000);
+  });
 }
 
 /* ============================================
