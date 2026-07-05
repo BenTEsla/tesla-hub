@@ -2002,7 +2002,7 @@ function UV() {
   DATA.forEach(function(d) {
     if (d.vs.indexOf("Transit") >= 0) tr++;
     if (d.otg && !d.delivered) cotg++;
-    if (d.vs === "Finished Goods" || d.vs.indexOf("service center") >= 0 || d.vs.indexOf("Arrived") >= 0) fg++;
+    if (d.vs === "Finished Goods" || d.vs === "In Service" || d.vs.indexOf("Arrived") >= 0) fg++;
     if (d.delivered) del++;
   });
   document.getElementById("sTr").textContent = tr;
