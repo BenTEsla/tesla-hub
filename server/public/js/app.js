@@ -2661,41 +2661,33 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
 
       html += '<div style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-left:4px solid ' + leftBar + ';border-radius:10px;padding:16px 20px;margin-bottom:12px">';
 
-      // Row 1: Name + Tags + Status
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+// Row 1: Name + Tags + Info
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
       html += '<span style="font-size:16px;font-weight:700">' + it.name + '</span>';
       if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">B2B</span>';
       if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:2px 8px;border-radius:10px;font-weight:600">Trade-In</span>';
       if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
       if (String(a.VehicleTitleStatus || '') === 'USED') html += '<span style="font-size:10px;background:rgba(249,115,22,.15);color:#f97316;padding:2px 8px;border-radius:10px;font-weight:600">USED</span>';
-      html += '<div style="flex:1"></div>';
-      html += '<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:' + statusDot + '"><span style="width:8px;height:8px;border-radius:50%;background:' + statusDot + '"></span>' + statusLabel + '</span>';
+      html += '<span style="color:#71717a;font-size:12px">' + it.model + '</span>';
+      html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
+      html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + (it.vin || a.Vin || '') + '</span>';
+      html += '<span style="font-weight:600;font-size:12px;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
       html += '</div>';
 
-      // Row 2: Info with VIN
-      html += '<div style="display:flex;gap:24px;font-size:13px;margin-bottom:12px;flex-wrap:wrap">';
-      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">RN</span><br><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600">' + it.rn + '</a></div>';
-      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">Model</span><br><span style="font-weight:600">' + it.model + '</span></div>';
-      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">VIN</span><br><span style="font-family:monospace;font-size:12px;letter-spacing:.5px">' + (it.vin || a.Vin || '-') + '</span></div>';
-      html += '<div><span style="color:#71717a;font-size:10px;text-transform:uppercase">Vehicle</span><br><span style="font-weight:600;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '-') + '</span></div>';
-      html += '</div>';
-
-      // Row 3: Readiness checklist
+      // Row 2: Readiness + Status + Links
       var ckG = isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.06)';
       var ckR = isDark ? 'rgba(239,68,68,.08)' : 'rgba(239,68,68,.04)';
-      html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (payOk?ckG:ckR) + ';color:' + (payOk?'#22c55e':'#ef4444') + '">' + (payOk?'\u2713':'\u2717') + ' Payment</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (regOk?ckG:ckR) + ';color:' + (regOk?'#22c55e':'#ef4444') + '">' + (regOk?'\u2713':'\u2717') + ' Registration</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (insOk?ckG:ckR) + ';color:' + (insOk?'#22c55e':'#ef4444') + '">' + (insOk?'\u2713':'\u2717') + ' Insurance</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (otg?ckG:ckR) + ';color:' + (otg?'#22c55e':'#f59e0b') + '">' + (otg?'\u2713':'\u2717') + ' OTG</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' No Hold</span>';
-      html += '</div>';
-
-      // Row 4: Status + Links
-      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (payOk?ckG:ckR) + ';color:' + (payOk?'#22c55e':'#ef4444') + '">' + (payOk?'\u2713':'\u2717') + ' Pay</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (regOk?ckG:ckR) + ';color:' + (regOk?'#22c55e':'#ef4444') + '">' + (regOk?'\u2713':'\u2717') + ' Reg</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (insOk?ckG:ckR) + ';color:' + (insOk?'#22c55e':'#ef4444') + '">' + (insOk?'\u2713':'\u2717') + ' Ins</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (otg?ckG:ckR) + ';color:' + (otg?'#22c55e':'#f59e0b') + '">' + (otg?'\u2713':'\u2717') + ' OTG</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' Hold</span>';
+      // Status dropdown
       var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
-      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value);this.style.color=this.value===\'Confirmed\'?\'#22c55e\':\'#3b82f6\'" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(128,128,128,.15);font-size:12px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer">' + stOpts + '</select>';
-      if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:11px;color:#22c55e;text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid rgba(34,197,94,.2);border-radius:6px">CEE</a>';
+      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value);this.style.color=this.value===\'Confirmed\'?\'#22c55e\':\'#3b82f6\'" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
+      // CEE link
+      if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:5px;margin-left:2px">CEE</a>';
       html += '</div>';
 
       // Row 5: Notes history
