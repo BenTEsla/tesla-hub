@@ -1606,6 +1606,7 @@ function LOADCALENDAR() {
 var _dispatchData = null;
 
 function LOADDISPATCHDATE() {
+  var dispBar = document.getElementById('dispatchLoadingBar'); if (dispBar) dispBar.classList.add('active');
   var summary = document.getElementById('dispatchSummary');
   var board = document.getElementById('dispatchBoard');
   var balBtn = document.getElementById('dispatchBalanceBtn');
@@ -1662,6 +1663,7 @@ function LOADDISPATCHDATE() {
       }).sort(function(a, b) { return a.time.localeCompare(b.time); });
 
       RENDERDISPATCH();
+      if (dispBar) dispBar.classList.remove('active');
       if (balBtn) balBtn.disabled = false;
       if (saveBtn) saveBtn.disabled = false;
     });
@@ -1894,6 +1896,7 @@ function SAVEDISPATCH() {
    PULL-UP PAGE: Find candidates to pull forward
    ============================================ */
 function LOADPULLUP() {
+  var puBar = document.getElementById('pullupLoadingBar'); if (puBar) puBar.classList.add('active');
   var container = document.getElementById('pullupContent');
   var range = parseInt(document.getElementById('pullupRange').value) || 7;
   container.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Searching next ' + range + ' days...</div>';
@@ -2093,6 +2096,7 @@ function LOADCSAT() {
    VRS: Vehicle Readiness Pipeline
    ============================================ */
 function LOADVRS() {
+  var vrsBar = document.getElementById('vrsLoadingBar'); if (vrsBar) vrsBar.classList.add('active');
   var container = document.getElementById('vrsContent');
   container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading vehicle readiness from COGS...</div>';
 
@@ -2251,6 +2255,7 @@ function SHOWVRSSTATUS(status) {
    VRS: SV & Holds - Service Visits and Containment Holds
    ============================================ */
 function LOADSVHOLDS() {
+  var svBar = document.getElementById('svholdsLoadingBar'); if (svBar) svBar.classList.add('active');
   var container = document.getElementById('svholdsContent');
   container.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">Loading...</div>';
 
@@ -2337,6 +2342,7 @@ function LOADSVHOLDS() {
 
     html += '</tbody></table>';
     container.innerHTML = html;
+      if (typeof vrsBar !== 'undefined' && vrsBar) vrsBar.classList.remove('active');
     }); // close advisor .then
   }); // close Promise.all
 }

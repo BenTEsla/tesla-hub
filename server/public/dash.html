@@ -402,6 +402,7 @@
 
     <!-- Summary cards -->
     <div id="dispatchSummary" style="margin-bottom:20px"></div>
+    <div id="dispatchLoadingBar" class="loading-bar"></div>
 
     <!-- Kanban board -->
     <div id="dispatchBoard" style="display:grid;gap:16px"></div>
@@ -417,6 +418,7 @@
       </select>
       <button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="LOADPULLUP()">Search Candidates</button>
     </div>
+    <div id="pullupLoadingBar" class="loading-bar"></div>
     <div id="pullupContent" style="color:var(--tds-color--foreground-low-contrast, #71717a);text-align:center;padding:40px">Click Search to find pull-up candidates.</div>
   </div>
 
@@ -453,11 +455,13 @@
 
   <!-- ========== VRS VIEW ========== -->
   <div id="vrsView" style="display:none;padding:0 32px 32px">
+    <div id="vrsLoadingBar" class="loading-bar"></div>
     <div id="vrsContent" style="text-align:center;padding:40px;color:#71717a">Loading VRS data...</div>
   </div>
 
   <!-- ========== SV & HOLDS VIEW ========== -->
   <div id="svholdsView" style="display:none;padding:0 32px 32px">
+    <div id="svholdsLoadingBar" class="loading-bar"></div>
     <div id="svholdsContent" style="text-align:center;padding:40px;color:#71717a">Loading SV & Holds...</div>
   </div>
 
