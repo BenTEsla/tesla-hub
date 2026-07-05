@@ -2760,8 +2760,48 @@ function UPDATEHOST(rn, host) {
 }
 
 function UPDATESTATUS(rn, status) {
-  // TODO: Call DRO/TSS API to update appointment status
-  console.log('Update status for', rn, '→', status);
+  // Get appointment details from TSS then update
+  fetch(SERVER + '/api/tss/delivery/getCustomerInfoByRN', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({userId: 65748, rn: rn, calendarId: 14453})
+  }).then(function(r) { return r.json(); }).then(function(info) {
+    if (!info || !info.appointmentId) {
+      console.log('No appointmentId for', rn);
+      return;
+    }
+    // Save with new status
+    return fetch(SERVER + '/api/tss/delivery/saveAppointment', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        customer: info.customer || {},
+        startDateTime: info.startDateTime,
+        trtId: CFG.trtId,
+        appointmentType: info.appointmentType || 'CustomerPickup',
+        appointmentStatus: status,
+        appointmentSubStatus: null,
+        model: info.model || '',
+        userId: 65748,
+        internalNotes: info.internalNotes || '',
+        appointmentId: info.appointmentId,
+        referenceNumber: rn,
+        vin: info.vin || '',
+        deliveryType: info.deliveryType || 3,
+        userName: 'bdaubin',
+        calendarId: 14453,
+        isExpress: false,
+        cultureName: 'FR',
+        forceFromDb: true,
+        changeReason: null,
+        changeSubReasons: []
+      })
+    });
+  }).then(function(r) { if (r) return r.json(); }).then(function(j) {
+    if (j) console.log('Status updated to', status, 'for', rn);
+  }).catch(function(e) {
+    console.log('UPDATESTATUS error:', e.message);
+  });
 }
 
 /* ============================================

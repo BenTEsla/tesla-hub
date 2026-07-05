@@ -73,6 +73,7 @@ app.post('/api/auth/tokens', (req, res) => {
   if (req.body.docgenAuth) tokens.docgenAuth = req.body.docgenAuth;
   if (req.body.userId) tokens.userId = req.body.userId.replace(/^"|"$/g, '');
   if (req.body.osToken) tokens.osToken = req.body.osToken;
+  if (req.body.tssToken) tokens.tssToken = req.body.tssToken;
   saveTokens();
   res.json({ ok: true });
 });
@@ -1415,6 +1416,25 @@ app.put('/api/planner/assign-host', async (req, res) => {
     try { res.status(r.status).json(JSON.parse(text)); }
     catch(e) { res.status(r.status).json({ ok: r.ok, status: r.status }); }
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
+// PROXY: TSS API (tss.tesla.com) — appointment status
+// ============================================================
+app.all('/api/tss/*', async (req, res) => {
+  try {
+    if (!tokens.tssToken) return res.status(401).json({ error: 'TSS token not set. Open TSS to capture token.' });
+    const path = req.params[0];
+    const url = 'https://tss.tesla.com/react/api/' + path;
+    const opts = { method: req.method, headers: { 'Authorization': 'JWT ' + tokens.tssToken, 'Content-Type': 'application/json', 'CountryCode': 'FR' } };
+    if (req.method !== 'GET' && req.body) opts.body = JSON.stringify(req.body);
+    const r = await fetch(url, opts);
+    const text = await r.text();
+    console.log('[TSS]', req.method, path, r.status);
+    if (r.status === 401 || r.status === 403) { tokens.tssToken = ''; return res.status(401).json({ error: 'TSS token expired' }); }
+    try { res.status(r.status).json(JSON.parse(text)); }
+    catch(e) { res.status(r.status).json({ ok: r.ok }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ============================================================
