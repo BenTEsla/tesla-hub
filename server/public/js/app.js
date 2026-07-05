@@ -1619,7 +1619,7 @@ function LOADDISPATCHDATE() {
   if (!dp || !dp.value) return;
   var ds = dp.value;
 
-  summary.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a;font-size:13px">Loading...</div>';
+  summary.innerHTML = '';
 
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
 
