@@ -329,7 +329,7 @@ async function QW(wk, el) {
         al: al,
         used: a.VehicleTitleStatus === "USED",
         tims: tms,
-        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN" && a.VehicleTitleStatus !== "USED"),
+        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN"),
         amtOk: amtOk,
         delivered: delivered,
         inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
@@ -787,7 +787,7 @@ async function L() {
         al: al,
         used: a.VehicleTitleStatus === "USED",
         tims: tms,
-        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN" && a.VehicleTitleStatus !== "USED"),
+        hasTI: !!(a.TradeInActionStatus && a.TradeInActionStatus !== "NO_TRADE_IN"),
         amtOk: amtOk,
         inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
         vin: a.Vin || "",
@@ -1624,7 +1624,7 @@ function LOADDISPATCHDATE() {
         var t = '?';
         var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-        var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(d.VehicleTitleStatus || a.VehicleTitleStatus || '') !== 'USED';
+        var hasTI = d.TradeInActionStatus === 'COMPLETE_TRADE_IN';
         var isEnt = !!(d.IsEnterpriseOrder || a.IsEnterpriseOrder);
         return {
           rn: d.ReferenceNumber,
@@ -2638,13 +2638,13 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       if (typeof noteData === 'string' && noteData) noteHistory = [{text: noteData, date: ''}];
       else if (Array.isArray(noteData)) noteHistory = noteData;
 
-      var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
+      var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0 && String(a.VehicleTitleStatus || '') !== 'USED'));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified');
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0;
-      var hasTI = c2.TradeInActionStatus === 'COMPLETE_TRADE_IN' && String(a.VehicleTitleStatus || '') !== 'USED';
+      var hasTI = c2.TradeInActionStatus === 'COMPLETE_TRADE_IN';
       var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
       var allReady = payOk && regOk && otg && !hold;
