@@ -2335,6 +2335,40 @@ function LOADDASH() {
     document.getElementById("dashDeliveriesSub").textContent = e.message;
   });
 
+  // 1b. Load TOMORROW's deliveries
+  var tmrw = new Date(Date.now() + 864e5);
+  var tmrwDate = tmrw.getFullYear() + '-' + String(tmrw.getMonth()+1).padStart(2,'0') + '-' + String(tmrw.getDate()).padStart(2,'0');
+  fetch(BASE + "/deliveryops/Customers/Dashboard", {
+    method: "POST", headers: h,
+    body: JSON.stringify({fromDeliveryDate: tmrwDate, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
+  }).then(function(r) { return r.json(); }).then(function(dash) {
+    var data = dash.Data || [];
+    var total = data.length;
+    var fg = data.filter(function(d) { var vs = String(d.VehicleStage || ''); return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0; }).length;
+    var notReady = total - fg;
+
+    var el = document.getElementById("dashTmrwDeliveries");
+    if (el) el.textContent = total;
+    var sub = document.getElementById("dashTmrwSub");
+    if (sub) sub.textContent = tmrw.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    var fgEl = document.getElementById("dashTmrwFG");
+    if (fgEl) fgEl.textContent = fg;
+    var nrEl = document.getElementById("dashTmrwNR");
+    if (nrEl) nrEl.textContent = notReady;
+
+    // Tomorrow schedule
+    var schedHtml = '';
+    data.sort(function(a, b) { return (a.ScheduledDeliveryStartDateString || '').localeCompare(b.ScheduledDeliveryStartDateString || ''); });
+    data.forEach(function(d) {
+      var t = '?';
+      var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
+      schedHtml += '<div class="dash-schedule-row"><div class="dash-schedule-time">' + t + '</div><div class="dash-schedule-name">' + (d.CustomerName || '') + '</div><div class="dash-schedule-model">' + (d.VehicleModel || '') + '</div></div>';
+    });
+    var tmrwSched = document.getElementById("dashTmrwSchedule");
+    if (tmrwSched) tmrwSched.innerHTML = schedHtml || '<div style="color:#52525b;padding:20px;text-align:center">No deliveries tomorrow</div>';
+  }).catch(function() {});
+
   // 2. Load arrivals
   fetch(SERVER + "/api/bi/arrivals").then(function(r) { return r.json(); }).then(function(j) {
     if (j.error) return;
