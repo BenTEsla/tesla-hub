@@ -2235,6 +2235,7 @@ function LOADVRS() {
 
     html += '</tbody></table>';
     container.innerHTML = html;
+    if (vrsBar) vrsBar.classList.remove('active');
   });
 }
 
