@@ -510,10 +510,10 @@
       if (cfgData.hub.ces) CES = cfgData.hub.ces.map(function(c) { return c.name; });
     }
 
-    // Check auth status
+    // Check auth status - show warning but don't redirect
     if (!authData.hasDro) {
-      window.location = '/';
-      return;
+      var dd = document.getElementById('dotDro');
+      if (dd) dd.style.background = '#ef4444';
     }
 
     // Auto-load dashboard
