@@ -1685,8 +1685,6 @@ function RENDERDISPATCH() {
   var cs = 'display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;border:1px solid rgba(128,128,128,.1);font-size:13px;font-weight:600';
   summary.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap">'
     + '<div style="' + cs + '"><span style="font-size:20px;font-weight:700">' + total + '</span> Total</div>'
-    + '<div style="' + cs + ';color:#22c55e"><span style="font-size:20px">' + (total - delivered) + '</span> To Deliver</div>'
-    + '<div style="' + cs + ';color:#3b82f6"><span style="font-size:20px">' + delivered + '</span> Delivered</div>'
     + '<div style="' + cs + ';color:#a855f7"><span style="font-size:20px">' + tradein + '</span> Trade-In</div>'
     + '<div style="' + cs + ';color:#f59e0b"><span style="font-size:20px">' + enterprise + '</span> Enterprise</div>'
     + (unassigned ? '<div style="' + cs + ';color:#ef4444"><span style="font-size:20px">' + unassigned + '</span> Unassigned</div>' : '')
