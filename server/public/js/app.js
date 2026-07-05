@@ -2005,10 +2005,14 @@ function UV() {
     if (d.vs === "Finished Goods" || d.vs === "In Service" || d.vs.indexOf("Arrived") >= 0) fg++;
     if (d.delivered) del++;
   });
-  document.getElementById("sTr").textContent = tr;
-  document.getElementById("sCotg").textContent = cotg;
-  document.getElementById("sFg").textContent = fg;
-  document.getElementById("sDel").textContent = del;
+  var elTr = document.getElementById("sTr");
+  var elCotg = document.getElementById("sCotg");
+  var elFg = document.getElementById("sFg");
+  var elDel = document.getElementById("sDel");
+  if (elTr) elTr.textContent = tr;
+  if (elCotg) elCotg.textContent = cotg;
+  if (elFg) elFg.textContent = fg;
+  if (elDel) elDel.textContent = del;
 }
 
 /* ============================================
