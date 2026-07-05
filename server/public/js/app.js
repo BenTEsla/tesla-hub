@@ -1592,10 +1592,10 @@ function LOADCALENDAR() {
           });
         });
       });
-      var ss = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid rgba(128,128,128,.1);font-size:13px;font-weight:600';
-      statsEl.innerHTML = '<div style="' + ss + '"><span style="font-size:22px;font-weight:700">' + totalWeek + '</span> Deliveries</div>'
-        + '<div style="' + ss + ';color:#3b82f6"><span style="font-size:22px">' + totalSched + '</span> Scheduled</div>'
-        + '<div style="' + ss + ';color:#22c55e"><span style="font-size:22px">' + totalConf + '</span> Confirmed</div>';
+      var ss = 'display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid rgba(128,128,128,.1);font-size:14px;font-weight:600';
+      statsEl.innerHTML = '<div style="' + ss + '"><span style="font-size:26px;font-weight:700">' + totalWeek + '</span> Deliveries</div>'
+        + '<div style="' + ss + ';color:#3b82f6"><span style="font-size:26px">' + totalSched + '</span> Scheduled</div>'
+        + '<div style="' + ss + ';color:#22c55e"><span style="font-size:26px">' + totalConf + '</span> Confirmed</div>';
     }
   });
 }

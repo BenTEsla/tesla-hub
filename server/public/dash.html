@@ -428,6 +428,8 @@
       <button class="bt" onclick="NAVCALWEEK(1)" style="padding:7px 16px">&rarr;</button>
       <button class="bt" onclick="_calWeekOffset=0;LOADCALENDAR()" style="padding:7px 16px">Today</button>
       <div style="flex:1"></div>
+      <div id="calWeekStats" style="display:flex;gap:10px"></div>
+      <div style="flex:1"></div>
       <span style="font-size:12px;display:flex;align-items:center;gap:12px;color:#71717a">
         <span style="color:#3b82f6;font-weight:600">● Scheduled</span>
         <span style="color:#22c55e;font-weight:600">● Confirmed</span>
@@ -435,7 +437,6 @@
       <button class="bt" id="calViewWeek" onclick="SETCALVIEW('week')" style="padding:7px 16px;font-weight:700">Week</button>
       <button class="bt" id="calViewDay" onclick="SETCALVIEW('day')" style="padding:7px 16px">Day</button>
     </div>
-    <div id="calWeekStats" style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap"></div>
     <div id="calLoadingBar" class="loading-bar"></div>
     <div id="calendarContent" style="text-align:center;padding:40px;color:#71717a">Loading calendar...</div>
     <!-- Detail modal: shows when clicking a time slot -->
