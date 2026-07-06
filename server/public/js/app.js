@@ -2450,6 +2450,7 @@ function LOADDASH() {
   fetch(SERVER + "/api/bi/arrivals").then(function(r) { return r.json(); }).then(function(j) {
     if (j.error) return;
     var chart = document.getElementById("dashArrChart");
+    if (!chart) return;
     var dates = j.data ? j.data.dates : [];
     var arrived = j.data ? j.data.arrived : [];
     var confident = j.data ? j.data.confident : [];
@@ -2530,6 +2531,7 @@ function LOADDASH() {
     document.getElementById("dashCsatSub").textContent = (j.summary ? j.summary.totalSurveys + ' surveys' : '');
     // CES chart
     var cesChart = document.getElementById("dashCesChart");
+    if (!cesChart) return;
     if (j.advisors && j.advisors.length) {
       var maxScore = 100;
       var html = '';
