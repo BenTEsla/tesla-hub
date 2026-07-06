@@ -2406,24 +2406,7 @@ function LOADDASH() {
     document.getElementById("dashNotReady").textContent = notReady;
     document.getElementById("dashNotReadySub").textContent = "not ready";
 
-    // Schedule
-    var scheduleHtml = '';
-    data.sort(function(a, b) { return (a.ScheduledDeliveryStartDateString || '').localeCompare(b.ScheduledDeliveryStartDateString || ''); });
-    data.forEach(function(d) {
-      var t = '?';
-      var tm = (d.ScheduledDeliveryStartDateString || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
-      var isDelivered = d.CustomerDeliveryStatus === 'Delivered' || d.CustomerDeliveryStatus === 'Complete';
-      scheduleHtml += '<div class="dash-schedule-row">'
-        + '<div class="dash-schedule-time">' + t + '</div>'
-        + '<div class="dash-schedule-name">' + (d.CustomerName || '') + '</div>'
-        + '<div class="dash-schedule-model">' + (d.VehicleModel || '') + '</div>'
-        + '<div class="dash-schedule-status">'
-        + '<div class="dash-schedule-dot" style="background:' + (isDelivered ? '#22c55e' : '#3b82f6') + '"></div>'
-        + '</div>'
-        + '</div>';
-    });
-    var schedEl = document.getElementById("dashSchedule"); if (schedEl) schedEl.innerHTML = scheduleHtml || '<div style="color:#52525b;padding:20px;text-align:center">No deliveries today</div>';
+    // Schedule removed - use Calendarpadding:20px;text-align:center">No deliveries today</div>';
   }).catch(function(e) {
     document.getElementById("dashDeliveries").textContent = '!';
     document.getElementById("dashDeliveriesSub").textContent = e.message;
