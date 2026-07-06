@@ -2423,7 +2423,7 @@ function LOADDASH() {
         + '</div>'
         + '</div>';
     });
-    document.getElementById("dashSchedule").innerHTML = scheduleHtml || '<div style="color:#52525b;padding:20px;text-align:center">No deliveries today</div>';
+    var schedEl = document.getElementById("dashSchedule"); if (schedEl) schedEl.innerHTML = scheduleHtml || '<div style="color:#52525b;padding:20px;text-align:center">No deliveries today</div>';
   }).catch(function(e) {
     document.getElementById("dashDeliveries").textContent = '!';
     document.getElementById("dashDeliveriesSub").textContent = e.message;
