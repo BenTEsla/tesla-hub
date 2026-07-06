@@ -2406,7 +2406,7 @@ function LOADDASH() {
     document.getElementById("dashNotReady").textContent = notReady;
     document.getElementById("dashNotReadySub").textContent = "not ready";
 
-    // Schedule removed - use Calendarpadding:20px;text-align:center">No deliveries today</div>';
+    // Schedule removed - use Calendar
   }).catch(function(e) {
     document.getElementById("dashDeliveries").textContent = '!';
     document.getElementById("dashDeliveriesSub").textContent = e.message;
