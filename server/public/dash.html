@@ -175,7 +175,7 @@
 
     <!-- ===== DASHBOARD: Kick-Off Board ===== -->
     <!-- Top: 3 columns -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;align-items:start">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;align-items:stretch">
 
       <!-- COLUMN 1: TODAY -->
       <div>
@@ -245,7 +245,7 @@
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:12px;display:flex;align-items:center;gap:8px">
         <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span> Quality & Ops
       </div>
-      <div class="dash-cards" style="grid-template-columns:repeat(6, 1fr)">
+      <div class="dash-cards" style="grid-template-columns:repeat(6, 1fr);margin-top:4px">
         <div class="dash-card" onclick="NAV(3,document.querySelector('[data-tooltip=&quot;Stock&quot;]'))" style="cursor:pointer"><div class="dash-card-label">Stock</div><div class="dash-card-value dash-blue" id="dashStock">-</div><div class="dash-card-sub" id="dashStockSub"></div></div>
         <div class="dash-card" onclick="NAV(4,document.querySelector('[data-tooltip=&quot;Trade-In&quot;]'))" style="cursor:pointer"><div class="dash-card-label">Trade-In</div><div class="dash-card-value dash-purple" id="dashTradeIn">-</div><div class="dash-card-sub" id="dashTradeInSub"></div></div>
         <div class="dash-card" onclick="NAV(5,document.querySelector('[data-tooltip=&quot;CSAT&quot;]'))" style="cursor:pointer"><div class="dash-card-label">CSAT</div><div class="dash-card-value" id="dashCsat">-</div><div class="dash-card-sub" id="dashCsatSub"></div></div>

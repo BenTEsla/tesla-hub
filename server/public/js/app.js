@@ -2399,17 +2399,17 @@ function LOADDASH() {
     var fg = data.filter(function(d) { var vs = String(d.VehicleStage || ''); return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0; }).length;
     var notReady = data.filter(function(d) { var vs = String(d.VehicleStage || ''); return d.CustomerDeliveryStatus !== 'Delivered' && d.CustomerDeliveryStatus !== 'Complete' && vs !== 'Finished Goods' && vs.indexOf('Arrived') < 0; }).length;
 
-    document.getElementById("dashDeliveries").textContent = total;
-    document.getElementById("dashDeliveriesSub").textContent = delivered + " delivered";
-    document.getElementById("dashReady").textContent = fg;
+    var dEl = document.getElementById("dashDeliveries"); if (dEl) dEl.textContent = total;
+    var dSub = document.getElementById("dashDeliveriesSub"); if (dSub) dSub.textContent = delivered + " delivered";
+    var rEl = document.getElementById("dashReady"); if (rEl) rEl.textContent = fg;
     // dashReadySub removed
-    document.getElementById("dashNotReady").textContent = notReady;
-    document.getElementById("dashNotReadySub").textContent = "not ready";
+    var nrEl = document.getElementById("dashNotReady"); if (nrEl) nrEl.textContent = notReady;
+    var nrSub = document.getElementById("dashNotReadySub"); if (nrSub) nrSub.textContent = "not ready";
 
     // Schedule removed - use Calendar
   }).catch(function(e) {
-    document.getElementById("dashDeliveries").textContent = '!';
-    document.getElementById("dashDeliveriesSub").textContent = e.message;
+    var dErr = document.getElementById("dashDeliveries"); if (dErr) dErr.textContent = '!';
+    var dErrSub = document.getElementById("dashDeliveriesSub"); if (dErrSub) dErrSub.textContent = e.message;
   });
 
   // 1b. Load TOMORROW's deliveries
