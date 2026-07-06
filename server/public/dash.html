@@ -173,30 +173,38 @@
   <!-- ========== DASHBOARD VIEW ========== -->
   <div id="dashView">
 
-    <!-- ===== DASHBOARD: Today | Tomorrow | This Week + Quality ===== -->
-    <!-- Top: 3 columns -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;align-items:start">
+    <!-- ===== DASHBOARD: Kick-Off Board ===== -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start">
 
       <!-- COLUMN 1: TODAY -->
       <div>
-        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Today
+        <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Today
         </div>
-        <div class="dash-card" onclick="NAV(1,document.querySelector('[data-tooltip=&quot;Customer Delivery&quot;]'))" style="cursor:pointer;margin-bottom:10px">
+        <div class="dash-card" onclick="NAV(1,document.querySelector('[data-tooltip=&quot;Customer Delivery&quot;]'))" style="cursor:pointer;margin-bottom:12px">
           <div class="dash-card-label">Deliveries</div>
           <div class="dash-card-value" id="dashDeliveries">-</div>
-          <div class="dash-card-sub" id="dashDeliveriesSub">Loading...</div>
+          <div class="dash-card-sub" id="dashDeliveriesSub"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">On Site</div>
+            <div class="dash-card-value dash-green" id="dashOnSite">-</div>
+          </div>
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">In Transit</div>
+            <div class="dash-card-value dash-yellow" id="dashInTransit">-</div>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div class="dash-card" onclick="NAV(1,document.querySelector('[data-tooltip=&quot;Customer Delivery&quot;]'))" style="cursor:pointer">
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">In Wash</div>
+            <div class="dash-card-value dash-blue" id="dashInWash">-</div>
+          </div>
+          <div class="dash-card" style="min-height:90px">
             <div class="dash-card-label">Finished Goods</div>
             <div class="dash-card-value dash-green" id="dashReady">-</div>
             <div class="dash-card-sub" id="dashReadySub"></div>
-          </div>
-          <div class="dash-card" onclick="NAV(1,document.querySelector('[data-tooltip=&quot;Customer Delivery&quot;]'))" style="cursor:pointer">
-            <div class="dash-card-label">Not Ready</div>
-            <div class="dash-card-value dash-red" id="dashNotReady">-</div>
-            <div class="dash-card-sub" id="dashNotReadySub"></div>
           </div>
         </div>
         <div class="dash-chart-card" onclick="NAV(8,document.querySelector('[data-tooltip=&quot;Calendar&quot;]'))" style="cursor:pointer">
@@ -207,24 +215,32 @@
 
       <!-- COLUMN 2: TOMORROW -->
       <div>
-        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a855f7;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <span style="width:8px;height:8px;border-radius:50%;background:#a855f7;display:inline-block"></span> Tomorrow
+        <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a855f7;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span> Tomorrow
         </div>
-        <div class="dash-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer;margin-bottom:10px">
+        <div class="dash-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer;margin-bottom:12px">
           <div class="dash-card-label">Deliveries</div>
           <div class="dash-card-value" id="dashTmrwDeliveries">-</div>
           <div class="dash-card-sub" id="dashTmrwSub"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">On Site</div>
+            <div class="dash-card-value dash-green" id="dashTmrwOnSite">-</div>
+          </div>
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">In Transit</div>
+            <div class="dash-card-value dash-yellow" id="dashTmrwInTransit">-</div>
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div class="dash-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer">
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">In Wash</div>
+            <div class="dash-card-value dash-blue" id="dashTmrwInWash">-</div>
+          </div>
+          <div class="dash-card" style="min-height:90px">
             <div class="dash-card-label">Finished Goods</div>
             <div class="dash-card-value dash-green" id="dashTmrwFG">-</div>
-            <div class="dash-card-sub" id="dashTmrwFGSub"></div>
-          </div>
-          <div class="dash-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer">
-            <div class="dash-card-label">Not Ready</div>
-            <div class="dash-card-value dash-red" id="dashTmrwNR">-</div>
-            <div class="dash-card-sub" id="dashTmrwNRSub"></div>
           </div>
         </div>
         <div class="dash-chart-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer">
@@ -235,59 +251,64 @@
 
       <!-- COLUMN 3: THIS WEEK -->
       <div>
-        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#22c55e;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block"></span> This Week
+        <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#22c55e;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span> This Week
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div class="dash-card" onclick="NAV(3,document.querySelector('[data-tooltip=&quot;Stock&quot;]'))" style="cursor:pointer">
-            <div class="dash-card-label">Stock Rennes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">Weekly Target</div>
+            <div class="dash-card-value" id="dashWeeklyTarget" style="cursor:pointer" onclick="var v=prompt('Weekly target:',this.textContent);if(v){this.textContent=v;localStorage.setItem('dashWeeklyTarget',v)}">-</div>
+          </div>
+          <div class="dash-card" style="min-height:90px">
+            <div class="dash-card-label">Not Ready</div>
+            <div class="dash-card-value dash-red" id="dashNotReady">-</div>
+            <div class="dash-card-sub" id="dashNotReadySub"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+          <div class="dash-card" onclick="NAV(3,document.querySelector('[data-tooltip=&quot;Stock&quot;]'))" style="cursor:pointer;min-height:90px">
+            <div class="dash-card-label">Stock</div>
             <div class="dash-card-value dash-blue" id="dashStock">-</div>
             <div class="dash-card-sub" id="dashStockSub"></div>
           </div>
-          <div class="dash-card" onclick="NAV(4,document.querySelector('[data-tooltip=&quot;Trade-In&quot;]'))" style="cursor:pointer">
+          <div class="dash-card" onclick="NAV(4,document.querySelector('[data-tooltip=&quot;Trade-In&quot;]'))" style="cursor:pointer;min-height:90px">
             <div class="dash-card-label">Trade-In</div>
             <div class="dash-card-value dash-purple" id="dashTradeIn">-</div>
             <div class="dash-card-sub" id="dashTradeInSub"></div>
+          </div>
+          <div class="dash-card" onclick="NAV(5,document.querySelector('[data-tooltip=&quot;CSAT&quot;]'))" style="cursor:pointer;min-height:90px">
+            <div class="dash-card-label">CSAT</div>
+            <div class="dash-card-value" id="dashCsat">-</div>
+            <div class="dash-card-sub" id="dashCsatSub"></div>
           </div>
         </div>
         <div class="dash-chart-card" onclick="NAV(2,document.querySelector('[data-tooltip=&quot;Arrivals&quot;]'))" style="cursor:pointer;margin-bottom:14px">
           <div class="dash-chart-title">Arrivals This Week</div>
           <div class="dash-bar-chart" id="dashArrChart"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="dash-card" onclick="NAV(10,document.querySelector('[data-tooltip=&quot;SV &amp; Holds&quot;]'))" style="cursor:pointer;min-height:90px">
+            <div class="dash-card-label">SVs</div>
+            <div class="dash-card-value dash-yellow" id="dashSV">-</div>
+            <div class="dash-card-sub" id="dashSVSub"></div>
+          </div>
+          <div class="dash-card" onclick="NAV(10,document.querySelector('[data-tooltip=&quot;SV &amp; Holds&quot;]'))" style="cursor:pointer;min-height:90px">
+            <div class="dash-card-label">Holds</div>
+            <div class="dash-card-value dash-red" id="dashCH">-</div>
+            <div class="dash-card-sub" id="dashCHSub"></div>
+          </div>
+          <div class="dash-card" onclick="NAV(11,document.querySelector('[data-tooltip=&quot;Due Bills&quot;]'))" style="cursor:pointer;min-height:90px">
+            <div class="dash-card-label">Due Bills</div>
+            <div class="dash-card-value dash-red" id="dashDueBills">-</div>
+            <div class="dash-card-sub" id="dashDueBillsSub"></div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Bottom: Quality & Ops -->
-    <div>
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span> Quality & Ops
-      </div>
-      <div class="dash-cards" style="grid-template-columns:repeat(4, 1fr)">
-        <div class="dash-card" onclick="NAV(5,document.querySelector('[data-tooltip=&quot;CSAT&quot;]'))" style="cursor:pointer">
-          <div class="dash-card-label">CSAT Score</div>
-          <div class="dash-card-value" id="dashCsat">-</div>
-          <div class="dash-card-sub" id="dashCsatSub"></div>
-        </div>
-        <div class="dash-card" onclick="NAV(10,document.querySelector('[data-tooltip=&quot;SV &amp; Holds&quot;]'))" style="cursor:pointer">
-          <div class="dash-card-label">Active SVs</div>
-          <div class="dash-card-value dash-yellow" id="dashSV">-</div>
-          <div class="dash-card-sub" id="dashSVSub"></div>
-        </div>
-        <div class="dash-card" onclick="NAV(10,document.querySelector('[data-tooltip=&quot;SV &amp; Holds&quot;]'))" style="cursor:pointer">
-          <div class="dash-card-label">Holds</div>
-          <div class="dash-card-value dash-red" id="dashCH">-</div>
-          <div class="dash-card-sub" id="dashCHSub"></div>
-        </div>
-        <div class="dash-card" onclick="NAV(11,document.querySelector('[data-tooltip=&quot;Due Bills&quot;]'))" style="cursor:pointer">
-          <div class="dash-card-label">Due Bills</div>
-          <div class="dash-card-value dash-red" id="dashDueBills">-</div>
-          <div class="dash-card-sub" id="dashDueBillsSub"></div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- TABS<!-- TABS<!-- TABS (hidden, controlled by sidebar) -->
+  <!-- TABS<!-- TABS<!-- TABS<!-- TABS (hidden, controlled by sidebar) -->
   <div class="tabs">
     <button class="tab on" onclick="STAB(0,this)">Customer Delivery</button>
     <button class="tab" onclick="STAB(1,this)">Arrivals</button>

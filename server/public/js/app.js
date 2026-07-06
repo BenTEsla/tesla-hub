@@ -2580,6 +2580,42 @@ function LOADDASH() {
     if (sub) sub.textContent = open > 0 ? open + ' open' : 'all clear';
   }).catch(function() {});
 
+  // 8. Load COGS vehicle status for Today
+  var INTREPID = SERVER + '/api/intrepid/cogs/api/cogs';
+  fetch(INTREPID + '/getTssAppointmentsByDate?trtId=' + CFG.trtId + '&date=' + today + '&searchQuery=', {headers: h})
+    .then(function(r) { return r.json(); }).then(function(data) {
+      var onSite = 0, inTransit = 0, inWash = 0;
+      (data || []).forEach(function(a) {
+        var vs = (a.cogInfo && a.cogInfo.vehicleCogStatusName) || '';
+        if (vs === 'Finished Goods' || vs.indexOf('Ready') >= 0 || vs.indexOf('Arrived') >= 0) onSite++;
+        else if (vs.indexOf('Transit') >= 0) inTransit++;
+        if (vs.indexOf('Wash') >= 0 || vs.indexOf('Charge') >= 0) inWash++;
+      });
+      var el1 = document.getElementById('dashOnSite'); if (el1) el1.textContent = onSite;
+      var el2 = document.getElementById('dashInTransit'); if (el2) el2.textContent = inTransit;
+      var el3 = document.getElementById('dashInWash'); if (el3) el3.textContent = inWash;
+    }).catch(function() {});
+
+  // 9. Load COGS vehicle status for Tomorrow
+  fetch(INTREPID + '/getTssAppointmentsByDate?trtId=' + CFG.trtId + '&date=' + tmrwDate + '&searchQuery=', {headers: h})
+    .then(function(r) { return r.json(); }).then(function(data) {
+      var onSite = 0, inTransit = 0, inWash = 0;
+      (data || []).forEach(function(a) {
+        var vs = (a.cogInfo && a.cogInfo.vehicleCogStatusName) || '';
+        if (vs === 'Finished Goods' || vs.indexOf('Ready') >= 0 || vs.indexOf('Arrived') >= 0) onSite++;
+        else if (vs.indexOf('Transit') >= 0) inTransit++;
+        if (vs.indexOf('Wash') >= 0 || vs.indexOf('Charge') >= 0) inWash++;
+      });
+      var el1 = document.getElementById('dashTmrwOnSite'); if (el1) el1.textContent = onSite;
+      var el2 = document.getElementById('dashTmrwInTransit'); if (el2) el2.textContent = inTransit;
+      var el3 = document.getElementById('dashTmrwInWash'); if (el3) el3.textContent = inWash;
+    }).catch(function() {});
+
+  // 10. Weekly Target from localStorage
+  var wt = localStorage.getItem('dashWeeklyTarget');
+  var wtEl = document.getElementById('dashWeeklyTarget');
+  if (wtEl && wt) wtEl.textContent = wt;
+
   // 7. Load SV & Holds counts (requires DRO auth)
   if (AUTH.token) {
     var svH = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
