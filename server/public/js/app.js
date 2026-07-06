@@ -2402,7 +2402,7 @@ function LOADDASH() {
     document.getElementById("dashDeliveries").textContent = total;
     document.getElementById("dashDeliveriesSub").textContent = delivered + " delivered";
     document.getElementById("dashReady").textContent = fg;
-    document.getElementById("dashReadySub").textContent = "on the ground";
+    // dashReadySub removed
     document.getElementById("dashNotReady").textContent = notReady;
     document.getElementById("dashNotReadySub").textContent = "not ready";
 
