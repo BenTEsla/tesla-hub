@@ -203,7 +203,7 @@
         <span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Today
       </div>
       <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px">
-        <div class="dash-card" onclick="NAV(1,document.querySelector('[data-tooltip=&quot;Customer Delivery&quot;]'))" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashDeliveries">-</div><div class="dash-card-sub" id="dashDeliveriesSub"></div></div>
+        <div class="dash-card" onclick="NAVTODAY()" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashDeliveries">-</div><div class="dash-card-sub" id="dashDeliveriesSub"></div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashOnSite">-</div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashInTransit">-</div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashInWash">-</div></div>
@@ -217,7 +217,7 @@
         <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span> Tomorrow
       </div>
       <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px">
-        <div class="dash-card" onclick="NAV(6,document.querySelector('[data-tooltip=&quot;Dispatch&quot;]'))" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashTmrwDeliveries">-</div><div class="dash-card-sub" id="dashTmrwSub"></div></div>
+        <div class="dash-card" onclick="NAVTOMORROW()" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashTmrwDeliveries">-</div><div class="dash-card-sub" id="dashTmrwSub"></div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashTmrwOnSite">-</div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashTmrwInTransit">-</div></div>
         <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashTmrwInWash">-</div></div>
