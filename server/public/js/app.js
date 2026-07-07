@@ -2456,6 +2456,7 @@ document.addEventListener("click", function() {});
    DASHBOARD HOME: Load summary data
    ============================================ */
 function LOADDASH() {
+  if (typeof initWidgetBoard === 'function') initWidgetBoard();
   var h = {"Authorization": AUTH.token, "Content-Type": "application/json", "userid": AUTH.userId};
   var ds = new Date();
   var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
