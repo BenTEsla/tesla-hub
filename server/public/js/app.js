@@ -874,6 +874,19 @@ async function L() {
 
     RW();
 
+    // Async: fetch battery levels and enrich DATA
+    var dateStr = new Date().toISOString().slice(0, 10);
+    fetch(SERVER + '/api/vehicle-info/batch?date=' + dateStr).then(function(r) { return r.json(); }).then(function(vi) {
+      if (!vi.vehicles) return;
+      var chargeMap = {};
+      vi.vehicles.forEach(function(v) { if (v.charge !== null) chargeMap[v.vin] = v.charge; });
+      var updated = false;
+      DATA.forEach(function(d) {
+        if (chargeMap[d.vin] !== undefined) { d.charge = chargeMap[d.vin]; updated = true; }
+      });
+      if (updated) RW(); // re-render with charge data
+    }).catch(function() {});
+
     var ok = DATA.filter(function(d) { return d.al.length === 0; }).length;
     var pOk = DATA.filter(function(d) { return d.amtOk; }).length;
     var oOk = DATA.filter(function(d) { return d.otg; }).length;
@@ -947,6 +960,7 @@ function RW() {
       + '</td>'
       + '<td data-col="host" style="font-size:12px;color:#a1a1aa">' + d.host + '</td>'
       + '<td data-col="vehicle">' + d.model + '</td>'
+      + '<td data-col="charge">' + (d.charge ? '<span style="font-size:12px;font-weight:600;color:' + (d.charge >= 80 ? '#22c55e' : d.charge >= 50 ? '#f59e0b' : '#ef4444') + '">' + d.charge + '%</span>' : '<span class="su">—</span>') + '</td>'
       + '<td data-col="reg">' + rc + '</td>'
       + '<td data-col="pay">' + (d.amtOk ? '<span class="dt dg"></span>OK' : '<span class="dt dr"></span>No') + '</td>'
       + '<td data-col="ti">' + tc + '</td>'

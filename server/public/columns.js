@@ -9,6 +9,7 @@ var COL_CONFIG = {
   rn:       { label: 'RN',             width: 120, hideable: false, visible: true },
   host:     { label: 'Host',           width: 90,  hideable: true,  visible: true },
   vehicle:  { label: 'Vehicle',        width: 80,  hideable: true,  visible: true },
+  charge:   { label: 'Charge',         width: 55,  hideable: true,  visible: true },
   reg:      { label: 'Registration',   width: 95,  hideable: true,  visible: true },
   pay:      { label: 'Payment',        width: 80,  hideable: true,  visible: true },
   ti:       { label: 'Trade-In',       width: 85,  hideable: true,  visible: true },

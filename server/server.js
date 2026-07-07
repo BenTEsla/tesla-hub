@@ -1889,6 +1889,69 @@ app.get('/api/car-commands/locations', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// Batch vehicle info: charge levels + COTG status for all deliveries of a date
+app.get('/api/vehicle-info/batch', async (req, res) => {
+  try {
+    const date = req.query.date;
+    if (!date) return res.status(400).json({ error: 'Date required' });
+    const hub = config.hubs[config.defaultHub];
+    const h = { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId || '', 'role': 'Customer Experience Specialist, Delivery' };
+
+    // Get deliveries from DRO
+    const advR = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+      method: 'POST', headers: h,
+      body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+    });
+    if (!advR.ok) return res.status(advR.status).json({ error: 'DRO error' });
+    const advJ = await advR.json();
+    const deliveries = (advJ.Data && advJ.Data.Dashboard) || [];
+    const vins = deliveries.map(d => d.Vin).filter(v => v);
+
+    // Parallel: charge levels + locations
+    const chargeMap = {}, locationMap = {};
+    const promises = [];
+
+    // Batch charge levels via widget API (parallel, max 10 at a time)
+    const chunks = [];
+    for (let i = 0; i < deliveries.length; i += 10) chunks.push(deliveries.slice(i, i + 10));
+    for (const chunk of chunks) {
+      promises.push(...chunk.map(d => {
+        if (!d.Vin || !d.ReferenceNumber) return Promise.resolve();
+        return fetch(config.apis.dro + '/widget/overview/' + d.ReferenceNumber + '/info?vin=' + d.Vin, { headers: h })
+          .then(r => r.json())
+          .then(j => { if (j.Data && j.Data.VinCharge) chargeMap[d.Vin] = parseInt(j.Data.VinCharge); })
+          .catch(() => {});
+      }));
+    }
+
+    // Bulk locations
+    if (vins.length) {
+      promises.push(
+        fetch(config.apis.intrepid + '/garage/api/garage/getBulkLastKnownLocation?vins=' + vins.join(','), { headers: { 'Authorization': 'Bearer ' + tokens.dro } })
+          .then(r => r.json())
+          .then(j => { if (Array.isArray(j)) j.forEach(v => { locationMap[v.vin] = { lat: v.latitude, lng: v.longitude, ts: v.timestamp }; }); })
+          .catch(() => {})
+      );
+    }
+
+    await Promise.all(promises);
+
+    // Build response
+    const vehicles = deliveries.map(d => ({
+      vin: d.Vin,
+      rn: d.ReferenceNumber,
+      name: d.CustomerName,
+      model: d.VehicleModel,
+      charge: chargeMap[d.Vin] || null,
+      location: locationMap[d.Vin] || null,
+      vehicleStage: d.VehicleStage,
+      delivered: !!d.IsDelivered
+    }));
+
+    res.json({ date, total: vehicles.length, vehicles, chargeCount: Object.keys(chargeMap).length, locationCount: Object.keys(locationMap).length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ============================================================
 // PROXY: Intrepid API
 // ============================================================
