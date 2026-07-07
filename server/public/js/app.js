@@ -2907,46 +2907,21 @@ function UPDATEHOST(rn, host) {
 }
 
 function UPDATESTATUS(rn, status) {
-  // Get appointment details from TSS then update
+  var sel = document.activeElement;
+  if (sel) { sel.style.opacity = '0.5'; sel.disabled = true; }
   fetch(SERVER + '/api/tss/delivery/getCustomerInfoByRN', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({userId: 65748, rn: rn, calendarId: 14453})
   }).then(function(r) { return r.json(); }).then(function(info) {
-    if (!info || !info.appointmentId) {
-      console.log('No appointmentId for', rn);
-      return;
-    }
-    // Save with new status
+    if (!info || !info.appointmentId) throw new Error('No appointment');
     return fetch(SERVER + '/api/tss/delivery/saveAppointment', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        customer: info.customer || {},
-        startDateTime: info.startDateTime,
-        trtId: CFG.trtId,
-        appointmentType: info.appointmentType || 'CustomerPickup',
-        appointmentStatus: status,
-        appointmentSubStatus: null,
-        model: info.model || '',
-        userId: 65748,
-        internalNotes: info.internalNotes || '',
-        appointmentId: info.appointmentId,
-        referenceNumber: rn,
-        vin: info.vin || '',
-        deliveryType: info.deliveryType || 3,
-        userName: 'bdaubin',
-        calendarId: 14453,
-        isExpress: false,
-        cultureName: 'FR',
-        forceFromDb: true,
-        changeReason: null,
-        changeSubReasons: []
-      })
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer:info.customer||{},startDateTime:info.startDateTime,trtId:CFG.trtId,appointmentType:info.appointmentType||'CustomerPickup',appointmentStatus:status,appointmentSubStatus:null,model:info.model||'',userId:65748,internalNotes:info.internalNotes||'',appointmentId:info.appointmentId,referenceNumber:rn,vin:info.vin||'',deliveryType:info.deliveryType||3,userName:'bdaubin',calendarId:14453,isExpress:false,cultureName:'FR',forceFromDb:true,changeReason:null,changeSubReasons:[]})
     });
   }).then(function(r) { if (r) return r.json(); }).then(function() {
+    if (sel) { sel.style.opacity = '1'; sel.disabled = false; sel.style.color = status === 'Confirmed' ? '#22c55e' : '#3b82f6'; }
   }).catch(function(e) {
-    console.error('UPDATESTATUS error:', e.message);
+    if (sel) { sel.style.opacity = '1'; sel.disabled = false; sel.style.color = '#ef4444'; setTimeout(function() { sel.style.color = ''; }, 3000); }
   });
 }
 
