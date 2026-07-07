@@ -28,6 +28,10 @@ function colLoadPrefs() {
   try {
     var saved = JSON.parse(localStorage.getItem('dash_col_prefs'));
     if (saved) {
+      // If new columns were added since last save, reset to get fresh defaults
+      var hasAllKeys = true;
+      COL_KEYS.forEach(function(k) { if (!saved[k]) hasAllKeys = false; });
+      if (!hasAllKeys) { localStorage.removeItem('dash_col_prefs'); return; }
       COL_KEYS.forEach(function(k) {
         if (saved[k]) {
           if (typeof saved[k].visible === 'boolean' && COL_CONFIG[k].hideable) COL_CONFIG[k].visible = saved[k].visible;
@@ -122,6 +126,7 @@ function colResetAll() {
     ck: { w: 32, v: true }, date: { w: 90, v: false }, time: { w: 65, v: true },
     customer: { w: 200, v: true }, rn: { w: 120, v: true }, host: { w: 90, v: true },
     vehicle: { w: 80, v: true },
+    charge: { w: 55, v: true },
     reg: { w: 95, v: true }, pay: { w: 80, v: true }, ti: { w: 85, v: true },
     vs: { w: 125, v: true }, hold: { w: 60, v: true }, ins: { w: 80, v: true },
     print: { w: 45, v: true }
