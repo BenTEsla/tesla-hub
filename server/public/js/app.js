@@ -1628,7 +1628,7 @@ function LOADDISPATCHDATE() {
     body: JSON.stringify({fromDeliveryDate: ds, trtId: CFG.trtId, customerHasNoHost: false, skip: 0, take: 200, fromTime: "00:00", toTime: "23:59", countryCode: CFG.cc, onlyMyLocation: true, sort: {}, stage: [], status: [], deliveryType: [], paperwork: [], customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [], pdcFilter: [], dmvDocumentStages: []})
   }).then(function(r) { return r.json(); }).then(function(dash) {
     var data = (dash.Data || []);
-    if (!data.length) { _dispatchData = []; summary.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>'; return; }
+    if (!data.length) { _dispatchData = []; summary.innerHTML = '<div style="text-align:center;padding:30px;color:#71717a">No deliveries for this date.</div>'; if (dispBar) dispBar.classList.remove('active'); return; }
 
     // Enrich with Advisor API
     var rns = data.map(function(d) { return d.ReferenceNumber; });
@@ -1669,6 +1669,7 @@ function LOADDISPATCHDATE() {
     });
   }).catch(function(e) {
     summary.innerHTML = ERRMSG(e.message);
+    if (dispBar) dispBar.classList.remove('active');
   });
 }
 
