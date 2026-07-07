@@ -841,7 +841,7 @@ app.get('/api/bi/csat', async (req, res) => {
     const scores = Object.values(hosts).map(h => h.score);
     const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     const totalSurveys = Object.values(advisors).reduce((s, a) => s + a.count, 0);
-    return res.json({ source: 'tableau', score: avgScore, totalSurveys, advisors, hosts, lastUpdate: new Date().toISOString() });
+    return res.json({ source: 'tableau', summary: { avgScore: avgScore + '%', totalSurveys: totalSurveys }, advisors: Object.entries(advisors).map(function(e) { return { name: e[0], score: e[1].score + '%', count: e[1].count }; }), hosts: Object.entries(hosts).map(function(e) { return { name: e[0], score: e[1].score + '%' }; }), lastUpdate: new Date().toISOString() });
   } catch(e) { /* fall through to CSV */ }
 
   // Fallback: CSV
