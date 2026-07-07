@@ -64,7 +64,7 @@ function saveTokens() { fs.writeFileSync(tokenFile, JSON.stringify(tokens, null,
 const printTrackFile = path.join(__dirname, 'print-status.json');
 let printStatus = {};
 try { printStatus = JSON.parse(fs.readFileSync(printTrackFile, 'utf8')); } catch(e) {}
-function savePrintStatus() { fs.writeFileSync(printTrackFile, JSON.stringify(printStatus, null, 2));
+function savePrintStatus() { fs.writeFileSync(printTrackFile, JSON.stringify(printStatus, null, 2)); }
 
 // Notifications
 const notifFile = path.join(__dirname, 'data', 'notifications.json');
@@ -75,7 +75,7 @@ function addNotif(type, title, detail, priority) {
   notifications.unshift({ id: Date.now(), type, title, detail, priority, time: new Date().toISOString(), read: false });
   if (notifications.length > 50) notifications = notifications.slice(0, 50);
   saveNotifs();
-} }
+}
 
 // ============================================================
 // AUTH
