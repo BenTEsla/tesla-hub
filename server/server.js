@@ -1819,6 +1819,77 @@ app.all('/api/tss/*', async (req, res) => {
 });
 
 // ============================================================
+// CAR COMMANDS: Bulk hazard lights (flash warnings)
+// ============================================================
+app.post('/api/car-commands/hazard', async (req, res) => {
+  try {
+    const { date, slot, state } = req.body; // slot: 'all'|'am'|'pm', state: 'on'|'off'
+    if (!date) return res.status(400).json({ error: 'Date required' });
+    if (!['on', 'off'].includes(state)) return res.status(400).json({ error: 'State must be on or off' });
+
+    const hub = config.hubs[config.defaultHub];
+    const h = { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId || '', 'role': 'Customer Experience Specialist, Delivery' };
+
+    // 1. Get deliveries for the date from DRO Advisor
+    const advR = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+      method: 'POST', headers: h,
+      body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+    });
+    if (!advR.ok) return res.status(advR.status).json({ error: 'DRO API error' });
+    const advJ = await advR.json();
+    let deliveries = (advJ.Data && advJ.Data.Dashboard) || [];
+
+    // 2. Filter by slot (AM/PM)
+    if (slot === 'am' || slot === 'pm') {
+      deliveries = deliveries.filter(d => {
+        const sdd = d.ScheduledDeliveryDate || d.ScheduledDeliveryStartDateString || '';
+        const timeMatch = sdd.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!timeMatch) return slot === 'am'; // default to AM if no time
+        let hr = parseInt(timeMatch[1]);
+        if (timeMatch[3].toUpperCase() === 'PM' && hr < 12) hr += 12;
+        if (timeMatch[3].toUpperCase() === 'AM' && hr === 12) hr = 0;
+        return slot === 'am' ? hr < 13 : hr >= 13;
+      });
+    }
+
+    // 3. Filter out delivered vehicles
+    deliveries = deliveries.filter(d => !d.IsDelivered);
+
+    // 4. Extract VINs
+    const vins = deliveries.map(d => d.Vin).filter(v => v && v.length > 10);
+    if (!vins.length) return res.json({ ok: true, vins: 0, message: 'No vehicles found for ' + date + (slot ? ' ' + slot.toUpperCase() : '') });
+
+    // 5. Send bulk hazard command
+    const cmdR = await fetch(config.apis.intrepid + '/garage/api/garage/bulkHazard?state=' + state, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokens.dro, 'X-Correlation-ID': require('crypto').randomUUID() },
+      body: JSON.stringify({ vins })
+    });
+    const cmdResult = await cmdR.text();
+    let cmdJson;
+    try { cmdJson = JSON.parse(cmdResult); } catch(e) { cmdJson = { raw: cmdResult.substring(0, 200) }; }
+
+    const slotLabel = slot === 'am' ? ' AM' : slot === 'pm' ? ' PM' : '';
+    const stateLabel = state === 'on' ? 'allumés' : 'éteints';
+    addNotif('car_command', 'Warnings ' + stateLabel, vins.length + ' véhicules' + slotLabel + ' — ' + date, 'medium');
+
+    res.json({ ok: true, state, vins: vins.length, vehicles: deliveries.map(d => ({ vin: d.Vin, name: d.CustomerName, model: d.VehicleModel, time: d.ScheduledDeliveryStartDateString })), result: cmdJson });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Get vehicle locations for map
+app.get('/api/car-commands/locations', async (req, res) => {
+  try {
+    const vins = req.query.vins;
+    if (!vins) return res.status(400).json({ error: 'VINs required' });
+    const r = await fetch(config.apis.intrepid + '/garage/api/garage/getBulkLastKnownLocation?vins=' + vins, {
+      headers: { 'Authorization': 'Bearer ' + tokens.dro }
+    });
+    res.status(r.status).json(await r.json());
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
 // PROXY: Intrepid API
 // ============================================================
 app.all('/api/intrepid/*', async (req, res) => {

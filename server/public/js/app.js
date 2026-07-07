@@ -1160,6 +1160,58 @@ function CANCELP() {
 }
 
 /* ============================================
+   HAZARD: bulk flash warnings on/off
+   ============================================ */
+function HAZARD(state) {
+  var btn = document.getElementById(state === 'on' ? 'hazardOnBtn' : 'hazardOffBtn');
+  var slot = document.getElementById('hazardSlot').value;
+  
+  // Get the current date from the date picker
+  var datePicker = document.querySelector('select[onchange*="SDD"], .date-select');
+  var dateVal = '';
+  if (datePicker && datePicker.value) {
+    dateVal = datePicker.value;
+  } else {
+    // Use today's date
+    var now = new Date();
+    dateVal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  }
+  
+  var slotLabel = slot === 'am' ? ' AM' : slot === 'pm' ? ' PM' : '';
+  var stateLabel = state === 'on' ? 'Flash warnings' : 'Turn off warnings';
+  if (!confirm(stateLabel + ' for all deliveries on ' + dateVal + slotLabel + '?')) return;
+  
+  btn.textContent = state === 'on' ? '⏳ Sending...' : '⏳...';
+  btn.disabled = true;
+  
+  fetch(SERVER + '/api/car-commands/hazard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date: dateVal, slot: slot, state: state })
+  }).then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) {
+      btn.textContent = 'Error';
+      btn.style.color = '#ef4444';
+      alert('Error: ' + j.error);
+    } else {
+      btn.textContent = state === 'on' ? '✓ ' + j.vins + ' flashed' : '✓ Off';
+      btn.style.color = '#22c55e';
+      if (j.vins === 0) alert(j.message || 'No vehicles found');
+    }
+    setTimeout(function() {
+      btn.textContent = state === 'on' ? '⚠ Flash' : 'Off';
+      btn.style.color = state === 'on' ? '#f59e0b' : '#71717a';
+      btn.disabled = false;
+    }, 3000);
+  }).catch(function(e) {
+    btn.textContent = 'Error';
+    btn.style.color = '#ef4444';
+    btn.disabled = false;
+    alert('Error: ' + e.message);
+  });
+}
+
+/* ============================================
    SORT: column sort
    ============================================ */
 function SO(k) {

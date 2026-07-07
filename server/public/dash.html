@@ -313,6 +313,15 @@
       <button class="bt bt-green" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="G()">Print</button>
       <button class="bt bt-blue" style="background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);margin-left:4px" onclick="GPDG()">PDG</button>
       <button class="bt bt-red" style="background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.3)" onclick="CANCELP()">Cancel</button>
+      <div style="margin-left:12px;border-left:1px solid rgba(255,255,255,.1);padding-left:12px;display:flex;gap:4px">
+        <button class="bt" id="hazardOnBtn" style="background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.3)" onclick="HAZARD('on')">⚠ Flash</button>
+        <select id="hazardSlot" style="background:#1a1a1a;color:#e5e5e5;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit">
+          <option value="all">All day</option>
+          <option value="am">AM only</option>
+          <option value="pm">PM only</option>
+        </select>
+        <button class="bt" id="hazardOffBtn" style="background:rgba(113,113,122,.1);color:#71717a;border-color:rgba(113,113,122,.2)" onclick="HAZARD('off')">Off</button>
+      </div>
     </div>
 
     <!-- TABLE -->
