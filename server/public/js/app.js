@@ -401,7 +401,7 @@ async function QW(wk, el) {
         al: al,
         used: a.VehicleTitleStatus === "USED",
         tims: tms,
-        hasTI: !!tiR[a.ReferenceNumber],
+        hasTI: !!tiR[a.ReferenceNumber] && a.VehicleTitleStatus !== "USED",
         amtOk: amtOk,
         delivered: delivered,
         inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
@@ -759,7 +759,7 @@ async function L() {
     }).then(function(r) { return r.json(); });
 
     var tiC = (adv.Data && adv.Data.Dashboard || []).filter(function(a) {
-      return a.TradeInActionStatus === "COMPLETE_TRADE_IN";
+      return a.TradeInActionStatus === "COMPLETE_TRADE_IN" && a.VehicleTitleStatus !== "USED";
     });
 
     var tiR = {};
@@ -767,7 +767,13 @@ async function L() {
       return fetch(BASE + "/widget/GetTradeInWidgetInfo?referenceNumber=" + a.ReferenceNumber + "&vehicleMapId=" + a.VehicleMapId + "&deliveryState=" + encodeURIComponent(a.DeliveryState || ""), { headers: h })
         .then(function(r) { return r.json(); })
         .then(function(j) {
-          if (j.Data) tiR[a.ReferenceNumber] = { ms: j.Data.AMPStatusFromC360 || j.Data.AcquisitionMilestone || "" };
+          if (j.Data) {
+            var ms = j.Data.AMPStatusFromC360 || j.Data.AcquisitionMilestone || "";
+            // Filter out vehicle stage values that are NOT trade-in milestones
+            var fakeMs = ["At service center", "Arrived at VRL", "Finished Goods", "In Transit", "Delivered", "Receiving"];
+            var isFake = fakeMs.some(function(f) { return ms.indexOf(f) >= 0; });
+            if (!isFake) tiR[a.ReferenceNumber] = { ms: ms };
+          }
         })
         .catch(function() {});
     }));
