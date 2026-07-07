@@ -820,7 +820,31 @@ app.get('/api/bi/arrivals', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/bi/csat', (req, res) => {
+app.get('/api/bi/csat', async (req, res) => {
+  // Try Tableau first
+  try {
+    const { token, siteId } = await getTableauToken();
+    const XLSX = require('xlsx');
+    const viewId = TABLEAU_VIEWS.csat;
+    const filter = 'vf_Delivery+Location=EU-FR-Saint-Jacques+de+la+Lande-Rue+de+la+Pitardi%C3%A8re';
+    const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + viewId + '/crosstab/excel?' + filter, { headers: { 'X-Tableau-Auth': token } });
+    const buffer = await r.buffer();
+    const wb = XLSX.read(buffer);
+    const advisors = {}, hosts = {};
+    const s1 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    s1.forEach(row => { Object.keys(row).forEach(k => { if (k !== '__EMPTY' && k !== 'Advisor Avg Metric - Advisor+Host Comparison - Format') { const s = row['Advisor Avg Metric - Advisor+Host Comparison - Format']; const c = row[k]; if (s && typeof c === 'number' && c > 1) advisors[k] = { score: parseInt(s), count: c }; } }); });
+    if (wb.SheetNames.length > 1) {
+      const s2 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]]);
+      s2.forEach(row => { Object.keys(row).forEach(k => { if (k !== '__EMPTY' && k !== 'Metric - Advisor+Host Comparison - Format') { const s = row['Metric - Advisor+Host Comparison - Format']; if (s && typeof row[k] === 'number' && row[k] > 0 && row[k] <= 1) hosts[k] = { score: parseInt(s), count: 0 }; } }); });
+    }
+    // Calculate average score
+    const scores = Object.values(hosts).map(h => h.score);
+    const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const totalSurveys = Object.values(advisors).reduce((s, a) => s + a.count, 0);
+    return res.json({ source: 'tableau', score: avgScore, totalSurveys, advisors, hosts, lastUpdate: new Date().toISOString() });
+  } catch(e) { /* fall through to CSV */ }
+
+  // Fallback: CSV
   try {
     const advPath = path.join(__dirname, 'data', 'csat-advisors.csv');
     if (!fs.existsSync(advPath)) return res.json({ error: 'No data' });
