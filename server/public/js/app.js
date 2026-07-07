@@ -1,5 +1,58 @@
 /* DASH v4.0 - Delivery Automation Smart Hub - Application Logic */
 
+// ============================================
+// NOTIFICATIONS
+// ============================================
+var _notifOpen = false;
+function TOGGLENOTIFS() {
+  var panel = document.getElementById('notifPanel');
+  _notifOpen = !_notifOpen;
+  panel.style.display = _notifOpen ? 'block' : 'none';
+  if (_notifOpen) LOADNOTIFS();
+}
+function LOADNOTIFS() {
+  fetch(SERVER + '/api/notifications').then(function(r) { return r.json(); }).then(function(notifs) {
+    var list = document.getElementById('notifList');
+    var badge = document.getElementById('notifBadge');
+    var unread = notifs.filter(function(n) { return !n.read; }).length;
+    if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+    if (!notifs.length) { list.innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:13px">No notifications</div>'; return; }
+    var isDark = !document.getElementById('lightThemeCSS');
+    var html = '';
+    var icons = { hold: '🔴', ready: '🟢', payment: '🔵', scan: '🟣', pushback: '⚡', duebill: '📋', info: 'ℹ️' };
+    notifs.forEach(function(n) {
+      var icon = icons[n.type] || '🔔';
+      var ago = Math.round((Date.now() - new Date(n.time).getTime()) / 60000);
+      var agoText = ago < 60 ? ago + 'min' : Math.round(ago / 60) + 'h';
+      var bg = n.read ? 'transparent' : (isDark ? 'rgba(59,130,246,.06)' : 'rgba(59,130,246,.04)');
+      html += '<div style="padding:10px 16px;border-bottom:1px solid rgba(128,128,128,.06);background:' + bg + ';display:flex;gap:10px;align-items:start">';
+      html += '<span style="font-size:16px;line-height:1.2">' + icon + '</span>';
+      html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">' + n.title + '</div>';
+      if (n.detail) html += '<div style="font-size:12px;color:#71717a;margin-top:2px">' + n.detail + '</div>';
+      html += '</div>';
+      html += '<span style="font-size:10px;color:#71717a;white-space:nowrap">' + agoText + '</span>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+    // Mark as read
+    fetch(SERVER + '/api/notifications/read', { method: 'POST' }).catch(function() {});
+  }).catch(function() {});
+}
+function CLEARNOTIFS() {
+  fetch(SERVER + '/api/notifications', { method: 'DELETE' }).then(function() {
+    document.getElementById('notifList').innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:13px">No notifications</div>';
+    var badge = document.getElementById('notifBadge'); if (badge) badge.style.display = 'none';
+  }).catch(function() {});
+}
+// Auto-check notifications every 2 minutes
+setInterval(function() {
+  fetch(SERVER + '/api/notifications').then(function(r) { return r.json(); }).then(function(notifs) {
+    var unread = notifs.filter(function(n) { return !n.read; }).length;
+    var badge = document.getElementById('notifBadge');
+    if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+  }).catch(function() {});
+}, 120000);
+
 function fmtSDD(sp) {
   var mm = String(sp.getMonth() + 1).padStart(2, '0');
   var dd = String(sp.getDate()).padStart(2, '0');

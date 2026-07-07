@@ -64,7 +64,18 @@ function saveTokens() { fs.writeFileSync(tokenFile, JSON.stringify(tokens, null,
 const printTrackFile = path.join(__dirname, 'print-status.json');
 let printStatus = {};
 try { printStatus = JSON.parse(fs.readFileSync(printTrackFile, 'utf8')); } catch(e) {}
-function savePrintStatus() { fs.writeFileSync(printTrackFile, JSON.stringify(printStatus, null, 2)); }
+function savePrintStatus() { fs.writeFileSync(printTrackFile, JSON.stringify(printStatus, null, 2));
+
+// Notifications
+const notifFile = path.join(__dirname, 'data', 'notifications.json');
+let notifications = [];
+try { notifications = JSON.parse(fs.readFileSync(notifFile, 'utf8')); } catch(e) {}
+function saveNotifs() { try { fs.writeFileSync(notifFile, JSON.stringify(notifications, null, 2)); } catch(e) {} }
+function addNotif(type, title, detail, priority) {
+  notifications.unshift({ id: Date.now(), type, title, detail, priority, time: new Date().toISOString(), read: false });
+  if (notifications.length > 50) notifications = notifications.slice(0, 50);
+  saveNotifs();
+} }
 
 // ============================================================
 // AUTH
@@ -1169,6 +1180,12 @@ try { deliveryNotes = JSON.parse(fs.readFileSync(notesFile, 'utf8')); } catch(e)
 function saveNotes() { fs.writeFileSync(notesFile, JSON.stringify(deliveryNotes, null, 2)); }
 
 app.get('/api/notes', (req, res) => { res.json(deliveryNotes); });
+
+// Notifications API
+app.get('/api/notifications', (req, res) => { res.json(notifications); });
+app.post('/api/notifications/read', (req, res) => { notifications.forEach(n => n.read = true); saveNotifs(); res.json({ ok: true }); });
+app.delete('/api/notifications', (req, res) => { notifications = []; saveNotifs(); res.json({ ok: true }); });
+app.post('/api/notifications/add', (req, res) => { addNotif(req.body.type, req.body.title, req.body.detail, req.body.priority); res.json({ ok: true }); });
 app.get('/api/notes/:rn', (req, res) => { res.json({ rn: req.params.rn, note: deliveryNotes[req.params.rn] || '' }); });
 app.post('/api/notes/:rn', (req, res) => {
   deliveryNotes[req.params.rn] = req.body.note || '';
@@ -1524,6 +1541,9 @@ app.post('/api/scan/assign', async (req, res) => {
     // Process it (with full enrichment)
     try {
       await scanProcessor.processScan(newPath, tokens, getPdfBrowser, PORT, null);
+      // Notification
+      var lastEntry = scanProcessor.tracking[scanProcessor.tracking.length - 1];
+      if (lastEntry) addNotif('scan', 'Trade-In Scanned', lastEntry.make + ' ' + lastEntry.model + ' — ' + (lastEntry.plate || lastEntry.rn), 'medium');
       // If plate was provided manually, update tracking
       if (plate) {
         const entry = scanProcessor.tracking.find(t => t.rn === rn);
