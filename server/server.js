@@ -670,7 +670,47 @@ app.post('/api/print/cancel', (req, res) => {
 // ============================================================
 // BI DATA: Parse Arrivals + CSAT CSVs
 // ============================================================
-app.get('/api/bi/arrivals', (req, res) => {
+app.get('/api/bi/arrivals', async (req, res) => {
+  // Try Tableau API first
+  try {
+    const { token, siteId } = await getTableauToken();
+    const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + TABLEAU_VIEWS.arrivals + '/data', { headers: { 'X-Tableau-Auth': token } });
+    const csv = await r.text();
+    const lines = csv.split('\n').filter(l => l.includes('France'));
+    if (lines.length) {
+      const buckets = {};
+      lines.forEach(l => { const p = l.split(','); if (p.length >= 4) { const b = p[0].trim(); const c = parseInt(p[3]) || 0; if (b && c) buckets[b] = (buckets[b] || 0) + c; } });
+      
+      // Convert to DASH format
+      const arrived = buckets['Arrived'] || 0;
+      const next2 = buckets['Arriving in Next 2 Days'] || 0;
+      const next4 = buckets['Arriving in Next 2-4 Days'] || 0;
+      const next6 = buckets['Arriving in Next 4-6 Days'] || 0;
+      const later = (buckets['Arriving in Next 6-8 Days'] || 0) + (buckets['Arriving in Next 8-10 Days'] || 0) + (buckets['Arriving in +10 days'] || 0);
+      const past = buckets['ETA in the Past'] || 0;
+      
+      // Build daily chart data (approximate from buckets)
+      const today = new Date();
+      const dates = [], arrivedArr = [], confArr = [], prelArr = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today); d.setDate(today.getDate() + i);
+        dates.push(('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2));
+        if (i === 0) { arrivedArr.push(arrived); confArr.push(0); prelArr.push(past); }
+        else if (i <= 2) { arrivedArr.push(0); confArr.push(Math.round(next2/2)); prelArr.push(0); }
+        else if (i <= 4) { arrivedArr.push(0); confArr.push(Math.round(next4/2)); prelArr.push(0); }
+        else { arrivedArr.push(0); confArr.push(0); prelArr.push(Math.round(next6/2)); }
+      }
+      
+      return res.json({
+        source: 'tableau',
+        summary: { arrivedTotal: arrived, inTransit: next2 + next4 + next6 + later, thisWeek: arrived + next2 + next4 },
+        data: { dates, arrived: arrivedArr, confident: confArr, preliminary: prelArr },
+        lastUpdate: new Date().toISOString()
+      });
+    }
+  } catch(e) { /* fall through to CSV */ }
+
+  // Fallback: CSV file
   try {
     const csvPath = path.join(__dirname, 'data', 'arrivals.csv');
     
