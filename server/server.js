@@ -2083,4 +2083,102 @@ app.listen(PORT, '0.0.0.0', () => {
   ========================================
 `);
   startFtp();
+  startDeliveryWatcher();
 });
+
+// ============================================================
+// BACKGROUND: Delivery Watcher (pushback, holds, vehicle ready)
+// ============================================================
+const WATCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const watchStateFile = path.join(__dirname, 'data', 'watch-state.json');
+let watchState = {};
+try { watchState = JSON.parse(fs.readFileSync(watchStateFile, 'utf8')); } catch(e) {}
+function saveWatchState() { try { fs.writeFileSync(watchStateFile, JSON.stringify(watchState, null, 2)); } catch(e) {} }
+
+async function checkDeliveries() {
+  if (!tokens.dro) return; // No DRO token, skip
+  try {
+    const h = { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId || '', 'role': 'Customer Experience Specialist, Delivery' };
+    const hub = config.hubs[config.defaultHub];
+
+    // Fetch today + tomorrow deliveries
+    const today = new Date();
+    const tomorrow = new Date(Date.now() + 86400000);
+    const dates = [today, tomorrow].map(d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+
+    for (const date of dates) {
+      const r = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+      });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const deliveries = (j.Data && j.Data.Dashboard) || [];
+
+      deliveries.forEach(d => {
+        const rn = d.ReferenceNumber;
+        const prev = watchState[rn] || {};
+        const isToday = date === dates[0];
+        const dayLabel = isToday ? "aujourd'hui" : 'demain';
+
+        // 1. PUSHBACK: SDD changed to a later date
+        if (prev.sdd && d.ScheduledDeliveryDate && prev.sdd !== d.ScheduledDeliveryDate) {
+          const oldDate = new Date(prev.sdd);
+          const newDate = new Date(d.ScheduledDeliveryDate);
+          if (newDate > oldDate) {
+            addNotif('pushback', 'Pushback: ' + (d.CustomerName || rn), rn + ' repoussé du ' + oldDate.toLocaleDateString('fr-FR') + ' au ' + newDate.toLocaleDateString('fr-FR'), 'high');
+          }
+        }
+
+        // 2. NEW HOLD: containment or repair hold appeared
+        const hasHold = !!(d.IsContainmentHold || d.IsRepairOrderHold);
+        if (hasHold && !prev.hold) {
+          const holdType = d.IsContainmentHold ? 'Containment' : 'Repair Order';
+          addNotif('hold', 'New Hold: ' + (d.CustomerName || rn), rn + ' — ' + holdType + ' hold (' + dayLabel + ')', 'high');
+        }
+
+        // 3. HOLD RESOLVED
+        if (!hasHold && prev.hold) {
+          addNotif('hold_resolved', 'Hold Resolved: ' + (d.CustomerName || rn), rn + ' — hold levé (' + dayLabel + ')', 'medium');
+        }
+
+        // 4. VEHICLE READY: moved to Finished Goods
+        const vs = String(d.VehicleStage || '');
+        const isFG = vs === 'Finished Goods' || vs.indexOf('Deliverable') >= 0;
+        if (isFG && prev.vs && !['Finished Goods'].includes(prev.vs) && prev.vs.indexOf('Deliverable') < 0) {
+          addNotif('vehicle_ready', 'Vehicle Ready: ' + (d.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' prêt (' + dayLabel + ')', 'medium');
+        }
+
+        // 5. NEW DELIVERY: RN not seen before for this date
+        if (!prev.sdd && d.ScheduledDeliveryDate) {
+          addNotif('new_delivery', 'New Delivery: ' + (d.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' ajouté ' + dayLabel, 'low');
+        }
+
+        // Update state
+        watchState[rn] = {
+          sdd: d.ScheduledDeliveryDate || prev.sdd,
+          vs: vs || prev.vs,
+          hold: hasHold,
+          name: d.CustomerName || prev.name,
+          model: d.VehicleModel || prev.model,
+          lastSeen: new Date().toISOString()
+        };
+      });
+    }
+
+    saveWatchState();
+    saveNotifs();
+  } catch(e) {
+    // Silent fail — will retry next interval
+  }
+}
+
+function startDeliveryWatcher() {
+  // First check after 30 seconds (let server warm up)
+  setTimeout(() => {
+    checkDeliveries();
+    // Then every 5 minutes
+    setInterval(checkDeliveries, WATCH_INTERVAL);
+    console.log('  Watcher:    Active (every 5 min) — pushback, holds, vehicle ready');
+  }, 30000);
+}
