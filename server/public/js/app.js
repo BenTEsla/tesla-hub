@@ -2913,10 +2913,12 @@ function UPDATESTATUS(rn, status) {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({userId: 65748, rn: rn, calendarId: 14453})
   }).then(function(r) { return r.json(); }).then(function(info) {
-    if (!info || !info.appointmentId) throw new Error('No appointment');
+    var appts = (info.response || info || []);
+    var appt = Array.isArray(appts) ? appts.find(function(a) { return a.rn === rn; }) : null;
+    if (!appt || !appt.appointmentId) throw new Error('No appointment found for ' + rn);
     return fetch(SERVER + '/api/tss/delivery/saveAppointment', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({customer:info.customer||{},startDateTime:info.startDateTime,trtId:CFG.trtId,appointmentType:info.appointmentType||'CustomerPickup',appointmentStatus:status,appointmentSubStatus:null,model:info.model||'',userId:65748,internalNotes:info.internalNotes||'',appointmentId:info.appointmentId,referenceNumber:rn,vin:info.vin||'',deliveryType:info.deliveryType||3,userName:'bdaubin',calendarId:14453,isExpress:false,cultureName:'FR',forceFromDb:true,changeReason:null,changeSubReasons:[]})
+      body: JSON.stringify({customer:appt.customerContact||{},startDateTime:appt.appointmentStartDateTime,trtId:CFG.trtId,appointmentType:appt.appointmentType||'CustomerPickup',appointmentStatus:status,appointmentSubStatus:null,model:'',userId:65748,internalNotes:'',appointmentId:appt.appointmentId,referenceNumber:rn,vin:appt.vin||'',deliveryType:3,userName:'bdaubin',calendarId:14453,isExpress:false,cultureName:'FR',forceFromDb:true,changeReason:null,changeSubReasons:[]})
     });
   }).then(function(r) { if (r) return r.json(); }).then(function() {
     if (sel) { sel.style.opacity = '1'; sel.disabled = false; sel.style.color = status === 'Confirmed' ? '#22c55e' : '#3b82f6'; }
