@@ -1200,7 +1200,7 @@ const TABLEAU_VIEWS = {
 
 async function getTableauToken() {
   if (tokens.tableauToken && tokens.tableauSiteId) return { token: tokens.tableauToken, siteId: tokens.tableauSiteId };
-  const body = `<tsRequest><credentials personalAccessTokenName="${TABLEAU_PAT_NAME}" personalAccessTokenSecret="${TABLEAU_PAT_SECRET}"><site contentUrl=""/></credentials></tsRequest>`;
+  const patName = tokens.tableauPatName || ''; const patSecret = tokens.tableauPatSecret || ''; if (!patName || !patSecret) throw new Error('Tableau PAT not configured'); const body = '<tsRequest><credentials personalAccessTokenName="' + patName + '" personalAccessTokenSecret="' + patSecret + '"><site contentUrl=""/></credentials></tsRequest>';
   const r = await fetch(TABLEAU_URL + '/auth/signin', { method: 'POST', headers: { 'Content-Type': 'application/xml' }, body });
   const text = await r.text();
   const tokenMatch = text.match(/token="([^"]+)"/);
@@ -1229,6 +1229,44 @@ app.get('/api/tableau/:view', async (req, res) => {
     tokens.tableauToken = ''; tokens.tableauSiteId = '';
     res.status(500).json({ error: e.message });
   }
+});
+
+// Parsed Tableau data for DASH
+app.get('/api/bi/tableau/arrivals', async (req, res) => {
+  try {
+    const { token, siteId } = await getTableauToken();
+    const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + TABLEAU_VIEWS.arrivals + '/data', { headers: { 'X-Tableau-Auth': token } });
+    const csv = await r.text();
+    const lines = csv.split('\n').filter(l => l.includes('France'));
+    const buckets = {};
+    lines.forEach(l => {
+      const parts = l.split(',');
+      if (parts.length >= 4) {
+        const bucket = parts[0].trim();
+        const count = parseInt(parts[3]) || 0;
+        if (bucket && count) buckets[bucket] = (buckets[bucket] || 0) + count;
+      }
+    });
+    res.json({ source: 'tableau', lastUpdate: new Date().toISOString(), france: buckets });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/bi/tableau/duebills', async (req, res) => {
+  try {
+    const { token, siteId } = await getTableauToken();
+    const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + TABLEAU_VIEWS.duebills + '/data', { headers: { 'X-Tableau-Auth': token } });
+    const csv = await r.text();
+    const lines = csv.split('\n');
+    const header = lines[0];
+    const rennes = lines.filter(l => l.includes('Saint-Jacques') || l.includes('Rennes'));
+    const items = rennes.map(l => {
+      const parts = l.split(',');
+      return { category: parts[0], created: parts[1], status: parts[2], title: parts[15] || '', vin: parts[16] || '', daysOpen: parseInt(parts[17]) || 0 };
+    });
+    const open = items.filter(i => i.status === 'Open').length;
+    const closed = items.filter(i => i.status === 'Closed').length;
+    res.json({ source: 'tableau', lastUpdate: new Date().toISOString(), total: items.length, open, closed, items });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/notifications/read', (req, res) => { notifications.forEach(n => n.read = true); saveNotifs(); res.json({ ok: true }); });
 app.delete('/api/notifications', (req, res) => { notifications = []; saveNotifs(); res.json({ ok: true }); });
