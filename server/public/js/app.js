@@ -1,4 +1,4 @@
-/* DASH v4.0 - Delivery Automation Smart Hub - Application Logic */
+/* DASH v22.6 - Delivery Automation Smart Hub - Application Logic */
 
 // ============================================
 // NOTIFICATIONS
@@ -1316,6 +1316,10 @@ function STAB(idx, btn) {
     LOADDASH();
   }
 
+  if (idx === 5 && typeof LOADCSAT === 'function') {
+    LOADCSAT();
+  }
+
   // Populate dispatch date picker and CES team toggles
   if (idx === 6) {
     var dp = document.getElementById('dispatchDate');
@@ -2137,58 +2141,80 @@ function TR() {
    LOAD CSAT tab
    ============================================ */
 function LOADCSAT() {
+  var cv = document.getElementById("csatView");
+  if (!cv) return;
+  cv.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading CSAT from Tableau...</div>';
+
   fetch(SERVER + "/api/bi/csat").then(function(r) { return r.json(); }).then(function(j) {
-    if (j.error) return;
-    document.getElementById("csatScore").textContent = j.summary.avgScore.replace("%", "");
-    document.getElementById("csatSurveys").textContent = j.summary.totalSurveys;
+    if (j.error) { cv.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Error loading CSAT: ' + j.error + '</div>'; return; }
 
-    var adv = j.advisors;
-    if (adv[0]) {
-      document.getElementById("csatScoreBen").textContent = adv[0].score;
-      document.getElementById("csatSurveysBen").textContent = adv[0].count;
-    }
-    if (adv[1]) {
-      document.getElementById("csatScoreSacha").textContent = adv[1].score;
-      document.getElementById("csatSurveysSacha").textContent = adv[1].count;
-    }
-    if (adv[2]) {
-      document.getElementById("csatScoreSophie").textContent = adv[2].score;
-      document.getElementById("csatSurveysSophie").textContent = adv[2].count;
+    var score = j.summary ? j.summary.avgScore : '-';
+    var surveys = j.summary ? j.summary.totalSurveys : 0;
+    var advisors = j.advisors || [];
+    var hosts = j.hosts || [];
+
+    // Build score color
+    var scoreNum = parseInt(score);
+    var scoreCol = scoreNum >= 85 ? '#22c55e' : scoreNum >= 70 ? '#f59e0b' : '#ef4444';
+
+    var html = '<div style="padding:20px">';
+
+    // Header: Overall score
+    html += '<div style="display:flex;gap:24px;margin-bottom:28px;flex-wrap:wrap">';
+    html += '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:28px 36px;text-align:center;min-width:200px">';
+    html += '<div style="font-size:13px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">CSAT Score</div>';
+    html += '<div style="font-size:52px;font-weight:800;color:' + scoreCol + '">' + score + '</div>';
+    html += '<div style="font-size:13px;color:#666;margin-top:4px">' + surveys + ' surveys</div>';
+    html += '</div>';
+
+    // Advisor breakdown
+    html += '<div style="flex:1;background:#111;border:1px solid #222;border-radius:12px;padding:24px;min-width:300px">';
+    html += '<div style="font-size:13px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">By Advisor (Sold By)</div>';
+    advisors.forEach(function(a) {
+      var s = parseInt(a.score) || 0;
+      var col = s >= 85 ? '#22c55e' : s >= 70 ? '#f59e0b' : '#ef4444';
+      var name = a.name || '?';
+      var count = a.count || '';
+      html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+      html += '<div style="width:140px;font-size:13px;color:#ccc;font-weight:500">' + name + '</div>';
+      html += '<div style="flex:1;background:#1a1a1a;border-radius:6px;height:24px;overflow:hidden">';
+      html += '<div style="height:100%;width:' + s + '%;background:' + col + ';border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:600;color:#fff;min-width:40px">' + a.score + '</div>';
+      html += '</div>';
+      if (count) html += '<div style="font-size:12px;color:#666;width:60px;text-align:right">' + count + ' surveys</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+
+    // Host breakdown
+    if (hosts.length) {
+      html += '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:24px;margin-bottom:24px">';
+      html += '<div style="font-size:13px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">By Host (Delivered By)</div>';
+      html += '<div style="display:flex;gap:16px;flex-wrap:wrap">';
+      hosts.forEach(function(h) {
+        var s = parseInt(h.score) || 0;
+        var col = s >= 85 ? '#22c55e' : s >= 70 ? '#f59e0b' : '#ef4444';
+        html += '<div style="background:#1a1a1a;border-radius:8px;padding:16px 20px;text-align:center;min-width:120px">';
+        html += '<div style="font-size:28px;font-weight:700;color:' + col + '">' + h.score + '</div>';
+        html += '<div style="font-size:12px;color:#888;margin-top:4px">' + (h.name || '?') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
     }
 
-    var w = j.weekly;
-    if (w && w.weeks) {
-      var ch = document.getElementById("csatWeeklyChart");
-      if (ch) {
-        var sc = w.scores || w.counts;
-        var html = "";
-        for (var i = 0; i < w.weeks.length; i++) {
-          if (!sc[i]) continue;
-          var pct = sc[i];
-          var col = pct >= 80 ? "#28a745" : pct >= 70 ? "#3e6ae1" : "#f0ad4e";
-          html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">'
-            + '<div style="font-size:12px;font-weight:600">' + sc[i] + '%</div>'
-            + '<div style="width:100%;height:' + pct + '%;border-radius:6px 6px 0 0;background:' + col + ';min-height:8px"></div>'
-            + '<div style="font-size:11px;color:#5c5e62">' + w.weeks[i] + '</div></div>';
-        }
-        ch.innerHTML = html;
-      }
-    }
-
-    // Last update badge for CSAT
+    // Last update
     if (j.lastUpdate) {
-      var csatUpd = document.getElementById("csatLastUpdate");
-      if (!csatUpd) {
-        csatUpd = document.createElement("div");
-        csatUpd.id = "csatLastUpdate";
-        csatUpd.style.cssText = "font-size:12px;color:#71717a;text-align:right;padding:8px 20px";
-        var csatView = document.getElementById("csatView");
-        if (csatView && csatView.firstChild) csatView.firstChild.insertBefore(csatUpd, csatView.firstChild.firstChild);
-      }
       var ud = new Date(j.lastUpdate);
-      csatUpd.textContent = "Data updated: " + ud.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + " " + ud.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"});
+      html += '<div style="font-size:12px;color:#52525b;text-align:right">Data from Tableau BI &bull; Updated: ' + ud.toLocaleDateString("en-US", {month:"short",day:"numeric"}) + ' ' + ud.toLocaleTimeString("en-US", {hour:"numeric",minute:"2-digit"}) + '</div>';
     }
-  }).catch(function() {});
+    html += '<div style="font-size:11px;color:#333;margin-top:8px;text-align:right">Source: ' + (j.source || 'tableau') + '</div>';
+
+    html += '</div>';
+    cv.innerHTML = html;
+  }).catch(function(e) {
+    cv.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Failed to load CSAT data</div>';
+  });
 }
 
 /* ============================================
