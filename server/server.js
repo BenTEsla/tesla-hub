@@ -5,6 +5,8 @@
 
 const express = require('express');
 const compression = require('compression');
+const session = require('express-session');
+const crypto = require('crypto');
 const fetch = require('node-fetch');
 const path = require('path');
 const fs = require('fs');
@@ -44,6 +46,17 @@ async function getPdfBrowser() {
 // ============================================================
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
+
+// Session for OIDC SSO
+const SESSION_SECRET = tokens.sessionSecret || crypto.randomBytes(32).toString('hex');
+if (!tokens.sessionSecret) { tokens.sessionSecret = SESSION_SECRET; saveTokens(); }
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24h, secure=true in prod with HTTPS
+}));
+
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -78,7 +91,107 @@ function addNotif(type, title, detail, priority) {
 }
 
 // ============================================================
-// AUTH
+// AUTH: OIDC / Azure AD (SSO)
+// ============================================================
+const oidcConfig = config.sso && config.sso.oidc || {};
+
+// Login: redirect to Azure AD
+app.get('/auth/login/sso', (req, res) => {
+  if (!oidcConfig.clientId) return res.status(503).json({ error: 'OIDC not configured — waiting for Client ID from Azure AD team' });
+  const state = crypto.randomBytes(16).toString('hex');
+  req.session.oidcState = state;
+  const params = new URLSearchParams({
+    client_id: oidcConfig.clientId,
+    response_type: 'code',
+    redirect_uri: oidcConfig.redirectUri,
+    scope: oidcConfig.scopes,
+    state: state,
+    response_mode: 'query'
+  });
+  res.redirect(oidcConfig.authorizeUrl + '?' + params.toString());
+});
+
+// Callback: exchange code for token
+app.get('/auth/callback/oidc', async (req, res) => {
+  try {
+    const { code, state, error, error_description } = req.query;
+    if (error) return res.redirect('/?sso_error=' + encodeURIComponent(error_description || error));
+    if (!code) return res.redirect('/?sso_error=no_code');
+    if (state !== req.session.oidcState) return res.redirect('/?sso_error=invalid_state');
+    delete req.session.oidcState;
+
+    // Exchange code for tokens
+    const tokenRes = await fetch(oidcConfig.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: oidcConfig.clientId,
+        client_secret: oidcConfig.clientSecret,
+        code: code,
+        redirect_uri: oidcConfig.redirectUri,
+        grant_type: 'authorization_code'
+      }).toString()
+    });
+    const tokenData = await tokenRes.json();
+    if (tokenData.error) return res.redirect('/?sso_error=' + encodeURIComponent(tokenData.error_description || tokenData.error));
+
+    // Decode id_token to get user info
+    const idToken = tokenData.id_token;
+    const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+
+    // Store user in session
+    req.session.user = {
+      email: payload.preferred_username || payload.email || payload.upn || '',
+      name: payload.name || '',
+      username: (payload.preferred_username || '').split('@')[0],
+      groups: payload.groups || [],
+      oid: payload.oid || '',
+      loginTime: new Date().toISOString()
+    };
+    req.session.accessToken = tokenData.access_token;
+    req.session.refreshToken = tokenData.refresh_token;
+
+    console.log('SSO login:', req.session.user.email);
+    res.redirect('/dash.html');
+  } catch(e) {
+    console.error('OIDC callback error:', e.message);
+    res.redirect('/?sso_error=' + encodeURIComponent(e.message));
+  }
+});
+
+// Current user info
+app.get('/api/auth/me', (req, res) => {
+  if (req.session && req.session.user) {
+    res.json({ authenticated: true, user: req.session.user });
+  } else {
+    res.json({ authenticated: false });
+  }
+});
+
+// Logout
+app.get('/auth/logout', (req, res) => {
+  const user = req.session.user;
+  req.session.destroy();
+  console.log('SSO logout:', user ? user.email : 'unknown');
+  // Azure AD logout URL
+  const logoutUrl = 'https://login.microsoftonline.com/' + oidcConfig.tenantId + '/oauth2/v2.0/logout?post_logout_redirect_uri=' + encodeURIComponent('http://localhost:3000/');
+  res.redirect(logoutUrl);
+});
+
+// Auth middleware — used to protect routes when SSO is active
+function requireAuth(req, res, next) {
+  // If OIDC not configured (no clientId), allow all (backward compat)
+  if (!oidcConfig.clientId) return next();
+  // If user has session, allow
+  if (req.session && req.session.user) return next();
+  // If API call, return 401
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Authentication required' });
+  // Otherwise redirect to login
+  res.redirect('/auth/login/sso');
+}
+
+// ============================================================
+// AUTH: Legacy (DRO tokens, DocGen)
 // ============================================================
 app.post('/api/auth/tokens', (req, res) => {
   if (req.body.droToken) tokens.dro = req.body.droToken.replace(/^"|"$/g, '');
@@ -1331,6 +1444,29 @@ async function getTableauToken() {
   }
   throw new Error('Tableau auth failed');
 }
+
+// Temp: list views in same workbook as a known view
+app.get('/api/tableau/workbook/:name/views', async (req, res) => {
+  try {
+    const { token, siteId } = await getTableauToken();
+    // Get view details to find workbook ID
+    const knownViewId = '9737677d-fe72-4ce0-b941-c7f92d705b1d'; // CSAT view
+    const vr = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + knownViewId, { headers: { 'X-Tableau-Auth': token } });
+    const vText = await vr.text();
+    const wbMatch = vText.match(/workbook id="([^"]+)"/);
+    if (!wbMatch) return res.json({ error: 'Cannot find workbook', raw: vText.substring(0, 300) });
+    const wbId = wbMatch[1];
+    const viewsR = await fetch(TABLEAU_URL + '/sites/' + siteId + '/workbooks/' + wbId + '/views', { headers: { 'X-Tableau-Auth': token } });
+    const viewsText = await viewsR.text();
+    const views = [];
+    const viewRegex = /view id="([^"]+)"[^>]*name="([^"]+)"[^>]*contentUrl="([^"]*)"/g;
+    let m;
+    while ((m = viewRegex.exec(viewsText)) !== null) {
+      views.push({ id: m[1], name: m[2], contentUrl: m[3] });
+    }
+    res.json({ workbookId: wbId, views });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 app.get('/api/tableau/:view', async (req, res) => {
   try {
