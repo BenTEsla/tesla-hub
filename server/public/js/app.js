@@ -54,11 +54,22 @@ setInterval(function() {
 }, 120000);
 
 function NAVTOMORROW() {
-  NAV(6, document.querySelector('[data-tooltip="Dispatch"]'));
-  setTimeout(function() {
-    var dp = document.getElementById('dispatchDate');
-    if (dp && dp.options.length > 1) { dp.selectedIndex = 1; LOADDISPATCHDATE(); }
-  }, 300);
+  _calWeekOffset = 0;
+  _calView = 'day';
+  // Set offset to tomorrow
+  var today = new Date();
+  var dayOfWeek = today.getDay();
+  var diffToMon = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+  _calWeekOffset = 1; // tomorrow = +1 day in day view
+  NAV(8, document.querySelector('[data-tooltip="Calendar"]'));
+  setTimeout(function() { if (typeof LOADCALENDAR === 'function') LOADCALENDAR(); }, 200);
+}
+
+function NAVTODAY() {
+  _calWeekOffset = 0;
+  _calView = 'day';
+  NAV(8, document.querySelector('[data-tooltip="Calendar"]'));
+  setTimeout(function() { if (typeof LOADCALENDAR === 'function') LOADCALENDAR(); }, 200);
 }
 
 function fmtSDD(sp) {
