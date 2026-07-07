@@ -87,6 +87,8 @@ app.post('/api/auth/tokens', (req, res) => {
   if (req.body.userId) tokens.userId = req.body.userId.replace(/^"|"$/g, '');
   if (req.body.osToken) tokens.osToken = req.body.osToken;
   if (req.body.tssToken) tokens.tssToken = req.body.tssToken;
+  if (req.body.tableauToken) tokens.tableauToken = req.body.tableauToken;
+  if (req.body.tableauSiteId) tokens.tableauSiteId = req.body.tableauSiteId;
   saveTokens();
   res.json({ ok: true });
 });
@@ -1183,6 +1185,51 @@ app.get('/api/notes', (req, res) => { res.json(deliveryNotes); });
 
 // Notifications API
 app.get('/api/notifications', (req, res) => { res.json(notifications); });
+
+// ============================================================
+// TABLEAU API - Live BI data
+// ============================================================
+const TABLEAU_URL = 'https://bi.teslamotors.com/api/3.25';
+const TABLEAU_PAT_NAME = process.env.TABLEAU_PAT_NAME || tokens.tableauPatName || '';
+const TABLEAU_PAT_SECRET = process.env.TABLEAU_PAT_SECRET || tokens.tableauPatSecret || '';
+const TABLEAU_VIEWS = {
+  arrivals: 'e97f9d60-a96e-41a0-a5d9-3070f2868c68',
+  csat: '9737677d-fe72-4ce0-b941-c7f92d705b1d',
+  duebills: '31c34305-ab51-419d-af8b-4626a9824899'
+};
+
+async function getTableauToken() {
+  if (tokens.tableauToken && tokens.tableauSiteId) return { token: tokens.tableauToken, siteId: tokens.tableauSiteId };
+  const body = `<tsRequest><credentials personalAccessTokenName="${TABLEAU_PAT_NAME}" personalAccessTokenSecret="${TABLEAU_PAT_SECRET}"><site contentUrl=""/></credentials></tsRequest>`;
+  const r = await fetch(TABLEAU_URL + '/auth/signin', { method: 'POST', headers: { 'Content-Type': 'application/xml' }, body });
+  const text = await r.text();
+  const tokenMatch = text.match(/token="([^"]+)"/);
+  const siteMatch = text.match(/site id="([^"]+)"/);
+  if (tokenMatch && siteMatch) {
+    tokens.tableauToken = tokenMatch[1];
+    tokens.tableauSiteId = siteMatch[1];
+    saveTokens();
+    return { token: tokens.tableauToken, siteId: tokens.tableauSiteId };
+  }
+  throw new Error('Tableau auth failed');
+}
+
+app.get('/api/tableau/:view', async (req, res) => {
+  try {
+    const { token, siteId } = await getTableauToken();
+    const viewId = TABLEAU_VIEWS[req.params.view];
+    if (!viewId) return res.status(404).json({ error: 'Unknown view' });
+    const filters = req.query.filters || '';
+    const url = TABLEAU_URL + '/sites/' + siteId + '/views/' + viewId + '/data' + (filters ? '?' + filters : '');
+    const r = await fetch(url, { headers: { 'X-Tableau-Auth': token } });
+    const csv = await r.text();
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch(e) {
+    tokens.tableauToken = ''; tokens.tableauSiteId = '';
+    res.status(500).json({ error: e.message });
+  }
+});
 app.post('/api/notifications/read', (req, res) => { notifications.forEach(n => n.read = true); saveNotifs(); res.json({ ok: true }); });
 app.delete('/api/notifications', (req, res) => { notifications = []; saveNotifs(); res.json({ ok: true }); });
 app.post('/api/notifications/add', (req, res) => { addNotif(req.body.type, req.body.title, req.body.detail, req.body.priority); res.json({ ok: true }); });
