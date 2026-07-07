@@ -7,6 +7,8 @@ const jsQR = require('jsqr');
 const SCAN_DIR = path.join(__dirname, 'scans');
 const PROCESSED_DIR = path.join(SCAN_DIR, 'processed');
 const TRACKING_FILE = path.join(__dirname, 'data', 'tradein-tracking.json');
+const VERITAS_EXTRACTOR_ID = '90ae94ac-7a1e-4989-a1a5-1f49b9f6f68f';
+const VERITAS_URL = 'https://veritas.bottlerocket.tesla.com/api/v0';
 
 // Format French plate: DE743HH → DE-743-HH
 function formatPlate(raw) {
@@ -22,6 +24,61 @@ function formatPlate(raw) {
 let tracking = [];
 try { tracking = JSON.parse(fs.readFileSync(TRACKING_FILE, 'utf8')); } catch(e) {}
 function saveTracking() { fs.writeFileSync(TRACKING_FILE, JSON.stringify(tracking, null, 2)); }
+
+// Extract data from document using Veritas AI
+async function extractWithVeritas(pdfPath) {
+  try {
+    const fetch = require('node-fetch');
+    const pdfData = fs.readFileSync(pdfPath);
+    const b64 = pdfData.toString('base64');
+    const fileName = path.basename(pdfPath);
+
+    console.log('  Veritas: submitting', fileName);
+    const submitResp = await fetch(VERITAS_URL + '/file/' + VERITAS_EXTRACTOR_ID, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: [{ name: fileName, file: b64 }] })
+    });
+
+    if (!submitResp.ok) { console.log('  Veritas submit failed:', submitResp.status); return null; }
+    const jobs = await submitResp.json();
+    if (!jobs || !jobs.length || jobs[0].upload_status !== 'Created') { console.log('  Veritas: no job created'); return null; }
+
+    const jobId = jobs[0].job_id;
+    console.log('  Veritas: job', jobId, 'created, polling...');
+
+    // Poll for result (max 60s)
+    for (let i = 0; i < 12; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      const params = new URLSearchParams({
+        job_ids: String(jobId),
+        extractor_id: VERITAS_EXTRACTOR_ID,
+        file_name: fileName,
+        include_results: 'true'
+      });
+      const queryResp = await fetch(VERITAS_URL + '/jobs/query?' + params.toString());
+      if (!queryResp.ok) continue;
+      const results = await queryResp.json();
+      if (results && results.length && results[0].status === 'Finished') {
+        const data = results[0].results || {};
+        console.log('  Veritas result:', JSON.stringify(data));
+        return {
+          plate: formatPlate(data.license_plate || ''),
+          vin: data.vin || '',
+          rn: data.reference_number ? data.reference_number.toUpperCase() : '',
+          owner: data.owner_name || '',
+          make: data.make || '',
+          model: data.model || ''
+        };
+      }
+    }
+    console.log('  Veritas: timeout');
+    return null;
+  } catch(e) {
+    console.log('  Veritas error:', e.message);
+    return null;
+  }
+}
 
 // Extract RN from PDF text content using pdf-parse
 async function extractRNFromPDFText(pdfPath) {
@@ -202,6 +259,15 @@ async function processScan(filePath, tokens, getPdfBrowser, PORT, vinToRN) {
   let vin = null;
   let rn = null;
   let ocrPlate = null;
+
+
+  // Method 0: Veritas AI extraction (most reliable)
+  var veritasResult = await extractWithVeritas(filePath);
+  if (veritasResult) {
+    if (veritasResult.rn) rn = veritasResult.rn;
+    if (veritasResult.vin) vin = veritasResult.vin;
+    if (veritasResult.plate) ocrPlate = veritasResult.plate;
+  }
 
   // Method 1: QR code extraction (fast, reliable — reads QR from page de garde)
   if (getPdfBrowser && PORT) {
