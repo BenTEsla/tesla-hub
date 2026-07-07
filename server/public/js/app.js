@@ -53,6 +53,14 @@ setInterval(function() {
   }).catch(function() {});
 }, 120000);
 
+function NAVTOMORROW() {
+  NAV(6, document.querySelector('[data-tooltip="Dispatch"]'));
+  setTimeout(function() {
+    var dp = document.getElementById('dispatchDate');
+    if (dp && dp.options.length > 1) { dp.selectedIndex = 1; LOADDISPATCHDATE(); }
+  }, 300);
+}
+
 function fmtSDD(sp) {
   var mm = String(sp.getMonth() + 1).padStart(2, '0');
   var dd = String(sp.getDate()).padStart(2, '0');
