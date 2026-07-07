@@ -830,18 +830,72 @@ app.get('/api/bi/csat', async (req, res) => {
     const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + viewId + '/crosstab/excel?' + filter, { headers: { 'X-Tableau-Auth': token } });
     const buffer = await r.buffer();
     const wb = XLSX.read(buffer);
+    
+    // Debug mode: dump raw sheets
+    if (req.query.debug === 'raw') {
+      const dump = {};
+      wb.SheetNames.forEach((name, i) => {
+        dump[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1 });
+      });
+      return res.json({ sheets: wb.SheetNames, data: dump });
+    }
+    
     const advisors = {}, hosts = {};
-    const s1 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    s1.forEach(row => { Object.keys(row).forEach(k => { if (k !== '__EMPTY' && k !== 'Advisor Avg Metric - Advisor+Host Comparison - Format') { const s = row['Advisor Avg Metric - Advisor+Host Comparison - Format']; const c = row[k]; if (s && typeof c === 'number' && c > 1) advisors[k] = { score: parseInt(s), count: c }; } }); });
+    let marketAvg = null;
+    const s1 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+    const advNames = (s1[0] || []).slice(2); // Column names = advisor names
+    s1.forEach(row => {
+      const label = String(row[0] || '');
+      const metric = String(row[1] || '');
+      if (label && label.includes('%') && metric.includes('Count')) {
+        const score = parseInt(label);
+        advNames.forEach((name, i) => {
+          const val = row[i + 2];
+          if (name && typeof val === 'number' && val > 1) {
+            advisors[name] = { score, count: val };
+          }
+        });
+      }
+      if (metric.includes('Market Avg')) {
+        advNames.forEach((name, i) => {
+          const val = row[i + 2];
+          if (name && typeof val === 'number' && val > 0 && advisors[name]) {
+            advisors[name].marketAvg = Math.round(val * 100);
+          }
+        });
+      }
+    });
     if (wb.SheetNames.length > 1) {
-      const s2 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]]);
-      s2.forEach(row => { Object.keys(row).forEach(k => { if (k !== '__EMPTY' && k !== 'Metric - Advisor+Host Comparison - Format') { const s = row['Metric - Advisor+Host Comparison - Format']; if (s && typeof row[k] === 'number' && row[k] > 0 && row[k] <= 1) hosts[k] = { score: parseInt(s), count: 0 }; } }); });
+      const s2 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]], { header: 1 });
+      const hostNames = (s2[0] || []).slice(2);
+      s2.forEach(row => {
+        const label = String(row[0] || '');
+        const metric = String(row[1] || '');
+        if (label && label.includes('%') && metric.includes('Metric -') && !metric.includes('Market')) {
+          const score = parseInt(label);
+          hostNames.forEach((name, i) => {
+            const val = row[i + 2];
+            if (name && typeof val === 'number' && val > 0 && val <= 1) {
+              hosts[name] = { score, rawScore: val };
+            }
+          });
+        }
+        if (metric.includes('Market Avg')) {
+          hostNames.forEach((name, i) => {
+            const val = row[i + 2];
+            if (name && typeof val === 'number' && val > 0 && hosts[name]) {
+              hosts[name].marketAvg = Math.round(val * 100);
+              if (!marketAvg) marketAvg = Math.round(val * 100);
+            }
+          });
+        }
+      });
     }
     // Calculate average score
     const scores = Object.values(hosts).map(h => h.score);
     const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     const totalSurveys = Object.values(advisors).reduce((s, a) => s + a.count, 0);
-    return res.json({ source: 'tableau', summary: { avgScore: avgScore + '%', totalSurveys: totalSurveys }, advisors: Object.entries(advisors).map(function(e) { return { name: e[0], score: e[1].score + '%', count: e[1].count }; }), hosts: Object.entries(hosts).map(function(e) { return { name: e[0], score: e[1].score + '%' }; }), lastUpdate: new Date().toISOString() });
+    return res.json({ source: 'tableau', summary: { avgScore: avgScore + '%', totalSurveys: totalSurveys, marketAvg: marketAvg ? marketAvg + '%' : null }, advisors: Object.entries(advisors).map(function(e) { return { name: e[0], score: e[1].score + '%', count: e[1].count, marketAvg: e[1].marketAvg ? e[1].marketAvg + '%' : null }; }), hosts: Object.entries(hosts).map(function(e) { return { name: e[0], score: e[1].score + '%', marketAvg: e[1].marketAvg ? e[1].marketAvg + '%' : null }; }), lastUpdate: new Date().toISOString() });
   } catch(e) { /* fall through to CSV */ }
 
   // Fallback: CSV
