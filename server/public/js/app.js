@@ -1316,7 +1316,10 @@ function STAB(idx, btn) {
         var first = c.split(' ')[0];
         var colors = ['#3b82f6', '#22c55e', '#a855f7'];
         var col = colors[i % colors.length];
+        teamHtml += '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:10px">';
         teamHtml += '<button id="cesToggle' + i + '" data-active="1" onclick="var a=this.dataset.active===\'1\'?\'0\':\'1\';this.dataset.active=a;this.style.background=a===\'1\'?\'' + col + '\':\'transparent\';this.style.color=a===\'1\'?\'#fff\':\'' + (isDark ? '#71717a' : '#999') + '\';this.style.borderColor=a===\'1\'?\'' + col + '\':\'rgba(128,128,128,.2)\';this.style.textDecoration=a===\'1\'?\'none\':\'line-through\'" style="padding:6px 18px;border-radius:20px;border:2px solid ' + col + ';font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:#fff;background:' + col + ';transition:all .15s">' + first + '</button>';
+        teamHtml += '<button id="cesAdminToggle' + i + '" data-active="0" onclick="var a=this.dataset.active===\'1\'?\'0\':\'1\';this.dataset.active=a;this.style.background=a===\'1\'?\'rgba(245,158,11,.15)\':\'transparent\';this.style.color=a===\'1\'?\'#f59e0b\':\'' + (isDark ? '#52525b' : '#bbb') + '\';this.style.borderColor=a===\'1\'?\'rgba(245,158,11,.4)\':\'rgba(128,128,128,.15)\'" style="padding:3px 8px;border-radius:12px;border:1px solid rgba(128,128,128,.15);font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;color:' + (isDark ? '#52525b' : '#bbb') + ';background:transparent;transition:all .15s" title="Admin duty (reduced load)">A</button>';
+        teamHtml += '</div>';
       });
       teamBlock.innerHTML = teamHtml;
     }
@@ -1866,14 +1869,19 @@ function RUNDISPATCH(mode) {
     var data = _dispatchData || [];
     // Get active CES from toggles
     var activeCES = [];
+    var adminPenalty = {};
     CES.forEach(function(c, i) {
       var btn = document.getElementById('cesToggle' + i);
-      if (!btn || btn.dataset.active === '1') activeCES.push(c);
+      var adminBtn = document.getElementById('cesAdminToggle' + i);
+      if (!btn || btn.dataset.active === '1') {
+        activeCES.push(c);
+        adminPenalty[c] = (adminBtn && adminBtn.dataset.active === '1') ? 0.5 : 0;
+      }
     });
     if (!activeCES.length) { alert('No CES selected'); return; }
 
     var cesLoad = {};
-    activeCES.forEach(function(c) { cesLoad[c] = 0; });
+    activeCES.forEach(function(c) { cesLoad[c] = adminPenalty[c] || 0; });
 
     var sorted = data.slice().sort(function(a, b) { return b.weight - a.weight; });
     sorted.forEach(function(d) {
