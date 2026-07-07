@@ -47,16 +47,6 @@ async function getPdfBrowser() {
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 
-// Session for OIDC SSO
-const SESSION_SECRET = tokens.sessionSecret || crypto.randomBytes(32).toString('hex');
-if (!tokens.sessionSecret) { tokens.sessionSecret = SESSION_SECRET; saveTokens(); }
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24h, secure=true in prod with HTTPS
-}));
-
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -73,6 +63,16 @@ const tokenFile = path.join(__dirname, 'tokens.json');
 let tokens = { dro: null, docgen: null, docgenAuth: null, userId: null };
 try { tokens = { ...tokens, ...JSON.parse(fs.readFileSync(tokenFile, 'utf8')) }; } catch(e) {}
 function saveTokens() { fs.writeFileSync(tokenFile, JSON.stringify(tokens, null, 2)); }
+
+// Session for OIDC SSO (must be after tokens are loaded)
+const SESSION_SECRET = tokens.sessionSecret || crypto.randomBytes(32).toString('hex');
+if (!tokens.sessionSecret) { tokens.sessionSecret = SESSION_SECRET; saveTokens(); }
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24h, secure=true in prod with HTTPS
+}));
 
 const printTrackFile = path.join(__dirname, 'print-status.json');
 let printStatus = {};
