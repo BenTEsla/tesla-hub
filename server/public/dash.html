@@ -481,12 +481,23 @@
     if (clockEl) clockEl.textContent = timeStr;
 
     var greetHeader = document.getElementById('dashGreetingHeader');
-    if (greetHeader) greetHeader.textContent = greeting + ', Ben';
+    if (greetHeader) {
+      var userName = window._ssoUser || 'Ben';
+      greetHeader.textContent = greeting + ', ' + userName;
+    }
     var dateHeader = document.getElementById('dashDateHeader');
     if (dateHeader) dateHeader.textContent = dateStr;
   }
   updateClock();
   setInterval(updateClock, 10000);
+
+  // Check SSO user for personalized greeting
+  fetch('/api/auth/me').then(function(r) { return r.json(); }).then(function(j) {
+    if (j.authenticated && j.user) {
+      window._ssoUser = j.user.name ? j.user.name.split(' ')[0] : j.user.username;
+      updateClock(); // refresh greeting with SSO name
+    }
+  }).catch(function() {});
 
   // Load auth + config, then auto-load data
   Promise.all([
