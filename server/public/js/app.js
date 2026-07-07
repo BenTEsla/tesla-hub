@@ -1860,15 +1860,21 @@ function REASSIGN(rn) {
 function RUNDISPATCH(mode) {
   if (mode === 'balance') {
     var data = _dispatchData || [];
-    var cesLoad = {};
-    CES.forEach(function(c) { cesLoad[c] = 0; });
+    // Get active CES from toggles
+    var activeCES = [];
+    CES.forEach(function(c, i) {
+      var btn = document.getElementById('cesToggle' + i);
+      if (!btn || btn.dataset.active === '1') activeCES.push(c);
+    });
+    if (!activeCES.length) { alert('No CES selected'); return; }
 
-    // Sort by weight descending for better distribution
+    var cesLoad = {};
+    activeCES.forEach(function(c) { cesLoad[c] = 0; });
+
     var sorted = data.slice().sort(function(a, b) { return b.weight - a.weight; });
     sorted.forEach(function(d) {
-      // Assign to CES with lowest TOTAL load
-      var minCES = CES[0], minLoad = Infinity;
-      CES.forEach(function(c) {
+      var minCES = activeCES[0], minLoad = Infinity;
+      activeCES.forEach(function(c) {
         if (cesLoad[c] < minLoad) { minLoad = cesLoad[c]; minCES = c; }
       });
       d.host = minCES.split(' ')[0];
