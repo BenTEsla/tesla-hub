@@ -1310,11 +1310,13 @@ function STAB(idx, btn) {
     // CES team toggles
     var teamBlock = document.getElementById('cesTeam');
     if (teamBlock && !teamBlock.innerHTML.trim()) {
+      var isDark = !document.getElementById('lightThemeCSS');
       var teamHtml = '';
       CES.forEach(function(c, i) {
         var first = c.split(' ')[0];
-        teamHtml += '<button id="cesToggle' + i + '" data-active="1" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.style.opacity=this.dataset.active===\'1\'?\'1\':\'0.35\'" style="padding:6px 16px;border-radius:20px;border:1px solid rgba(128,128,128,.2);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:inherit;background:transparent">' + first + '</button>';
-        teamHtml += '<button id="cesAdminToggle' + i + '" data-active="0" onclick="this.dataset.active=this.dataset.active===\'1\'?\'0\':\'1\';this.textContent=this.dataset.active===\'1\'?\'Admin\':\'A\';this.style.background=this.dataset.active===\'1\'?\'rgba(245,158,11,.12)\':\'transparent\';this.style.color=this.dataset.active===\'1\'?\'#f59e0b\':\'inherit\';this.style.borderColor=this.dataset.active===\'1\'?\'rgba(245,158,11,.3)\':\'rgba(128,128,128,.2)\'" style="padding:4px 8px;border-radius:20px;border:1px solid rgba(128,128,128,.2);font-size:11px;font-family:inherit;cursor:pointer;color:inherit;background:transparent;margin-right:8px" title="Toggle admin duty">A</button>';
+        var colors = ['#3b82f6', '#22c55e', '#a855f7'];
+        var col = colors[i % colors.length];
+        teamHtml += '<button id="cesToggle' + i + '" data-active="1" onclick="var a=this.dataset.active===\'1\'?\'0\':\'1\';this.dataset.active=a;this.style.background=a===\'1\'?\'' + col + '\':\'transparent\';this.style.color=a===\'1\'?\'#fff\':\'' + (isDark ? '#71717a' : '#999') + '\';this.style.borderColor=a===\'1\'?\'' + col + '\':\'rgba(128,128,128,.2)\';this.style.textDecoration=a===\'1\'?\'none\':\'line-through\'" style="padding:6px 18px;border-radius:20px;border:2px solid ' + col + ';font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:#fff;background:' + col + ';transition:all .15s">' + first + '</button>';
       });
       teamBlock.innerHTML = teamHtml;
     }
@@ -1723,6 +1725,8 @@ function LOADDISPATCHDATE() {
   }).catch(function(e) {
     summary.innerHTML = ERRMSG(e.message);
     if (dispBar) dispBar.classList.remove('active');
+    if (balBtn) balBtn.disabled = false;
+    if (saveBtn) saveBtn.disabled = false;
   });
 }
 
