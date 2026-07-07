@@ -1239,7 +1239,7 @@ const TABLEAU_VIEWS = {
 };
 
 async function getTableauToken() {
-  if (tokens.tableauToken && tokens.tableauSiteId) return { token: tokens.tableauToken, siteId: tokens.tableauSiteId };
+  // Always re-auth (session tokens expire quickly)
   const patName = tokens.tableauPatName || ''; const patSecret = tokens.tableauPatSecret || ''; if (!patName || !patSecret) throw new Error('Tableau PAT not configured'); const body = '<tsRequest><credentials personalAccessTokenName="' + patName + '" personalAccessTokenSecret="' + patSecret + '"><site contentUrl=""/></credentials></tsRequest>';
   const r = await fetch(TABLEAU_URL + '/auth/signin', { method: 'POST', headers: { 'Content-Type': 'application/xml' }, body });
   const text = await r.text();
@@ -1288,6 +1288,43 @@ app.get('/api/bi/tableau/arrivals', async (req, res) => {
       }
     });
     res.json({ source: 'tableau', lastUpdate: new Date().toISOString(), france: buckets });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/bi/tableau/csat', async (req, res) => {
+  try {
+    const { token, siteId } = await getTableauToken();
+    const XLSX = require('xlsx');
+    const viewId = TABLEAU_VIEWS.csat;
+    const filter = 'vf_Delivery+Location=EU-FR-Saint-Jacques+de+la+Lande-Rue+de+la+Pitardi%C3%A8re';
+    const r = await fetch(TABLEAU_URL + '/sites/' + siteId + '/views/' + viewId + '/crosstab/excel?' + filter, { headers: { 'X-Tableau-Auth': token } });
+    const buffer = await r.buffer();
+    const wb = XLSX.read(buffer);
+    const result = { source: 'tableau', lastUpdate: new Date().toISOString(), advisors: {}, hosts: {} };
+    // Sheet 1: Advisor scores
+    const s1 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    s1.forEach(row => {
+      Object.keys(row).forEach(k => {
+        if (k !== '__EMPTY' && k !== 'Advisor Avg Metric - Advisor+Host Comparison - Format') {
+          const scoreStr = row['Advisor Avg Metric - Advisor+Host Comparison - Format'];
+          const count = row[k];
+          if (scoreStr && typeof count === 'number' && count > 1) result.advisors[k] = { score: scoreStr, count };
+        }
+      });
+    });
+    // Sheet 2: Host scores
+    if (wb.SheetNames.length > 1) {
+      const s2 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]]);
+      s2.forEach(row => {
+        Object.keys(row).forEach(k => {
+          if (k !== '__EMPTY' && k !== 'Metric - Advisor+Host Comparison - Format') {
+            const scoreStr = row['Metric - Advisor+Host Comparison - Format'];
+            if (scoreStr && typeof row[k] === 'number' && row[k] > 0 && row[k] <= 1) result.hosts[k] = { score: scoreStr, value: Math.round(row[k] * 100) };
+          }
+        });
+      });
+    }
+    res.json(result);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

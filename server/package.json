@@ -21,6 +21,7 @@
     "qrcode": "^1.5.4",
     "sharp": "^0.35.2",
     "terser": "^5.48.0",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "xlsx": "^0.18.5"
   }
 }
