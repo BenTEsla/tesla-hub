@@ -2704,7 +2704,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       if (typeof noteData === 'string' && noteData) noteHistory = [{text: noteData, date: ''}];
       else if (Array.isArray(noteData)) noteHistory = noteData;
 
-      var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0 && String(a.VehicleTitleStatus || '') !== 'USED'));
+      var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified');
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
