@@ -1,5 +1,14 @@
 [
   {
+    "id": 1783544062464,
+    "type": "hold",
+    "title": "New Hold: Man Yau Cheung",
+    "detail": "RN6274788 — Repair Order hold (aujourd'hui)",
+    "priority": "high",
+    "time": "2026-07-08T20:54:22.464Z",
+    "read": false
+  },
+  {
     "id": 1783458210532,
     "type": "new_delivery",
     "title": "New Delivery: KAM FU WONG",
@@ -438,15 +447,6 @@
     "detail": "RN1731767 — Model S ajouté aujourd'hui",
     "priority": "low",
     "time": "2026-07-07T21:03:30.470Z",
-    "read": false
-  },
-  {
-    "id": 1783458210469,
-    "type": "new_delivery",
-    "title": "New Delivery: Kwok Pui David Ho",
-    "detail": "RN9877599 — Model S ajouté aujourd'hui",
-    "priority": "low",
-    "time": "2026-07-07T21:03:30.469Z",
     "read": false
   }
 ]

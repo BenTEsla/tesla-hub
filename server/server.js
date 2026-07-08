@@ -2007,6 +2007,122 @@ app.get('/api/vehicle-info/batch', async (req, res) => {
 });
 
 // ============================================================
+// TESLADEX: Live vehicle inventory from Garage Europe
+// ============================================================
+const TESLADEX_API = 'https://garage-europe.vn.teslamotors.com/api/1/tesladex/search?device_type=vehicle';
+
+function getGarageCookies() {
+  if (!tokens.garageCookie) return null;
+  return tokens.garageCookie;
+}
+
+// Store garage session cookie
+app.post('/api/auth/garage-cookie', (req, res) => {
+  if (req.body.cookie) {
+    tokens.garageCookie = req.body.cookie;
+    saveTokens();
+    res.json({ ok: true });
+  } else {
+    res.status(400).json({ error: 'cookie required' });
+  }
+});
+
+// Generic Tesladex search proxy
+app.post('/api/tesladex/search', async (req, res) => {
+  try {
+    const cookie = getGarageCookies();
+    if (!cookie) return res.status(503).json({ error: 'Garage cookie not configured. Visit garage-europe.vn.teslamotors.com and store the cookie.' });
+    const r = await fetch(TESLADEX_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie },
+      body: JSON.stringify(req.body)
+    });
+    if (!r.ok) return res.status(r.status).json({ error: 'Tesladex API error: ' + r.status });
+    res.json(await r.json());
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Stock: all vehicles at Rennes (replaces CSV import)
+app.get('/api/tesladex/stock', async (req, res) => {
+  try {
+    const cookie = getGarageCookies();
+    if (!cookie) return res.status(503).json({ error: 'Garage cookie not configured' });
+    const hub = config.hubs[config.defaultHub];
+    const delivered = req.query.delivered || 'false';
+    const query = 'trt_id:' + hub.trtId + ' AND delivered:' + delivered;
+    const fields = [
+      'vin', 'model', 'car_type', 'cfg_trim', 'cfg_exteriorcolor', 'cfg_wheeltype',
+      'cfg_drivetraintype', 'cfg_country', 'SOC', 'SOE', 'range', 'odo',
+      'delivered', 'cfg_deliverystatus', 'delivery_details', 'delivery_stage',
+      'bday', 'bday_epoch', 'birthplace', 'factory_gated', 'fleet_status',
+      'vehicle_type', 'last_known_location', 'connectivity_state',
+      'deployed_fw_package_customer_version', 'alerts',
+      'option_codes', 'trt_id', 'tesla_facility'
+    ];
+    const body = { fields, from: 0, query, size: 500, sort: 'vin:asc', type: 'vehicle', device_type: 'vehicle' };
+    const r = await fetch(TESLADEX_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) return res.status(r.status).json({ error: 'Tesladex error: ' + r.status });
+    const data = await r.json();
+
+    // Parse vehicles
+    const colorMap = { PEARL_WHITE: 'Blanc Perle', SOLID_BLACK: 'Noir', DEEP_BLUE: 'Bleu', STEALTH_GREY: 'Gris Stealth', ULTRA_RED: 'Rouge Ultra', QUICKSILVER: 'Quicksilver', DIAMOND_BLACK: 'Noir Diamant', GLACIER_BLUE: 'Bleu Glacier', MARINE_BLUE: 'Bleu Marine' };
+    const trimMap = { '50': 'SR+ RWD', '74': 'LR RWD', '74D': 'LR AWD', 'P74D': 'Performance' };
+    const typeMap = { 'customer-vehicle': 'Customer', 'inventory-vehicle': 'Inventory', 'marketing-vehicle': 'Marketing', 'service-loaner': 'Service Loaner' };
+    const vehicles = (data.results || data.hits || []).map(hit => {
+      const v = hit._source || hit;
+      const dd = v.delivery_details || {};
+      return {
+        vin: v.vin || '',
+        model: v.car_type === 'MODELY' ? 'Model Y' : v.car_type === 'MODEL3' ? 'Model 3' : v.model || '',
+        trim: trimMap[v.cfg_trim] || v.cfg_trim || '',
+        color: colorMap[v.cfg_exteriorcolor] || v.cfg_exteriorcolor || '',
+        wheels: (v.cfg_wheeltype || '').replace(/_/g, ' '),
+        drivetrain: v.cfg_drivetraintype || '',
+        soc: typeof v.SOC === 'number' ? Math.round(v.SOC) : null,
+        range: typeof v.range === 'number' ? Math.round(v.range) : null,
+        odo: typeof v.odo === 'number' ? Math.round(v.odo) : null,
+        delivered: !!v.delivered,
+        deliveryStatus: v.cfg_deliverystatus || '',
+        deliveryStage: v.delivery_stage || '',
+        eta: dd.eta2sc_date || '',
+        destination: dd.destination_trt_city || '',
+        vehicleType: typeMap[v.vehicle_type] || v.vehicle_type || '',
+        bday: v.bday || '',
+        bdayEpoch: v.bday_epoch || 0,
+        birthplace: v.birthplace || '',
+        factoryGated: !!v.factory_gated,
+        fleetStatus: v.fleet_status || '',
+        firmware: v.deployed_fw_package_customer_version || '',
+        connectivity: v.connectivity_state || '',
+        location: v.last_known_location || null,
+        alerts: (v.alerts || []).length,
+        alertsList: v.alerts || [],
+        ageDays: v.bday_epoch ? Math.floor((Date.now() / 1000 - parseInt(v.bday_epoch)) / 86400) : null
+      };
+    });
+
+    // Stats
+    const stats = {
+      total: vehicles.length,
+      customer: vehicles.filter(v => v.vehicleType === 'Customer').length,
+      inventory: vehicles.filter(v => v.vehicleType === 'Inventory').length,
+      serviceLoaner: vehicles.filter(v => v.vehicleType === 'Service Loaner').length,
+      marketing: vehicles.filter(v => v.vehicleType === 'Marketing').length,
+      avgSoc: vehicles.filter(v => v.soc !== null).length ? Math.round(vehicles.filter(v => v.soc !== null).reduce((s, v) => s + v.soc, 0) / vehicles.filter(v => v.soc !== null).length) : null,
+      lowCharge: vehicles.filter(v => v.soc !== null && v.soc < 50).length,
+      factoryGated: vehicles.filter(v => v.factoryGated).length,
+      withAlerts: vehicles.filter(v => v.alerts > 0).length
+    };
+
+    res.json({ source: 'tesladex', query, stats, vehicles, total: data.total || vehicles.length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
 // PROXY: Intrepid API
 // ============================================================
 app.all('/api/intrepid/*', async (req, res) => {

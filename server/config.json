@@ -44,6 +44,7 @@
     "docgen": "https://documentautomation-processapi.tesla.com",
     "billing": "https://billingengine.tesla.com/invoiceengineprocessapi/api",
     "intrepid": "https://intrepidapi.tesla.com",
-    "reggie": "https://reggie.tesla.com/api"
+    "reggie": "https://reggie.tesla.com/api",
+    "tesladex": "https://garage-europe.vn.teslamotors.com/api/1/tesladex"
   }
 }
