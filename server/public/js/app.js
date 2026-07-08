@@ -2886,6 +2886,20 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
     var advMap = {};
     ((results[2].Data && results[2].Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
 
+    // Fetch battery levels async
+    var chargeMap = {};
+    var chargeP = fetch(SERVER + '/api/vehicle-info/batch?date=' + dateStr).then(function(r) { return r.json(); }).then(function(vi) {
+      if (vi.vehicles) vi.vehicles.forEach(function(v) { if (v.charge !== null) chargeMap[v.vin] = v.charge; });
+      // Update charge badges in already-rendered cards
+      document.querySelectorAll('[data-charge-vin]').forEach(function(el) {
+        var charge = chargeMap[el.dataset.chargeVin];
+        if (charge !== undefined) {
+          var col = charge >= 80 ? '#22c55e' : charge >= 50 ? '#f59e0b' : '#ef4444';
+          el.innerHTML = '<span style="font-size:11px;font-weight:600;color:' + col + '">🔋 ' + charge + '%</span>';
+        }
+      });
+    }).catch(function() {});
+
     var isDark = !document.getElementById('lightThemeCSS');
     var html = '';
 
@@ -2931,6 +2945,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
       html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + (it.vin || a.Vin || '') + '</span>';
       html += '<span style="font-weight:600;font-size:12px;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
+      html += '<span data-charge-vin="' + (it.vin || a.Vin || '') + '" style="font-size:11px;color:#52525b">🔋 ...</span>';
       html += '</div>';
 
       // Row 2: Readiness + Status + Links
