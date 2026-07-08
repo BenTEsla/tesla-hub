@@ -1819,6 +1819,60 @@ app.all('/api/tss/*', async (req, res) => {
 });
 
 // ============================================================
+// ============================================================
+// COTG: Cars On Ground / Vehicle Readiness (Intrepid COGS)
+// ============================================================
+app.get('/api/cotg/inventory', async (req, res) => {
+  try {
+    const hub = config.hubs[config.defaultHub];
+    const matchStatus = req.query.status || '';
+    const vehicleTypes = req.query.types || '';
+    const url = config.apis.intrepid + '/cogs/api/cogs/getCogInventoryCars?trtId=' + hub.trtId + '&matchStatus=' + matchStatus + '&vehicleTypes=' + vehicleTypes + '&pageSize=1000';
+
+    // Try DRO token first, then COGS cookie
+    let r;
+    if (tokens.dro) {
+      r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + tokens.dro, 'Accept': 'application/json' } });
+    }
+    if (!r || !r.ok) {
+      // Fallback: COGS cookie
+      if (tokens.cogsAuth) {
+        r = await fetch(url, { headers: { 'Cookie': 'cogs-authorization=' + tokens.cogsAuth, 'Accept': 'application/json' } });
+      }
+    }
+    if (!r || !r.ok) return res.status(r ? r.status : 503).json({ error: 'COGS API error — need DRO token or COGS cookie' });
+
+    const data = await r.json();
+    // Build summary stats
+    const vehicles = Array.isArray(data) ? data : (data.vehicles || data.data || []);
+    const stats = { total: vehicles.length, dirty: 0, receivingInspection: 0, pdiPending: 0, inService: 0, inWash: 0, inCharge: 0, finishedGoods: 0, readyForPrep: 0 };
+    vehicles.forEach(v => {
+      const s = (v.vehicleCogStatusName || v.status || '').toLowerCase();
+      if (s.includes('dirty') || s.includes('inspection pending')) stats.dirty++;
+      if (s.includes('receiving inspection')) stats.receivingInspection++;
+      if (s.includes('pdi')) stats.pdiPending++;
+      if (s.includes('service')) stats.inService++;
+      if (s.includes('wash')) stats.inWash++;
+      if (s.includes('charge')) stats.inCharge++;
+      if (s.includes('finished')) stats.finishedGoods++;
+      if (s.includes('ready for prep')) stats.readyForPrep++;
+    });
+
+    res.json({ stats, vehicles });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Store COGS auth cookie
+app.post('/api/auth/cogs-cookie', (req, res) => {
+  if (req.body.cogsAuth) {
+    tokens.cogsAuth = req.body.cogsAuth;
+    saveTokens();
+    res.json({ ok: true });
+  } else {
+    res.status(400).json({ error: 'cogsAuth required' });
+  }
+});
+
 // CAR COMMANDS: Bulk hazard lights (flash warnings)
 // ============================================================
 app.post('/api/car-commands/hazard', async (req, res) => {

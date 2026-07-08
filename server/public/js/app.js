@@ -880,7 +880,7 @@ async function L() {
 
     RW();
 
-    // Async: fetch battery levels and enrich DATA
+    // Async: fetch battery levels + COTG status and enrich DATA
     var dateStr = new Date().toISOString().slice(0, 10);
     fetch(SERVER + '/api/vehicle-info/batch?date=' + dateStr).then(function(r) { return r.json(); }).then(function(vi) {
       if (!vi.vehicles) return;
@@ -890,7 +890,26 @@ async function L() {
       DATA.forEach(function(d) {
         if (chargeMap[d.vin] !== undefined) { d.charge = chargeMap[d.vin]; updated = true; }
       });
-      if (updated) RW(); // re-render with charge data
+      if (updated) RW();
+    }).catch(function() {});
+
+    // Async: enrich with COTG inventory data (bay location, COGS status)
+    fetch(SERVER + '/api/cotg/inventory').then(function(r) { return r.json(); }).then(function(j) {
+      if (!j.vehicles || !j.vehicles.length) return;
+      var cotgMap = {};
+      j.vehicles.forEach(function(v) { if (v.vin) cotgMap[v.vin] = v; });
+      var updated = false;
+      DATA.forEach(function(d) {
+        var cv = cotgMap[d.vin];
+        if (cv) {
+          d.cotgStatus = cv.vehicleCogStatusName || cv.status || '';
+          d.bayLocation = cv.bayLocation || cv.bay || '';
+          d.cotgCharge = cv.chargePercentage || cv.charge;
+          if (d.cotgCharge && !d.charge) d.charge = d.cotgCharge;
+          updated = true;
+        }
+      });
+      if (updated) RW();
     }).catch(function() {});
 
     var ok = DATA.filter(function(d) { return d.al.length === 0; }).length;
@@ -2758,20 +2777,26 @@ function LOADDASH() {
     if (sub) sub.textContent = open > 0 ? open + ' open' : 'all clear';
   }).catch(function() {});
 
-  // 8. Load COGS vehicle status for Today
+  // 8. Load COTG inventory (all cars on ground) for Today/Tomorrow stats
+  fetch(SERVER + '/api/cotg/inventory').then(function(r) { return r.json(); }).then(function(j) {
+    if (j.stats) {
+      var el1 = document.getElementById('dashOnSite'); if (el1) el1.textContent = j.stats.finishedGoods + j.stats.readyForPrep;
+      var el3 = document.getElementById('dashInWash'); if (el3) el3.textContent = j.stats.inWash + j.stats.inCharge;
+      // Store COTG data globally for other pages
+      window._cotgInventory = j.vehicles || [];
+      window._cotgStats = j.stats;
+    }
+  }).catch(function() {});
+  // Keep COGS per-date for transit info
   var INTREPID = SERVER + '/api/intrepid/cogs/api/cogs';
   fetch(INTREPID + '/getTssAppointmentsByDate?trtId=' + CFG.trtId + '&date=' + today + '&searchQuery=', {headers: h})
     .then(function(r) { return r.json(); }).then(function(data) {
-      var onSite = 0, inTransit = 0, inWash = 0;
+      var inTransit = 0;
       (data || []).forEach(function(a) {
         var vs = (a.cogInfo && a.cogInfo.vehicleCogStatusName) || '';
-        if (vs === 'Finished Goods' || vs.indexOf('Ready') >= 0 || vs.indexOf('Arrived') >= 0) onSite++;
-        else if (vs.indexOf('Transit') >= 0) inTransit++;
-        if (vs.indexOf('Wash') >= 0 || vs.indexOf('Charge') >= 0) inWash++;
+        if (vs.indexOf('Transit') >= 0) inTransit++;
       });
-      var el1 = document.getElementById('dashOnSite'); if (el1) el1.textContent = onSite;
       var el2 = document.getElementById('dashInTransit'); if (el2) el2.textContent = inTransit;
-      var el3 = document.getElementById('dashInWash'); if (el3) el3.textContent = inWash;
     }).catch(function() {});
 
   // 9. Load COGS vehicle status for Tomorrow
