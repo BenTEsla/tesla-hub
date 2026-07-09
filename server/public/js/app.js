@@ -96,6 +96,79 @@ function GSEARCHGO(rn, page) {
 }
 
 // ============================================
+// READINESS SCORE (0-100)
+// ============================================
+function calcScore(payOk, regOk, insOk, otg, hold, tims) {
+  var s = 0;
+  if (payOk) s += 25;
+  if (regOk) s += 20;
+  if (insOk) s += 15;
+  if (otg) s += 25;
+  if (!hold) s += 10;
+  if (tims && (tims.indexOf('Approved') >= 0 || tims.indexOf('Received') >= 0)) s += 5;
+  else if (!tims) s += 5; // no trade-in = OK
+  return s;
+}
+
+function scoreColor(s) {
+  if (s >= 90) return '#22c55e';
+  if (s >= 70) return '#f59e0b';
+  if (s >= 50) return '#f97316';
+  return '#ef4444';
+}
+
+function scoreLabel(d) {
+  var issues = [];
+  if (!d.amtOk) issues.push('Payment');
+  if (!d.regOk) issues.push('Reg');
+  if (!d.io) issues.push('Insurance');
+  if (!d.otg) issues.push('Vehicle');
+  if (d.hold) issues.push('HOLD');
+  return issues.length ? issues.join(', ') : 'Ready';
+}
+
+// ============================================
+// DAILY STANDUP REPORT
+// ============================================
+function STANDUP() {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)';
+  modal.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a">Loading standup report...</div>';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  fetch(SERVER + '/api/standup').then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) { modal.innerHTML = '<div style="color:#ef4444;padding:20px">Error: ' + j.error + '</div>'; return; }
+
+    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
+    html += '<h2 style="font-size:18px;font-weight:700;margin:0">📋 Standup Report</h2>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="COPYSTANDUP()" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📋 Copy</button>';
+    html += '<button onclick="this.closest(\'div\').closest(\'div\').closest(\'div\').remove()" style="background:none;border:1px solid rgba(255,255,255,.1);color:#71717a;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Close</button>';
+    html += '</div></div>';
+    html += '<div style="font-size:12px;color:#52525b;margin-bottom:16px">' + j.date + ' · ' + j.hubName + '</div>';
+    html += '<pre id="standupText" style="background:#111;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:16px;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:inherit;color:#e5e5e5;margin:0">' + j.report + '</pre>';
+    modal.innerHTML = html;
+  }).catch(function(e) {
+    modal.innerHTML = '<div style="color:#ef4444;padding:20px">Error: ' + e.message + '</div>';
+  });
+}
+
+function COPYSTANDUP() {
+  var text = document.getElementById('standupText');
+  if (text) {
+    navigator.clipboard.writeText(text.textContent).then(function() {
+      var btn = document.querySelector('[onclick="COPYSTANDUP()"]');
+      if (btn) { btn.textContent = '✓ Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 2000); }
+    });
+  }
+}
+
+// ============================================
 // NOTIFICATIONS
 // ============================================
 var _notifOpen = false;
@@ -967,7 +1040,8 @@ async function L() {
         amtOk: amtOk,
         inc: a.IncentivesGate === "Complete" && !a.IsEnterpriseOrder && a.VehicleTitleStatus !== "USED",
         vin: a.Vin || "",
-        uid: a.AccountUid || ""
+        uid: a.AccountUid || "",
+        score: delivered ? 100 : calcScore(amtOk, regOk, io, otg, hold, tms)
       };
     }).sort(function(a, b) {
       return a.t.localeCompare(b.t);
@@ -1103,6 +1177,7 @@ function RW() {
       + '<td data-col="vs"><span class="dt ' + vc + '"></span>' + d.vs + '</td>'
       + '<td data-col="hold">' + (d.hold ? '<span class="dt dr"></span><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank" style="color:#ef4444;font-weight:700;text-decoration:none">Hold</a>' : '<span class="dt dg"></span>OK') + '</td>'
       + '<td data-col="ins">' + (d.io ? '<span class="dt dg"></span>OK' : '<span class="su">No</span>') + '</td>'
+      + '<td data-col="score"><div style="display:flex;align-items:center;gap:4px" title="' + scoreLabel(d) + '"><div style="width:32px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden"><div style="width:' + d.score + '%;height:100%;background:' + scoreColor(d.score) + ';border-radius:3px"></div></div><span style="font-size:11px;font-weight:600;color:' + scoreColor(d.score) + '">' + d.score + '</span></div></td>'
       + '<td data-col="print" style="text-align:center"><button onclick="P1(' + i + ',this)" style="padding:5px 7px;border:1px solid rgba(255,255,255,.1);border-radius:5px;cursor:pointer;background:none;color:#a1a1aa;font-family:inherit;font-size:12px;line-height:1">'
       + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" style="display:block"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>'
       + '</button></td></tr>';

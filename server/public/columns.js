@@ -14,8 +14,9 @@ var COL_CONFIG = {
   pay:      { label: 'Payment',        width: 80,  hideable: true,  visible: true },
   ti:       { label: 'Trade-In',       width: 85,  hideable: true,  visible: true },
   vs:       { label: 'Vehicle Status', width: 125, hideable: true,  visible: true },
-  hold:     { label: 'Hold',           width: 60,  hideable: true,  visible: true },
-  ins:      { label: 'Insurance',      width: 80,  hideable: true,  visible: true },
+  hold:     { label: 'Hold',            width: 60,  hideable: true,  visible: true },
+  ins:      { label: 'Insurance',       width: 80,  hideable: true,  visible: true },
+  score:    { label: 'Score',           width: 65,  hideable: true,  visible: true },
   print:    { label: 'Print',          width: 45,  hideable: false, visible: true }
 };
 
@@ -129,6 +130,7 @@ function colResetAll() {
     charge: { w: 55, v: true },
     reg: { w: 95, v: true }, pay: { w: 80, v: true }, ti: { w: 85, v: true },
     vs: { w: 125, v: true }, hold: { w: 60, v: true }, ins: { w: 80, v: true },
+    score: { w: 65, v: true },
     print: { w: 45, v: true }
   };
   COL_KEYS.forEach(function(k) {

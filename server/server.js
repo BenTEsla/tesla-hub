@@ -1420,6 +1420,92 @@ app.post('/api/config/switch', (req, res) => {
 });
 
 // ============================================================
+// DAILY STANDUP REPORT
+// ============================================================
+app.get('/api/standup', async (req, res) => {
+  try {
+    const hub = config.hubs[config.defaultHub];
+    const h = { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId || '', 'role': 'Customer Experience Specialist, Delivery' };
+    const today = new Date();
+    const tomorrow = new Date(Date.now() + 86400000);
+    const fmtDate = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const fmtDateFR = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+
+    const fetchDay = async (date) => {
+      const r = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+      });
+      if (!r.ok) return [];
+      const j = await r.json();
+      return (j.Data && j.Data.Dashboard) || [];
+    };
+
+    const todayData = await fetchDay(fmtDate(today));
+    const tmrwData = await fetchDay(fmtDate(tomorrow));
+
+    const analyze = (data) => {
+      const total = data.length;
+      const delivered = data.filter(d => d.IsDelivered).length;
+      const active = data.filter(d => !d.IsDelivered);
+      const payOk = active.filter(d => d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete').length;
+      const regOk = active.filter(d => d.LicensePlate && d.LicensePlate.indexOf('-') >= 0).length;
+      const insOk = active.filter(d => d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified').length;
+      const otg = active.filter(d => { const vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0; }).length;
+      const holds = active.filter(d => d.IsContainmentHold || d.IsRepairOrderHold);
+      const ready = active.filter(d => {
+        const p = d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete';
+        const r = d.LicensePlate && d.LicensePlate.indexOf('-') >= 0;
+        const o = d.VehicleStage === 'Finished Goods' || (d.VehicleStage || '').indexOf('Arrived') >= 0;
+        const h = d.IsContainmentHold || d.IsRepairOrderHold;
+        return p && r && o && !h;
+      }).length;
+      const notReady = active.length - ready;
+      const issues = [];
+      if (active.length - payOk > 0) issues.push((active.length - payOk) + ' payment pending');
+      if (active.length - regOk > 0) issues.push((active.length - regOk) + ' reg pending');
+      if (active.length - otg > 0) issues.push((active.length - otg) + ' not on site');
+      return { total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg, holds: holds.map(d => ({ rn: d.ReferenceNumber, name: d.CustomerName, type: d.IsContainmentHold ? 'Containment' : 'Repair Order' })), issues };
+    };
+
+    const todayStats = analyze(todayData);
+    const tmrwStats = analyze(tmrwData);
+
+    // Recent notifications
+    const recentNotifs = notifications.filter(n => {
+      const age = Date.now() - new Date(n.time).getTime();
+      return age < 24 * 60 * 60 * 1000; // last 24h
+    });
+
+    // Generate text report
+    const dayName = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    let report = '📋 STANDUP — ' + hub.name + ' — ' + dayName + '\n\n';
+    report += '📊 TODAY: ' + todayStats.total + ' deliveries\n';
+    report += '   ✅ ' + todayStats.ready + ' ready (' + (todayStats.active ? Math.round(todayStats.ready / todayStats.active * 100) : 0) + '%)\n';
+    if (todayStats.notReady) report += '   ⚠️ ' + todayStats.notReady + ' not ready\n';
+    if (todayStats.delivered) report += '   🏁 ' + todayStats.delivered + ' already delivered\n';
+    if (todayStats.holds.length) {
+      report += '   🔴 ' + todayStats.holds.length + ' hold(s):\n';
+      todayStats.holds.forEach(h => { report += '      • ' + h.rn + ' ' + h.name + ' (' + h.type + ')\n'; });
+    }
+    if (todayStats.issues.length) report += '   📝 ' + todayStats.issues.join(', ') + '\n';
+
+    report += '\n📊 TOMORROW: ' + tmrwStats.total + ' deliveries\n';
+    report += '   ✅ ' + tmrwStats.ready + ' ready\n';
+    if (tmrwStats.notReady) report += '   ⚠️ ' + tmrwStats.notReady + ' not ready\n';
+    if (tmrwStats.holds.length) report += '   🔴 ' + tmrwStats.holds.length + ' hold(s)\n';
+
+    if (recentNotifs.length) {
+      report += '\n🔔 LAST 24H CHANGES: ' + recentNotifs.length + '\n';
+      recentNotifs.slice(0, 5).forEach(n => { report += '   ' + (n.priority === 'high' ? '🔴' : '🟡') + ' ' + n.title + '\n'; });
+      if (recentNotifs.length > 5) report += '   ... +' + (recentNotifs.length - 5) + ' more\n';
+    }
+
+    res.json({ report, today: todayStats, tomorrow: tmrwStats, notifications: recentNotifs.length, hubName: hub.name, date: dayName });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
 // DELIVERY NOTES API
 // ============================================================
 const notesFile = path.join(__dirname, 'data', 'delivery-notes.json');
