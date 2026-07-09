@@ -8,9 +8,21 @@
       "printer": "RSN03-Printer 2",
       "printerIP": "10.86.16.32",
       "ces": [
-        {"name": "Ben Daubin", "id": "428058", "username": "bdaubin"},
-        {"name": "Sacha Villa", "id": "399921", "username": "sacvilla"},
-        {"name": "Sophie MACE", "id": "444287", "username": "smace"}
+        {
+          "name": "Ben Daubin",
+          "id": "428058",
+          "username": "bdaubin"
+        },
+        {
+          "name": "Sacha Villa",
+          "id": "399921",
+          "username": "sacvilla"
+        },
+        {
+          "name": "Sophie MACE",
+          "id": "444287",
+          "username": "smace"
+        }
       ]
     },
     "nantes": {

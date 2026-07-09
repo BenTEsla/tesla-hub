@@ -2438,6 +2438,11 @@ async function checkDeliveries() {
 
       deliveries.forEach(d => {
         const rn = d.ReferenceNumber;
+        if (!rn) return;
+        // Skip delivered or obviously wrong entries
+        if (d.IsDelivered) return;
+        if (d.DeliveryLocation && !d.DeliveryLocation.includes(hub.location.split('-').slice(0,3).join('-'))) return;
+
         const prev = watchState[rn] || {};
         const isToday = date === dates[0];
         const dayLabel = isToday ? "aujourd'hui" : 'demain';
