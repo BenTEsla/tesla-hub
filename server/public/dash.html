@@ -218,6 +218,44 @@
       </div>
     </div>
 
+    <!-- BLOCK: READINESS PULSE -->
+    <div id="dashBlock_readiness" style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f97316;display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f97316;display:inline-block"></span> Readiness Pulse
+        </div>
+        <button onclick="STANDUP()" style="background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Open Standup</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;margin-bottom:12px">
+        <div class="dash-card" onclick="STANDUP()" style="cursor:pointer;min-height:100px">
+          <div class="dash-card-label">Avg Score</div>
+          <div class="dash-card-value" id="dashAvgScore">-</div>
+          <div class="dash-card-sub" id="dashAvgScoreSub">today active</div>
+        </div>
+        <div class="dash-card" onclick="STANDUP()" style="cursor:pointer;min-height:100px">
+          <div class="dash-card-label">Ready %</div>
+          <div class="dash-card-value" id="dashReadyPct">-</div>
+          <div class="dash-card-sub" id="dashReadyPctSub"></div>
+        </div>
+        <div class="dash-card" onclick="STANDUP()" style="cursor:pointer;min-height:100px">
+          <div class="dash-card-label">Not Ready</div>
+          <div class="dash-card-value dash-yellow" id="dashPulseNotReady">-</div>
+          <div class="dash-card-sub" id="dashPulseNotReadySub">action needed</div>
+        </div>
+        <div class="dash-card" onclick="NAV(10,document.querySelector('[data-tooltip=&quot;SV &amp; Holds&quot;]'))" style="cursor:pointer;min-height:100px">
+          <div class="dash-card-label">Holds Today</div>
+          <div class="dash-card-value dash-red" id="dashPulseHolds">-</div>
+          <div class="dash-card-sub" id="dashPulseHoldsSub"></div>
+        </div>
+        <div class="dash-card" onclick="STANDUP()" style="cursor:pointer;min-height:100px">
+          <div class="dash-card-label">Low Charge</div>
+          <div class="dash-card-value dash-red" id="dashPulseCharge">-</div>
+          <div class="dash-card-sub" id="dashPulseChargeSub">&lt; 50%</div>
+        </div>
+      </div>
+      <div id="dashPulseAlerts" style="display:none"></div>
+    </div>
+
     <!-- BLOCK: TODAY -->
     <div id="dashBlock_today" style="margin-bottom:24px">
       <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;margin-bottom:12px;display:flex;align-items:center;gap:8px">

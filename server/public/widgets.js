@@ -1,6 +1,7 @@
 /* DASH Block Selector - Show/hide dashboard sections */
 
 var DASH_BLOCKS = {
+  readiness: { label: 'Readiness Pulse', icon: '🟠', default: true },
   today:    { label: 'Today', icon: '🔵', default: true },
   tomorrow: { label: 'Tomorrow', icon: '🟣', default: true },
   week:     { label: 'This Week', icon: '🟢', default: true },

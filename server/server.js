@@ -1502,12 +1502,14 @@ app.get('/api/standup', async (req, res) => {
       notReadyList.sort((a, b) => a.score - b.score);
       const ready = readyList.length;
       const notReady = notReadyList.length;
+      const scorePool = readyList.concat(notReadyList);
+      const avgScore = scorePool.length ? Math.round(scorePool.reduce((s, x) => s + x.score, 0) / scorePool.length) : 0;
       const issues = [];
       if (active.length - payOk > 0) issues.push((active.length - payOk) + ' payment pending');
       if (active.length - regOk > 0) issues.push((active.length - regOk) + ' reg pending');
       if (active.length - otg > 0) issues.push((active.length - otg) + ' not on site');
       return {
-        total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg,
+        total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg, avgScore,
         holds: holds.map(d => ({ rn: d.ReferenceNumber, name: d.CustomerName, type: d.IsContainmentHold ? 'Containment' : 'Repair Order' })),
         issues, notReadyList: notReadyList.slice(0, 15), readyList
       };

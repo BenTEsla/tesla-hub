@@ -2929,6 +2929,80 @@ function LOADDASH() {
   var ds = new Date();
   var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
 
+  // 0. Readiness Pulse from standup API (score, holds, low charge)
+  fetch(SERVER + '/api/standup').then(function(r) { return r.json(); }).then(function(j) {
+    if (j.error) return;
+    var t = j.today || {};
+    var avg = t.avgScore != null ? t.avgScore : '-';
+    var readyPct = t.active ? Math.round((t.ready || 0) / t.active * 100) : 0;
+    var holdsN = (t.holds || []).length;
+    var lowN = (j.lowCharge || []).length;
+
+    var avgEl = document.getElementById('dashAvgScore');
+    if (avgEl) {
+      avgEl.textContent = avg;
+      avgEl.style.color = typeof avg === 'number' ? (avg >= 90 ? '#22c55e' : avg >= 70 ? '#f59e0b' : '#ef4444') : '';
+    }
+    var avgSub = document.getElementById('dashAvgScoreSub');
+    if (avgSub) avgSub.textContent = (t.active || 0) + ' active · ' + (t.delivered || 0) + ' done';
+
+    var rp = document.getElementById('dashReadyPct');
+    if (rp) {
+      rp.textContent = readyPct + '%';
+      rp.style.color = readyPct >= 80 ? '#22c55e' : readyPct >= 50 ? '#f59e0b' : '#ef4444';
+    }
+    var rps = document.getElementById('dashReadyPctSub');
+    if (rps) rps.textContent = (t.ready || 0) + ' / ' + (t.active || 0) + ' ready';
+
+    var nr = document.getElementById('dashPulseNotReady');
+    if (nr) nr.textContent = t.notReady || 0;
+    var nrs = document.getElementById('dashPulseNotReadySub');
+    if (nrs) nrs.textContent = (t.issues || []).slice(0, 2).join(' · ') || 'action needed';
+
+    var ph = document.getElementById('dashPulseHolds');
+    if (ph) ph.textContent = holdsN;
+    var phs = document.getElementById('dashPulseHoldsSub');
+    if (phs) phs.textContent = holdsN ? (t.holds[0].rn + (holdsN > 1 ? ' +' + (holdsN - 1) : '')) : 'all clear';
+
+    var pc = document.getElementById('dashPulseCharge');
+    if (pc) {
+      pc.textContent = lowN;
+      pc.style.color = lowN ? '#ef4444' : '#22c55e';
+    }
+    var pcs = document.getElementById('dashPulseChargeSub');
+    if (pcs) pcs.textContent = lowN ? 'vehicles under 50%' : 'all above 50%';
+
+    // Alert chips strip
+    var alerts = document.getElementById('dashPulseAlerts');
+    if (alerts) {
+      var chips = [];
+      (t.holds || []).slice(0, 3).forEach(function(hld) {
+        chips.push('<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + hld.rn + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#fca5a5;text-decoration:none;font-size:12px;font-weight:600">HOLD ' + hld.rn + ' · ' + (hld.name || '') + '</a>');
+      });
+      (j.lowCharge || []).slice(0, 4).forEach(function(v) {
+        chips.push('<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + v.rn + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.14);color:#fca5a5;text-decoration:none;font-size:12px;font-weight:600">🔋 ' + v.charge + '% ' + v.rn + '</a>');
+      });
+      (t.notReadyList || []).slice(0, 4).forEach(function(item) {
+        if (item.score >= 70) return;
+        chips.push('<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + item.rn + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.16);color:#fcd34d;text-decoration:none;font-size:12px;font-weight:600">Score ' + item.score + ' ' + item.rn + '</a>');
+      });
+      if (chips.length) {
+        alerts.style.display = 'flex';
+        alerts.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px';
+        alerts.innerHTML = chips.join('');
+      } else {
+        alerts.style.display = 'none';
+        alerts.innerHTML = '';
+      }
+    }
+
+    // Keep week "Not Ready" in sync with pulse when available
+    var weekNr = document.getElementById('dashNotReady');
+    if (weekNr && t.notReady != null) weekNr.textContent = t.notReady;
+    var weekNrSub = document.getElementById('dashNotReadySub');
+    if (weekNrSub && t.notReady != null) weekNrSub.textContent = 'today not ready';
+  }).catch(function() {});
+
   // 1. Load today's deliveries
   fetch(BASE + "/deliveryops/Customers/Dashboard", {
     method: "POST", headers: h,
@@ -2944,8 +3018,8 @@ function LOADDASH() {
     var dSub = document.getElementById("dashDeliveriesSub"); if (dSub) dSub.textContent = delivered + " delivered";
     var rEl = document.getElementById("dashReady"); if (rEl) rEl.textContent = fg;
     // dashReadySub removed
-    var nrEl = document.getElementById("dashNotReady"); if (nrEl) nrEl.textContent = notReady;
-    var nrSub = document.getElementById("dashNotReadySub"); if (nrSub) nrSub.textContent = "not ready";
+    var nrEl = document.getElementById("dashNotReady"); if (nrEl && nrEl.textContent === '-') nrEl.textContent = notReady;
+    var nrSub = document.getElementById("dashNotReadySub"); if (nrSub && !nrSub.textContent) nrSub.textContent = "not ready";
 
     // Schedule removed - use Calendar
   }).catch(function(e) {
