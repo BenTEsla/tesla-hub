@@ -164,6 +164,15 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Support
         </a>
+        <!-- Global Search -->
+        <div style="position:relative;margin:0 8px">
+          <input id="globalSearch" type="text" placeholder="Search RN, name, VIN..." 
+            oninput="GSEARCH(this.value)" onkeydown="if(event.key==='Escape'){this.value='';GSEARCH('');this.blur()}"
+            style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#e5e5e5;font-size:12px;padding:5px 10px 5px 28px;border-radius:8px;width:200px;font-family:inherit;outline:none;transition:border-color .15s"
+            onfocus="this.style.borderColor='rgba(59,130,246,.5)'" onblur="setTimeout(function(){document.getElementById('searchResults').style.display='none'},200);this.style.borderColor='rgba(255,255,255,.08)'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" style="width:14px;height:14px;position:absolute;left:8px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div id="searchResults" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:1001;max-height:350px;overflow-y:auto"></div>
+        </div>
         <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.5;display:flex;align-items:center;padding:2px;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>

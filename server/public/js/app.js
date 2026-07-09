@@ -1,4 +1,99 @@
-/* DASH v22.6 - Delivery Automation Smart Hub - Application Logic */
+/* DASH v22.15 - Delivery Automation Smart Hub - Application Logic */
+
+// ============================================
+// GLOBAL SEARCH
+// ============================================
+var _searchTimeout = null;
+function GSEARCH(q) {
+  var panel = document.getElementById('searchResults');
+  if (!q || q.length < 2) { panel.style.display = 'none'; return; }
+  clearTimeout(_searchTimeout);
+  _searchTimeout = setTimeout(function() {
+    var query = q.toLowerCase().trim();
+    var results = [];
+    var isDark = !document.getElementById('lightThemeCSS');
+
+    // Search in current DATA (Customer Delivery)
+    if (typeof DATA !== 'undefined' && Array.isArray(DATA)) {
+      DATA.forEach(function(d) {
+        if ((d.rn && d.rn.toLowerCase().indexOf(query) >= 0) ||
+            (d.name && d.name.toLowerCase().indexOf(query) >= 0) ||
+            (d.vin && d.vin.toLowerCase().indexOf(query) >= 0) ||
+            (d.model && d.model.toLowerCase().indexOf(query) >= 0)) {
+          results.push({ type: 'delivery', rn: d.rn, name: d.name, model: d.model, time: d.t, vin: d.vin, page: 1, label: 'Customer Delivery' });
+        }
+      });
+    }
+
+    // Search in trade-in tracking
+    if (typeof scanProcessor !== 'undefined' || true) {
+      fetch(SERVER + '/api/scan/status').then(function(r) { return r.json(); }).then(function(j) {
+        (j.tracking || []).forEach(function(t) {
+          if ((t.rn && t.rn.toLowerCase().indexOf(query) >= 0) ||
+              (t.plate && t.plate.toLowerCase().indexOf(query) >= 0) ||
+              (t.vin && t.vin.toLowerCase().indexOf(query) >= 0) ||
+              (t.make && t.make.toLowerCase().indexOf(query) >= 0)) {
+            results.push({ type: 'tradein', rn: t.rn, name: (t.make || '') + ' ' + (t.model || ''), plate: t.plate, page: 4, label: 'Trade-In' });
+          }
+        });
+        renderSearchResults(results, panel, query, isDark);
+      }).catch(function() { renderSearchResults(results, panel, query, isDark); });
+    } else {
+      renderSearchResults(results, panel, query, isDark);
+    }
+
+    // Also search via DRO API for RN/name not in current DATA
+    if (query.length >= 4) {
+      fetch(SERVER + '/api/dro/advisor/Dashboard?isSidePanelFullScreen=true', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ReferenceNumbers: query.toUpperCase().startsWith('RN') ? [query.toUpperCase()] : [], CustomerName: query.toUpperCase().startsWith('RN') ? '' : query, TrtIds: [CFG.trtId], Countries: [] }], Skip: 0, Take: 5, SortOrder: [], SelectedColumns: [] })
+      }).then(function(r) { return r.json(); }).then(function(j) {
+        var dro = (j.Data && j.Data.Dashboard) || [];
+        dro.forEach(function(a) {
+          var exists = results.some(function(r) { return r.rn === a.ReferenceNumber; });
+          if (!exists) {
+            results.push({ type: 'dro', rn: a.ReferenceNumber, name: a.CustomerName, model: a.VehicleModel || '', vin: a.Vin || '', page: 1, label: 'DRO' });
+          }
+        });
+        renderSearchResults(results, panel, query, isDark);
+      }).catch(function() {});
+    }
+  }, 300);
+}
+
+function renderSearchResults(results, panel, query, isDark) {
+  if (!results.length) {
+    panel.innerHTML = '<div style="padding:16px;text-align:center;color:#71717a;font-size:12px">No results for "' + query + '"</div>';
+    panel.style.display = '';
+    return;
+  }
+  var html = '';
+  results.slice(0, 10).forEach(function(r) {
+    var icon = r.type === 'delivery' ? '📋' : r.type === 'tradein' ? '🔄' : '🔍';
+    var subtitle = r.model || r.plate || '';
+    var badge = '<span style="font-size:9px;background:rgba(59,130,246,.15);color:#60a5fa;padding:1px 6px;border-radius:8px;font-weight:600">' + r.label + '</span>';
+    html += '<div onclick="GSEARCHGO(\'' + r.rn + '\',' + r.page + ')" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .1s" onmouseover="this.style.background=\'rgba(255,255,255,.06)\'" onmouseout="this.style.background=\'none\'">';
+    html += '<span style="font-size:16px">' + icon + '</span>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:13px;font-weight:600;color:#e5e5e5">' + (r.name || r.rn) + ' ' + badge + '</div>';
+    html += '<div style="font-size:11px;color:#71717a;display:flex;gap:8px">';
+    html += '<span style="color:#3b82f6;font-weight:600">' + r.rn + '</span>';
+    if (subtitle) html += '<span>' + subtitle + '</span>';
+    if (r.time) html += '<span>' + r.time + '</span>';
+    html += '</div></div></div>';
+  });
+  if (results.length > 10) html += '<div style="padding:8px;text-align:center;color:#52525b;font-size:11px">+' + (results.length - 10) + ' more results</div>';
+  panel.innerHTML = html;
+  panel.style.display = '';
+}
+
+function GSEARCHGO(rn, page) {
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('globalSearch').value = '';
+  NAV(page);
+  // Open DRO side panel for this RN
+  window.open('https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + rn, '_blank');
+}
 
 // ============================================
 // NOTIFICATIONS
