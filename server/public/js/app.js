@@ -3350,20 +3350,6 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
     var advMap = {};
     ((results[2].Data && results[2].Data.Dashboard) || []).forEach(function(a) { advMap[a.ReferenceNumber] = a; });
 
-    // Fetch battery levels async
-    var chargeMap = {};
-    var chargeP = fetch(SERVER + '/api/vehicle-info/batch?date=' + dateStr).then(function(r) { return r.json(); }).then(function(vi) {
-      if (vi.vehicles) vi.vehicles.forEach(function(v) { if (v.charge !== null) chargeMap[v.vin] = v.charge; });
-      // Update charge badges in already-rendered cards
-      document.querySelectorAll('[data-charge-vin]').forEach(function(el) {
-        var charge = chargeMap[el.dataset.chargeVin];
-        if (charge !== undefined) {
-          var col = charge >= 80 ? '#22c55e' : charge >= 50 ? '#f59e0b' : '#ef4444';
-          el.innerHTML = '<span style="font-size:11px;font-weight:600;color:' + col + '">🔋 ' + charge + '%</span>';
-        }
-      });
-    }).catch(function() {});
-
     var isDark = !document.getElementById('lightThemeCSS');
     var html = '';
 
@@ -3378,7 +3364,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified' || a.InsuranceActionStatus === 'COMPLETE');
-      var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
+      var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0 || vs.indexOf('service center') >= 0;
       var hasTI = !!(window._tiR && window._tiR[it.rn]); // Widget API verified
@@ -3394,6 +3380,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       if (!otg) scoreIssues.push('Vehicle');
       if (hold) scoreIssues.push('HOLD');
       var scoreTitle = scoreIssues.length ? scoreIssues.join(', ') : 'Ready';
+      var vin = it.vin || a.Vin || '';
 
       var statusDot = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : '#3b82f6';
       var statusLabel = it.status || 'Scheduled';
@@ -3416,9 +3403,9 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       if (String(a.VehicleTitleStatus || '') === 'USED') html += '<span style="font-size:10px;background:rgba(249,115,22,.15);color:#f97316;padding:2px 8px;border-radius:10px;font-weight:600">USED</span>';
       html += '<span style="color:#71717a;font-size:12px">' + it.model + '</span>';
       html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
-      html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + (it.vin || a.Vin || '') + '</span>';
+      html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + vin + '</span>';
       html += '<span style="font-weight:600;font-size:12px;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
-      html += '<span data-charge-vin="' + (it.vin || a.Vin || '') + '" style="font-size:11px;color:#52525b">🔋 ...</span>';
+      html += '<span data-charge-rn="' + it.rn + '" data-charge-vin="' + vin + '" style="font-size:11px;color:#52525b">🔋 ...</span>';
       // Readiness score badge
       html += '<span title="' + scoreTitle + '" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">';
       html += '<div style="width:28px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden"><div style="width:' + score + '%;height:100%;background:' + scoreColor(score) + ';border-radius:3px"></div></div>';
@@ -3437,7 +3424,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' Hold</span>';
       // Status dropdown
       var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
-      html += '<select onchange="UPDATESTATUS(\'' + it.rn + '\',this.value);this.style.color=this.value===\'Confirmed\'?\'#22c55e\':\'#3b82f6\'" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
+      html += '<select data-status-rn="' + it.rn + '" onchange="UPDATESTATUS(\'' + it.rn + '\',this.value,this)" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
       // CEE link
       if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:5px;margin-left:2px">CEE</a>';
       html += '</div>';
@@ -3461,6 +3448,34 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
     });
 
     body.innerHTML = html;
+
+    // Charge: same fast path as Customer Delivery — widget per RN after render
+    items.forEach(function(it) {
+      var a = advMap[it.rn] || {};
+      var vin = it.vin || a.Vin || '';
+      if (!it.rn || !vin || a.IsDelivered) {
+        var el0 = document.querySelector('[data-charge-rn="' + it.rn + '"]');
+        if (el0) el0.innerHTML = '<span style="font-size:11px;color:#52525b">🔋 —</span>';
+        return;
+      }
+      fetch(SERVER + '/api/dro/widget/overview/' + it.rn + '/info?vin=' + encodeURIComponent(vin))
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          var el = document.querySelector('[data-charge-rn="' + it.rn + '"]');
+          if (!el) return;
+          var charge = j.Data && j.Data.VinCharge != null ? parseInt(j.Data.VinCharge) : null;
+          if (charge == null || isNaN(charge)) {
+            el.innerHTML = '<span style="font-size:11px;color:#52525b">🔋 —</span>';
+            return;
+          }
+          var col = charge >= 80 ? '#22c55e' : charge >= 50 ? '#f59e0b' : '#ef4444';
+          el.innerHTML = '<span style="font-size:11px;font-weight:600;color:' + col + '">🔋 ' + charge + '%</span>';
+        })
+        .catch(function() {
+          var el = document.querySelector('[data-charge-rn="' + it.rn + '"]');
+          if (el) el.innerHTML = '<span style="font-size:11px;color:#52525b">🔋 —</span>';
+        });
+    });
   });
 }
 
@@ -3500,24 +3515,82 @@ function UPDATEHOST(rn, host) {
   }).catch(function() {});
 }
 
-function UPDATESTATUS(rn, status) {
-  var sel = document.activeElement;
+function UPDATESTATUS(rn, status, selEl) {
+  var sel = selEl || document.activeElement;
+  var prev = sel ? sel.value : status;
   if (sel) { sel.style.opacity = '0.5'; sel.disabled = true; }
+
+  var userId = (AUTH && AUTH.userId) ? AUTH.userId : '428058';
+  var calendarId = (CFG && CFG.calendarId) ? CFG.calendarId : 14453;
+  var userName = (window._ssoUser || 'bdaubin').toLowerCase();
+
   fetch(SERVER + '/api/tss/delivery/getCustomerInfoByRN', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({userId: 65748, rn: rn, calendarId: 14453})
-  }).then(function(r) { return r.json(); }).then(function(info) {
+    body: JSON.stringify({ userId: parseInt(userId, 10) || userId, rn: rn, calendarId: calendarId })
+  }).then(function(r) {
+    if (r.status === 401) throw new Error('TSS token missing/expired — open TSS (tss.tesla.com) to capture token');
+    if (!r.ok) throw new Error('TSS lookup failed (' + r.status + ')');
+    return r.json();
+  }).then(function(info) {
+    if (info && info.error) throw new Error(info.error);
     var appts = (info.response || info || []);
-    var appt = Array.isArray(appts) ? appts.find(function(a) { return a.rn === rn; }) : null;
-    if (!appt || !appt.appointmentId) throw new Error('No appointment found for ' + rn);
+    if (!Array.isArray(appts)) appts = appts ? [appts] : [];
+    var appt = appts.find(function(a) { return (a.rn || a.referenceNumber) === rn; }) || appts[0];
+    if (!appt || !appt.appointmentId) throw new Error('No TSS appointment found for ' + rn);
     return fetch(SERVER + '/api/tss/delivery/saveAppointment', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({customer:appt.customerContact||{},startDateTime:appt.appointmentStartDateTime,trtId:CFG.trtId,appointmentType:appt.appointmentType||'CustomerPickup',appointmentStatus:status,appointmentSubStatus:null,model:'',userId:65748,internalNotes:'',appointmentId:appt.appointmentId,referenceNumber:rn,vin:appt.vin||'',deliveryType:3,userName:'bdaubin',calendarId:14453,isExpress:false,cultureName:'FR',forceFromDb:true,changeReason:null,changeSubReasons:[]})
+      body: JSON.stringify({
+        customer: appt.customerContact || {},
+        startDateTime: appt.appointmentStartDateTime,
+        trtId: CFG.trtId,
+        appointmentType: appt.appointmentType || 'CustomerPickup',
+        appointmentStatus: status,
+        appointmentSubStatus: null,
+        model: '',
+        userId: parseInt(userId, 10) || userId,
+        internalNotes: '',
+        appointmentId: appt.appointmentId,
+        referenceNumber: rn,
+        vin: appt.vin || '',
+        deliveryType: 3,
+        userName: userName,
+        calendarId: calendarId,
+        isExpress: false,
+        cultureName: 'FR',
+        forceFromDb: true,
+        changeReason: null,
+        changeSubReasons: []
+      })
     });
-  }).then(function(r) { if (r) return r.json(); }).then(function() {
-    if (sel) { sel.style.opacity = '1'; sel.disabled = false; sel.style.color = status === 'Confirmed' ? '#22c55e' : '#3b82f6'; }
+  }).then(function(r) {
+    if (!r) return null;
+    if (r.status === 401) throw new Error('TSS token missing/expired — open TSS to capture token');
+    if (!r.ok) throw new Error('TSS save failed (' + r.status + ')');
+    return r.json().catch(function() { return { ok: true }; });
+  }).then(function() {
+    if (sel) {
+      sel.style.opacity = '1';
+      sel.disabled = false;
+      sel.style.color = status === 'Confirmed' ? '#22c55e' : '#3b82f6';
+    }
+    // Update local calendar cache so grid counts stay in sync
+    (_calAllDays || []).forEach(function(day) {
+      Object.keys(day.slots || {}).forEach(function(slot) {
+        (day.slots[slot] || []).forEach(function(e) {
+          if (e.rn === rn) e.status = status;
+        });
+      });
+    });
   }).catch(function(e) {
-    if (sel) { sel.style.opacity = '1'; sel.disabled = false; sel.style.color = '#ef4444'; setTimeout(function() { sel.style.color = ''; }, 3000); }
+    if (sel) {
+      sel.style.opacity = '1';
+      sel.disabled = false;
+      sel.style.color = '#ef4444';
+      // revert selection
+      try { sel.value = (prev === 'Confirmed' ? 'Scheduled' : prev); } catch (err) {}
+      setTimeout(function() { if (sel) sel.style.color = ''; }, 4000);
+    }
+    alert('Confirm failed: ' + (e.message || e));
   });
 }
 

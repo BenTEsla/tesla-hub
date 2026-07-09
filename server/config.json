@@ -1,71 +1,78 @@
-{
-  "hubs": {
-    "rennes": {
-      "name": "Rennes Saint-Jacques",
-      "trtId": 28498,
-      "country": "FR",
-      "location": "EU-FR-Saint-Jacques de la Lande-Rue de la Pitardiere",
-      "printer": "RSN03-Printer 2",
-      "printerIP": "10.86.16.32",
-      "ces": [
-        {
-          "name": "Ben Daubin",
-          "id": "428058",
-          "username": "bdaubin"
-        },
-        {
-          "name": "Sacha Villa",
-          "id": "399921",
-          "username": "sacvilla"
-        },
-        {
-          "name": "Sophie MACE",
-          "id": "444287",
-          "username": "smace"
-        }
-      ]
-    },
-    "nantes": {
-      "name": "Nantes",
-      "trtId": 0,
-      "country": "FR",
-      "location": "",
-      "printer": "",
-      "printerIP": "",
-      "ces": []
-    },
-    "bordeaux": {
-      "name": "Bordeaux",
-      "trtId": 58354,
-      "country": "FR",
-      "location": "EU-FR-Bordeaux-Delivery",
-      "printer": "",
-      "printerIP": "",
-      "ces": []
-    }
-  },
-  "defaultHub": "rennes",
-  "sso": {
-    "adfsUrl": "https://sso.tesla.com/adfs/oauth2",
-    "droClientId": "44490dec-da63-422d-92ca-8856c19aae7d",
-    "billingClientId": "3d46b5c5-6a01-423a-a4b8-c16dca7e6a92",
-    "oidc": {
-      "tenantId": "9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674",
-      "clientId": "",
-      "clientSecret": "",
-      "redirectUri": "http://localhost:3000/auth/callback/oidc",
-      "scopes": "openid profile email offline_access",
-      "authorizeUrl": "https://login.microsoftonline.com/9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674/oauth2/v2.0/authorize",
-      "tokenUrl": "https://login.microsoftonline.com/9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674/oauth2/v2.0/token",
-      "allowedGroup": "EUD-DASH-Admins"
-    }
-  },
-  "apis": {
-    "dro": "https://mytdeliveryopsapi.tesla.com/api",
-    "docgen": "https://documentautomation-processapi.tesla.com",
-    "billing": "https://billingengine.tesla.com/invoiceengineprocessapi/api",
-    "intrepid": "https://intrepidapi.tesla.com",
-    "reggie": "https://reggie.tesla.com/api",
-    "tesladex": "https://garage-europe.vn.teslamotors.com/api/1/tesladex"
-  }
+﻿{
+    "hubs":  {
+                 "rennes":  {
+                                "name":  "Rennes Saint-Jacques",
+                                "trtId":  28498,
+                                "country":  "FR",
+                                "location":  "EU-FR-Saint-Jacques de la Lande-Rue de la Pitardiere",
+                                "printer":  "RSN03-Printer 2",
+                                "printerIP":  "10.86.16.32",
+                                "ces":  [
+                                            {
+                                                "name":  "Ben Daubin",
+                                                "id":  "428058",
+                                                "username":  "bdaubin"
+                                            },
+                                            {
+                                                "name":  "Sacha Villa",
+                                                "id":  "399921",
+                                                "username":  "sacvilla"
+                                            },
+                                            {
+                                                "name":  "Sophie MACE",
+                                                "id":  "444287",
+                                                "username":  "smace"
+                                            }
+                                        ],
+                                "calendarId":  14453
+                            },
+                 "nantes":  {
+                                "name":  "Nantes",
+                                "trtId":  0,
+                                "country":  "FR",
+                                "location":  "",
+                                "printer":  "",
+                                "printerIP":  "",
+                                "ces":  [
+
+                                        ],
+                                "calendarId":  0
+                            },
+                 "bordeaux":  {
+                                  "name":  "Bordeaux",
+                                  "trtId":  58354,
+                                  "country":  "FR",
+                                  "location":  "EU-FR-Bordeaux-Delivery",
+                                  "printer":  "",
+                                  "printerIP":  "",
+                                  "ces":  [
+
+                                          ],
+                                  "calendarId":  0
+                              }
+             },
+    "defaultHub":  "rennes",
+    "sso":  {
+                "adfsUrl":  "https://sso.tesla.com/adfs/oauth2",
+                "droClientId":  "44490dec-da63-422d-92ca-8856c19aae7d",
+                "billingClientId":  "3d46b5c5-6a01-423a-a4b8-c16dca7e6a92",
+                "oidc":  {
+                             "tenantId":  "9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674",
+                             "clientId":  "",
+                             "clientSecret":  "",
+                             "redirectUri":  "http://localhost:3000/auth/callback/oidc",
+                             "scopes":  "openid profile email offline_access",
+                             "authorizeUrl":  "https://login.microsoftonline.com/9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674/oauth2/v2.0/authorize",
+                             "tokenUrl":  "https://login.microsoftonline.com/9026c5f4-86d0-4b9f-bd39-b7d4d0fb4674/oauth2/v2.0/token",
+                             "allowedGroup":  "EUD-DASH-Admins"
+                         }
+            },
+    "apis":  {
+                 "dro":  "https://mytdeliveryopsapi.tesla.com/api",
+                 "docgen":  "https://documentautomation-processapi.tesla.com",
+                 "billing":  "https://billingengine.tesla.com/invoiceengineprocessapi/api",
+                 "intrepid":  "https://intrepidapi.tesla.com",
+                 "reggie":  "https://reggie.tesla.com/api",
+                 "tesladex":  "https://garage-europe.vn.teslamotors.com/api/1/tesladex"
+             }
 }

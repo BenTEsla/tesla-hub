@@ -228,7 +228,7 @@ app.get('/api/auth/status', (req, res) => {
       droValid = droMinLeft > 0;
     } catch(e) { droValid = !!tokens.dro; }
   }
-  res.json({ hasDro: droValid, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, droMinLeft, hasOs: !!tokens.osToken, userId: tokens.userId });
+  res.json({ hasDro: droValid, hasDocgen: !!tokens.docgen && docgenMinLeft > 0, docgenMinLeft, droMinLeft, hasOs: !!tokens.osToken, hasTss: !!tokens.tssToken, userId: tokens.userId });
 });
 
 app.get('/auth/callback', (req, res) => {

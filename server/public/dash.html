@@ -580,7 +580,7 @@
     // Set globals
     AUTH = { token: 'Bearer proxy', userId: authData.userId || '428058' };
     if (cfgData.hub) {
-      CFG = { trtId: cfgData.hub.trtId, cc: cfgData.hub.country || 'FR', location: cfgData.hub.location || '' };
+      CFG = { trtId: cfgData.hub.trtId, cc: cfgData.hub.country || 'FR', location: cfgData.hub.location || '', calendarId: cfgData.hub.calendarId || 14453 };
       if (cfgData.hub.ces) CES = cfgData.hub.ces.map(function(c) { return c.name; });
     }
 
