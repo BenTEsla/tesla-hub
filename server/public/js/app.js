@@ -880,18 +880,34 @@ async function L() {
 
     RW();
 
-    // Async: fetch battery levels + COTG status and enrich DATA
-    var dateStr = new Date().toISOString().slice(0, 10);
-    fetch(SERVER + '/api/vehicle-info/batch?date=' + dateStr).then(function(r) { return r.json(); }).then(function(vi) {
-      if (!vi.vehicles) return;
+    // Async: fetch battery levels per VIN from Widget API
+    var vinsToCharge = DATA.filter(function(d) { return d.vin && !d.delivered; }).map(function(d) { return { vin: d.vin, rn: d.rn }; });
+    if (vinsToCharge.length) {
+      // Fetch charge in parallel batches of 5
       var chargeMap = {};
-      vi.vehicles.forEach(function(v) { if (v.charge !== null) chargeMap[v.vin] = v.charge; });
-      var updated = false;
-      DATA.forEach(function(d) {
-        if (chargeMap[d.vin] !== undefined) { d.charge = chargeMap[d.vin]; updated = true; }
-      });
-      if (updated) RW();
-    }).catch(function() {});
+      var batchSize = 5;
+      var batches = [];
+      for (var bi = 0; bi < vinsToCharge.length; bi += batchSize) {
+        batches.push(vinsToCharge.slice(bi, bi + batchSize));
+      }
+      (function processBatch(idx) {
+        if (idx >= batches.length) return;
+        Promise.all(batches[idx].map(function(v) {
+          return fetch(SERVER + '/api/dro/widget/overview/' + v.rn + '/info?vin=' + v.vin)
+            .then(function(r) { return r.json(); })
+            .then(function(j) { if (j.Data && j.Data.VinCharge) chargeMap[v.vin] = parseInt(j.Data.VinCharge); })
+            .catch(function() {});
+        })).then(function() {
+          // Update DATA with charges found so far
+          var updated = false;
+          DATA.forEach(function(d) {
+            if (chargeMap[d.vin] !== undefined && d.charge !== chargeMap[d.vin]) { d.charge = chargeMap[d.vin]; updated = true; }
+          });
+          if (updated) RW();
+          processBatch(idx + 1);
+        });
+      })(0);
+    }
 
     // Async: enrich with COTG inventory data (bay location, COGS status)
     fetch(SERVER + '/api/cotg/inventory').then(function(r) { return r.json(); }).then(function(j) {

@@ -2010,6 +2010,8 @@ app.get('/api/vehicle-info/batch', async (req, res) => {
 // TESLADEX: Live vehicle inventory from Garage Europe
 // ============================================================
 const TESLADEX_API = 'https://garage-europe.vn.teslamotors.com/api/1/tesladex/search?device_type=vehicle';
+const https = require('https');
+const tesladexAgent = new https.Agent({ rejectUnauthorized: false });
 
 function getGarageCookies() {
   if (!tokens.garageCookie) return null;
@@ -2034,7 +2036,7 @@ app.post('/api/tesladex/search', async (req, res) => {
     if (!cookie) return res.status(503).json({ error: 'Garage cookie not configured. Visit garage-europe.vn.teslamotors.com and store the cookie.' });
     const r = await fetch(TESLADEX_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie, 'X-CSRF-Token': tokens.garageCsrf || '' },
       body: JSON.stringify(req.body)
     });
     if (!r.ok) return res.status(r.status).json({ error: 'Tesladex API error: ' + r.status });
@@ -2062,7 +2064,7 @@ app.get('/api/tesladex/stock', async (req, res) => {
     const body = { fields, from: 0, query, size: 500, sort: 'vin:asc', type: 'vehicle', device_type: 'vehicle' };
     const r = await fetch(TESLADEX_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Cookie': cookie, 'X-CSRF-Token': tokens.garageCsrf || '' },
       body: JSON.stringify(body)
     });
     if (!r.ok) return res.status(r.status).json({ error: 'Tesladex error: ' + r.status });
