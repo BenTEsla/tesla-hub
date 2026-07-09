@@ -24,9 +24,9 @@
     },
     "bordeaux": {
       "name": "Bordeaux",
-      "trtId": 0,
+      "trtId": 58354,
       "country": "FR",
-      "location": "EU-FR-Bordeaux",
+      "location": "EU-FR-Bordeaux-Delivery",
       "printer": "",
       "printerIP": "",
       "ces": []
