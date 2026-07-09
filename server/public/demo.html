@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DASH — Demo Pack (Bordeaux + Rennes)</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, system-ui, sans-serif;
+      background: #0b0b0c;
+      color: #f4f4f5;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 36px; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 { font-size: 20px; margin: 36px 0 12px; color: #fafafa; }
+    h3 { font-size: 15px; margin: 0 0 6px; color: #e4e4e7; }
+    .sub { color: #a1a1aa; font-size: 15px; margin-bottom: 28px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+      background: rgba(249,115,22,.12); color: #fb923c; border: 1px solid rgba(249,115,22,.25);
+      margin-bottom: 16px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: #141416;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+    }
+    .card.full { grid-column: 1 / -1; }
+    .kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #71717a; font-weight: 700; margin-bottom: 8px; }
+    .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 4px; }
+    .stat {
+      min-width: 110px; flex: 1;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px; padding: 12px;
+    }
+    .stat b { display: block; font-size: 24px; line-height: 1.1; }
+    .stat span { font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: .04em; }
+    .green { color: #22c55e; } .yellow { color: #f59e0b; } .red { color: #ef4444; } .blue { color: #60a5fa; } .purple { color: #a78bfa; }
+    ul { margin: 8px 0 0; padding-left: 18px; color: #d4d4d8; }
+    li { margin: 4px 0; }
+    .flow {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;
+    }
+    @media (max-width: 720px) { .flow { grid-template-columns: 1fr 1fr; } }
+    .step {
+      background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.18);
+      border-radius: 12px; padding: 12px; font-size: 13px;
+    }
+    .step b { display: block; color: #93c5fd; margin-bottom: 4px; }
+    .cta {
+      display: inline-block; margin-top: 10px; padding: 10px 14px; border-radius: 10px;
+      background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.3);
+      text-decoration: none; font-weight: 700; font-size: 13px;
+    }
+    .foot { margin-top: 40px; color: #71717a; font-size: 12px; border-top: 1px solid rgba(255,255,255,.06); padding-top: 16px; }
+    code { background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">DASH · Delivery Automation Smart Hub · Demo Pack</div>
+    <h1>From Rennes to Bordeaux in one selector</h1>
+    <p class="sub">
+      DASH unifies CES daily ops: readiness score, standup report, calendar, dispatch, flash warnings, COTG, multi-hub.
+      Built for EU Delivery — portable when CRM changes (proxy architecture).
+    </p>
+
+    <div class="grid">
+      <div class="card full">
+        <div class="kicker">Demo path (8 minutes)</div>
+        <div class="flow">
+          <div class="step"><b>1. Home</b>Readiness Pulse: avg score, ready %, holds, low charge chips</div>
+          <div class="step"><b>2. Standup</b>Open report → copy for Teams (today + tomorrow)</div>
+          <div class="step"><b>3. Customer Delivery</b>Score column + charge + low-charge banner</div>
+          <div class="step"><b>4. Calendar</b>Slot detail with score badge + readiness chips</div>
+          <div class="step"><b>5. Dispatch</b>Kanban with score / left bar / avg score</div>
+          <div class="step"><b>6. Pull-up</b>Candidates ranked by score</div>
+          <div class="step"><b>7. Flash</b>Bulk hazard AM/PM for today’s VINs</div>
+          <div class="step"><b>8. Multi-hub</b>Switch Rennes → Bordeaux (config only)</div>
+        </div>
+        <a class="cta" href="/dash.html">Open live DASH →</a>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Readiness Score</div>
+        <h3>One number, same weights everywhere</h3>
+        <div class="stat-row">
+          <div class="stat"><b class="green">25</b><span>Payment</span></div>
+          <div class="stat"><b class="blue">20</b><span>Reg</span></div>
+          <div class="stat"><b class="purple">15</b><span>Insurance</span></div>
+          <div class="stat"><b class="green">25</b><span>On site</span></div>
+          <div class="stat"><b class="yellow">10</b><span>No hold</span></div>
+          <div class="stat"><b>+5</b><span>Trade-in OK</span></div>
+        </div>
+        <ul>
+          <li>Customer Delivery · Calendar · Dispatch · Pull-up · Standup · Home Pulse</li>
+          <li>Color: ≥90 green · ≥70 yellow · ≥50 orange · else red</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Multi-hub</div>
+        <h3>Bordeaux live proof</h3>
+        <ul>
+          <li>Hub selector in sidebar</li>
+          <li><code>POST /api/config/switch</code> → changes default hub</li>
+          <li>Rennes <code>trtId 28498</code></li>
+          <li>Bordeaux <code>trtId 58354</code> (EU-FR-Bordeaux-Delivery)</li>
+          <li>Add a hub = config.json only</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Standup</div>
+        <h3>Morning ritual in 10 seconds</h3>
+        <ul>
+          <li>Today / Tomorrow ready counts</li>
+          <li>Holds + action-needed list (sorted by score)</li>
+          <li>Low charge &lt; 50%</li>
+          <li>Last 24h watcher events</li>
+          <li><b>Copy for Teams</b> monospaced paste</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Ops signals</div>
+        <h3>Alerts without noise</h3>
+        <ul>
+          <li>Watcher every 5 min: pushback, hold, vehicle ready, new delivery, low charge</li>
+          <li>Ghost filter: skip delivered / wrong location</li>
+          <li>Customer Delivery banner for batteries under 50%</li>
+          <li>Flash warnings bulk on/off (AM/PM)</li>
+        </ul>
+      </div>
+
+      <div class="card full">
+        <div class="kicker">Talking points for Kostis / David Bento</div>
+        <div class="grid" style="margin-top:8px">
+          <div>
+            <h3>Why now</h3>
+            <ul>
+              <li>CES still jumps between DRO / Planner / COGS / Tableau</li>
+              <li>Readiness is tribal knowledge — DASH makes it a score</li>
+              <li>Multi-hub shows EU portability before CRM vendor change</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Architecture</h3>
+            <ul>
+              <li>All external APIs proxied via <code>server.js</code></li>
+              <li>CRM swap = change proxies, not the UI</li>
+              <li>OIDC ready (Azure AD) — waiting Client ID</li>
+              <li>VM ticket CLOUD-36482 for Tesla Cloud deploy</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="kicker">Current version</div>
+        <div class="stat-row">
+          <div class="stat"><b class="blue">v22.19</b><span>Score everywhere</span></div>
+          <div class="stat"><b class="green">Pulse</b><span>Home readiness</span></div>
+          <div class="stat"><b class="yellow">Standup</b><span>Teams copy</span></div>
+          <div class="stat"><b class="purple">Bordeaux</b><span>Multi-hub</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      DASH — Tesla Delivery Automation Smart Hub · Internal demo material · Not customer-facing ·
+      Open <a href="/dash.html" style="color:#93c5fd">/dash.html</a> for live product ·
+      One-pager twin: keep this URL for pitch decks.
+    </div>
+  </div>
+</body>
+</html>

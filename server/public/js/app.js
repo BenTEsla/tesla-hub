@@ -2150,6 +2150,14 @@ function LOADDISPATCHDATE() {
         if (tm) { var hr = parseInt(tm[1]); if (tm[3].toUpperCase() === 'PM' && hr < 12) hr += 12; if (tm[3].toUpperCase() === 'AM' && hr === 12) hr = 0; t = String(hr).padStart(2, '0') + ':' + tm[2]; }
         var hasTI = !!(window._tiR && window._tiR[d.ReferenceNumber]); // Widget API verified
         var isEnt = !!(d.IsEnterpriseOrder || a.IsEnterpriseOrder);
+        var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
+        var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
+        var insOk = a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified' || a.InsuranceActionStatus === 'COMPLETE';
+        var vs = String(a.VehicleStage || '');
+        var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0 || vs.indexOf('Deliverable') >= 0;
+        var hold = !!(a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
+        var delivered = !!(a.IsDelivered || d.CustomerDeliveryStatus === 'Delivered');
+        var score = delivered ? 100 : calcScore(payOk, regOk, insOk, otg, hold, hasTI ? 'Approved' : '');
         return {
           rn: d.ReferenceNumber,
           name: d.CustomerName || a.CustomerName || '?',
@@ -2160,9 +2168,14 @@ function LOADDISPATCHDATE() {
           hasTI: hasTI,
           isPM: parseInt(t) >= 13,
           weight: isEnt ? 1.5 : hasTI ? 1.3 : 1.0,
-          delivered: !!(a.IsDelivered || d.CustomerDeliveryStatus === 'Delivered'),
-          vs: String(a.VehicleStage || ''),
-          vehicleMapId: String(a.VehicleMapId || d.VehicleMapId || '')
+          delivered: delivered,
+          vs: vs,
+          vehicleMapId: String(a.VehicleMapId || d.VehicleMapId || ''),
+          score: score,
+          hold: hold,
+          payOk: payOk,
+          regOk: regOk,
+          otg: otg
         };
       }).sort(function(a, b) { return a.time.localeCompare(b.time); });
 
@@ -2190,10 +2203,15 @@ function RENDERDISPATCH() {
   var tradein = data.filter(function(d) { return d.hasTI; }).length;
   var enterprise = data.filter(function(d) { return d.isEnt; }).length;
   var unassigned = data.filter(function(d) { return !d.host; }).length;
+  var activeScores = data.filter(function(d) { return !d.delivered && d.score != null; });
+  var avgScore = activeScores.length ? Math.round(activeScores.reduce(function(s, d) { return s + d.score; }, 0) / activeScores.length) : null;
+  var lowScore = data.filter(function(d) { return !d.delivered && d.score < 70; }).length;
 
   var cs = 'display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;border:1px solid rgba(128,128,128,.1);font-size:13px;font-weight:600';
   summary.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap">'
     + '<div style="' + cs + '"><span style="font-size:20px;font-weight:700">' + total + '</span> Total</div>'
+    + (avgScore != null ? '<div style="' + cs + ';color:' + scoreColor(avgScore) + '"><span style="font-size:20px">' + avgScore + '</span> Avg Score</div>' : '')
+    + (lowScore ? '<div style="' + cs + ';color:#ef4444"><span style="font-size:20px">' + lowScore + '</span> Low score</div>' : '')
     + '<div style="' + cs + ';color:#a855f7"><span style="font-size:20px">' + tradein + '</span> Trade-In</div>'
     + '<div style="' + cs + ';color:#f59e0b"><span style="font-size:20px">' + enterprise + '</span> Enterprise</div>'
     + (unassigned ? '<div style="' + cs + ';color:#ef4444"><span style="font-size:20px">' + unassigned + '</span> Unassigned</div>' : '')
@@ -2247,9 +2265,11 @@ function RENDERDISPATCH() {
       var tags = '';
       if (d.isEnt) tags += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span> ';
       if (d.hasTI) tags += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">TI</span> ';
+      if (d.hold) tags += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:1px 6px;border-radius:10px;font-weight:700">HOLD</span> ';
       if (d.delivered) tags += '<span style="font-size:10px;background:rgba(34,197,94,.15);color:#22c55e;padding:1px 6px;border-radius:10px;font-weight:600">Done</span> ';
-      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span>' + tags + '</div>';
+      var leftBar = d.delivered ? '#22c55e' : d.hold ? '#ef4444' : (d.score >= 90 ? '#22c55e' : d.score >= 70 ? '#f59e0b' : '#ef4444');
+      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-left:3px solid ' + leftBar + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span><span style="display:inline-flex;align-items:center;gap:6px">' + tags + '<span style="font-size:11px;font-weight:700;color:' + scoreColor(d.score) + '">' + d.score + '</span></span></div>';
       html += '<div style="font-size:11px;color:#71717a;margin-top:2px">' + d.model + ' · ' + d.rn + '</div>';
       html += '</div>';
     });
@@ -2260,9 +2280,11 @@ function RENDERDISPATCH() {
       var tags = '';
       if (d.isEnt) tags += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:1px 6px;border-radius:10px;font-weight:600">B2B</span> ';
       if (d.hasTI) tags += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:1px 6px;border-radius:10px;font-weight:600">TI</span> ';
+      if (d.hold) tags += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:1px 6px;border-radius:10px;font-weight:700">HOLD</span> ';
       if (d.delivered) tags += '<span style="font-size:10px;background:rgba(34,197,94,.15);color:#22c55e;padding:1px 6px;border-radius:10px;font-weight:600">Done</span> ';
-      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span>' + tags + '</div>';
+      var leftBar = d.delivered ? '#22c55e' : d.hold ? '#ef4444' : (d.score >= 90 ? '#22c55e' : d.score >= 70 ? '#f59e0b' : '#ef4444');
+      html += '<div class="dispatch-card" data-rn="' + d.rn + '" onclick="REASSIGN(\'' + d.rn + '\')" style="background:' + cardBg + ';border:1px solid ' + cardBdr + ';border-left:3px solid ' + leftBar + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-weight:600;font-size:13px">' + d.time + ' — ' + d.name + '</span><span style="display:inline-flex;align-items:center;gap:6px">' + tags + '<span style="font-size:11px;font-weight:700;color:' + scoreColor(d.score) + '">' + d.score + '</span></span></div>';
       html += '<div style="font-size:11px;color:#71717a;margin-top:2px">' + d.model + ' · ' + d.rn + '</div>';
       html += '</div>';
     });
@@ -2283,7 +2305,8 @@ function REASSIGN(rn) {
   var box = document.createElement('div');
   box.style.cssText = 'background:' + (isDark ? '#1a1a1a' : '#fff') + ';border-radius:12px;padding:24px;min-width:300px;border:1px solid ' + (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)') + ';box-shadow:0 12px 40px rgba(0,0,0,.3);color:inherit';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:4px">' + d.name + '</div>'
-    + '<div style="font-size:12px;color:#71717a;margin-bottom:16px">' + d.rn + ' · ' + d.model + ' · ' + d.time + '</div>'
+    + '<div style="font-size:12px;color:#71717a;margin-bottom:8px">' + d.rn + ' · ' + d.model + ' · ' + d.time + '</div>'
+    + '<div style="margin-bottom:16px;font-size:12px;font-weight:700;color:' + scoreColor(d.score || 0) + '">Score ' + (d.score != null ? d.score : '—') + '</div>'
     + '<div style="font-size:13px;font-weight:600;color:#71717a;margin-bottom:8px">Assign to:</div>';
 
   CES.forEach(function(c) {
@@ -2443,9 +2466,11 @@ function LOADPULLUP() {
             var hasInsurance = c.InsuranceActionStatus === 'COMPLETE';
             var hasPay = c.AmountDueActionStatus === 'Yes' || c.FinalPaymentGate === 'Complete';
             var otg = c.VehicleStage === 'Finished Goods' || (c.VehicleStage && c.VehicleStage.indexOf('Arrived') >= 0);
+            var hold = !!(c.IsContainmentHold || c.IsRepairOrderHold);
             // Ready = plate (or RTS) + payment + OTG. Insurance is NOT a blocker.
-            var ready = plateOrRTS && hasPay && otg;
-            allCandidates.push({ date: ds, dateLabel: label, name: c.CustomerName, rn: c.ReferenceNumber, model: c.VehicleModel, plate: plateOrRTS, insurance: hasInsurance, payment: hasPay, otg: otg, ready: ready });
+            var ready = plateOrRTS && hasPay && otg && !hold;
+            var score = calcScore(hasPay, plateOrRTS, hasInsurance, otg, hold, null);
+            allCandidates.push({ date: ds, dateLabel: label, name: c.CustomerName, rn: c.ReferenceNumber, model: c.VehicleModel, plate: plateOrRTS, insurance: hasInsurance, payment: hasPay, otg: otg, hold: hold, ready: ready, score: score });
           });
         }).catch(function() {})
       );
@@ -2458,16 +2483,24 @@ function LOADPULLUP() {
       return;
     }
 
-    // Sort: ready first, then by date
-    allCandidates.sort(function(a, b) { return (b.ready ? 1 : 0) - (a.ready ? 1 : 0) || a.date.localeCompare(b.date); });
+    // Sort: ready first, then by score desc, then date
+    allCandidates.sort(function(a, b) {
+      return (b.ready ? 1 : 0) - (a.ready ? 1 : 0) || (b.score || 0) - (a.score || 0) || a.date.localeCompare(b.date);
+    });
     var readyCount = allCandidates.filter(function(c) { return c.ready; }).length;
+    var avgScore = allCandidates.length ? Math.round(allCandidates.reduce(function(s, c) { return s + (c.score || 0); }, 0) / allCandidates.length) : 0;
 
-    var html = '<div style="margin-bottom:16px;font-size:14px"><span style="color:#22c55e;font-weight:600">' + readyCount + ' ready</span> out of ' + allCandidates.length + ' candidates</div>';
+    var html = '<div style="margin-bottom:16px;font-size:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">'
+      + '<span style="color:#22c55e;font-weight:600">' + readyCount + ' ready</span>'
+      + '<span style="color:#71717a">out of ' + allCandidates.length + ' candidates</span>'
+      + '<span style="font-weight:700;color:' + scoreColor(avgScore) + '">Avg score ' + avgScore + '</span>'
+      + '</div>';
     html += '<table style="width:100%;border-collapse:collapse"><thead><tr>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Date</th>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Customer</th>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">RN</th>';
     html += '<th style="text-align:left;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Vehicle</th>';
+    html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Score</th>';
     html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Plate</th>';
     html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">Payment</th>';
     html += '<th style="text-align:center;padding:10px 12px;font-size:12px;color:#71717a;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.15)">OTG</th>';
@@ -2483,11 +2516,12 @@ function LOADPULLUP() {
       html += '<td style="padding:10px 12px;font-size:14px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.08)">' + c.name + '</td>';
       html += '<td style="padding:10px 12px;border-bottom:1px solid rgba(128,128,128,.08)"><a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + c.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:13px">' + c.rn + '</a></td>';
       html += '<td style="padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(128,128,128,.08)">' + (c.model || '') + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)"><span style="font-size:12px;font-weight:700;color:' + scoreColor(c.score) + '">' + c.score + '</span></td>';
       html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.plate) + '</td>';
       html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.payment) + '</td>';
       html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.otg) + '</td>';
       html += '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(128,128,128,.08)">' + dot(c.insurance) + '</td>';
-      html += '<td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.08);color:' + (c.ready ? '#22c55e' : '#71717a') + '">' + (c.ready ? 'READY' : 'Not ready') + '</td>';
+      html += '<td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.08);color:' + (c.ready ? '#22c55e' : c.hold ? '#ef4444' : '#71717a') + '">' + (c.ready ? 'READY' : c.hold ? 'HOLD' : 'Not ready') + '</td>';
       html += '</tr>';
     });
 
