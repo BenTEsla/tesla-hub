@@ -206,7 +206,9 @@ function STANDUP() {
         html += '<div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px;margin-bottom:6px">';
         html += '<span style="font-size:12px;font-weight:700;color:' + sc + ';min-width:28px">' + item.score + '</span>';
         html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + item.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:12px">' + item.rn + '</a>';
-        html += '<span style="font-size:13px">' + (item.name || '') + '</span>';
+        html += '<span style="font-size:13px;font-weight:600">' + (item.name || '') + '</span>';
+        if (item.model) html += '<span style="font-size:11px;color:#71717a">' + item.model + '</span>';
+        if (item.host) html += '<span style="font-size:11px;color:#52525b">' + item.host + '</span>';
         html += '<span style="font-size:11px;color:#71717a;margin-left:auto">' + (item.issues || []).join(', ') + '</span>';
         html += '</div>';
       });

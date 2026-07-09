@@ -1429,16 +1429,82 @@ app.get('/api/standup', async (req, res) => {
     const today = new Date();
     const tomorrow = new Date(Date.now() + 86400000);
     const fmtDate = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    const fmtDateFR = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
 
+    // Location-safe fetch: Customer Dashboard (onlyMyLocation) is source of truth,
+    // then Advisor enriches readiness gates for those RNs only.
     const fetchDay = async (date) => {
-      const r = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+      const custR = await fetch(config.apis.dro + '/deliveryops/Customers/Dashboard', {
         method: 'POST', headers: h,
-        body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+        body: JSON.stringify({
+          fromDeliveryDate: date,
+          trtId: hub.trtId,
+          customerHasNoHost: false,
+          skip: 0,
+          take: 200,
+          fromTime: '00:00',
+          toTime: '23:59',
+          countryCode: hub.country || 'FR',
+          onlyMyLocation: true,
+          sort: {},
+          stage: [], status: [], deliveryType: [], paperwork: [],
+          customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [],
+          pdcFilter: [], dmvDocumentStages: []
+        })
       });
-      if (!r.ok) return [];
-      const j = await r.json();
-      return (j.Data && j.Data.Dashboard) || [];
+      if (!custR.ok) return [];
+      const custJ = await custR.json();
+      const customers = custJ.Data || [];
+      if (!customers.length) return [];
+
+      const rns = customers.map(c => c.ReferenceNumber).filter(Boolean);
+      const custMap = {};
+      customers.forEach(c => { custMap[c.ReferenceNumber] = c; });
+
+      let advMap = {};
+      try {
+        const advR = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({
+            condition: 'and',
+            rules: [{ condition: 'and', ReferenceNumbers: rns, Countries: [] }],
+            Skip: 0, Take: 200, SortOrder: [], SelectedColumns: []
+          })
+        });
+        if (advR.ok) {
+          const advJ = await advR.json();
+          ((advJ.Data && advJ.Data.Dashboard) || []).forEach(a => { advMap[a.ReferenceNumber] = a; });
+        }
+      } catch (e) {}
+
+      return rns.map(rn => {
+        const c = custMap[rn] || {};
+        const a = advMap[rn] || {};
+        const loc = a.DeliveryLocation || c.DeliveryLocation || hub.location || '';
+        // Drop obvious foreign ghosts if Advisor returns a foreign location
+        if (loc && /Hong Kong|HK-|Shanghai|Beijing|Tokyo|Seoul|Dubai|\bUSA\b|US-/i.test(loc)) return null;
+        const delivered = !!(a.IsDelivered
+          || c.CustomerDeliveryStatus === 'Delivered'
+          || c.CustomerDeliveryStatus === 'Complete'
+          || (a.VehicleStage && String(a.VehicleStage).toLowerCase().indexOf('delivered') >= 0));
+        return {
+          ReferenceNumber: rn,
+          CustomerName: a.CustomerName || c.CustomerName || '',
+          VehicleModel: a.VehicleModel || c.VehicleModel || '',
+          Vin: a.Vin || c.Vin || '',
+          LicensePlate: a.LicensePlate || c.LicensePlate || '',
+          AmountDueActionStatus: a.AmountDueActionStatus || c.AmountDueActionStatus,
+          FinalPaymentGate: a.FinalPaymentGate || c.FinalPaymentGate,
+          InsuranceGate: a.InsuranceGate,
+          InsuranceActionStatus: a.InsuranceActionStatus || c.InsuranceActionStatus,
+          VehicleStage: a.VehicleStage || c.VehicleStage || '',
+          IsContainmentHold: !!(a.IsContainmentHold || c.IsContainmentHold),
+          IsRepairOrderHold: !!(a.IsRepairOrderHold || c.IsRepairOrderHold),
+          ServiceVisitGate: a.ServiceVisitGate,
+          IsDelivered: delivered,
+          DeliveryLocation: loc,
+          HostName: c.HostName || a.DeliverySpecialistName || a.DeliverySpecialist || ''
+        };
+      }).filter(Boolean);
     };
 
     const todayData = await fetchDay(fmtDate(today));
@@ -1450,14 +1516,14 @@ app.get('/api/standup', async (req, res) => {
       const regOk = !!(d.LicensePlate && d.LicensePlate.indexOf('-') >= 0);
       const insOk = d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE';
       const vs = d.VehicleStage || '';
-      const otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0;
-      const hold = !!(d.IsContainmentHold || d.IsRepairOrderHold);
+      const otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0 || vs.indexOf('Deliverable') >= 0;
+      const hold = !!(d.IsContainmentHold || d.IsRepairOrderHold || d.ServiceVisitGate === 'Incomplete');
       if (payOk) s += 25;
       if (regOk) s += 20;
       if (insOk) s += 15;
       if (otg) s += 25;
       if (!hold) s += 10;
-      s += 5; // trade-in unknown default OK
+      s += 5;
       return s;
     };
 
@@ -1467,8 +1533,8 @@ app.get('/api/standup', async (req, res) => {
       if (!(d.LicensePlate && d.LicensePlate.indexOf('-') >= 0)) issues.push('Reg');
       if (!(d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE')) issues.push('Insurance');
       const vs = d.VehicleStage || '';
-      if (!(vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0)) issues.push('Vehicle');
-      if (d.IsContainmentHold || d.IsRepairOrderHold) issues.push('HOLD');
+      if (!(vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0 || vs.indexOf('Deliverable') >= 0)) issues.push('Vehicle');
+      if (d.IsContainmentHold || d.IsRepairOrderHold || d.ServiceVisitGate === 'Incomplete') issues.push('HOLD');
       return issues;
     };
 
@@ -1479,19 +1545,20 @@ app.get('/api/standup', async (req, res) => {
       const payOk = active.filter(d => d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete').length;
       const regOk = active.filter(d => d.LicensePlate && d.LicensePlate.indexOf('-') >= 0).length;
       const insOk = active.filter(d => d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE').length;
-      const otg = active.filter(d => { const vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0; }).length;
-      const holds = active.filter(d => d.IsContainmentHold || d.IsRepairOrderHold);
+      const otg = active.filter(d => { const vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0 || vs.indexOf('Deliverable') >= 0; }).length;
+      const holds = active.filter(d => d.IsContainmentHold || d.IsRepairOrderHold || d.ServiceVisitGate === 'Incomplete');
       const readyList = [];
       const notReadyList = [];
       active.forEach(d => {
         const p = d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete';
         const r = d.LicensePlate && d.LicensePlate.indexOf('-') >= 0;
-        const o = d.VehicleStage === 'Finished Goods' || (d.VehicleStage || '').indexOf('Arrived') >= 0;
-        const hld = d.IsContainmentHold || d.IsRepairOrderHold;
+        const o = (() => { const vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0; })();
+        const hld = d.IsContainmentHold || d.IsRepairOrderHold || d.ServiceVisitGate === 'Incomplete';
         const item = {
           rn: d.ReferenceNumber,
           name: d.CustomerName,
           model: d.VehicleModel || '',
+          host: d.HostName || '',
           score: scoreOf(d),
           issues: issuesOf(d),
           vin: d.Vin || ''
@@ -1508,19 +1575,23 @@ app.get('/api/standup', async (req, res) => {
       if (active.length - payOk > 0) issues.push((active.length - payOk) + ' payment pending');
       if (active.length - regOk > 0) issues.push((active.length - regOk) + ' reg pending');
       if (active.length - otg > 0) issues.push((active.length - otg) + ' not on site');
+      if (holds.length) issues.push(holds.length + ' hold(s)');
       return {
         total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg, avgScore,
-        holds: holds.map(d => ({ rn: d.ReferenceNumber, name: d.CustomerName, type: d.IsContainmentHold ? 'Containment' : 'Repair Order' })),
-        issues, notReadyList: notReadyList.slice(0, 15), readyList
+        holds: holds.map(d => ({
+          rn: d.ReferenceNumber,
+          name: d.CustomerName,
+          type: d.IsContainmentHold ? 'Containment' : d.IsRepairOrderHold ? 'Repair Order' : 'SV'
+        })),
+        issues, notReadyList: notReadyList.slice(0, 20), readyList
       };
     };
 
     const todayStats = analyze(todayData);
     const tmrwStats = analyze(tmrwData);
 
-    // Low charge for today (sample up to 15 active VINs)
     const lowCharge = [];
-    const chargeCandidates = todayData.filter(d => !d.IsDelivered && d.Vin && d.ReferenceNumber).slice(0, 15);
+    const chargeCandidates = todayData.filter(d => !d.IsDelivered && d.Vin && d.ReferenceNumber).slice(0, 20);
     await Promise.all(chargeCandidates.map(async (d) => {
       try {
         const cr = await fetch(config.apis.dro + '/widget/overview/' + d.ReferenceNumber + '/info?vin=' + d.Vin, { headers: h });
@@ -1533,26 +1604,25 @@ app.get('/api/standup', async (req, res) => {
     }));
     lowCharge.sort((a, b) => a.charge - b.charge);
 
-    // Recent notifications
     const recentNotifs = notifications.filter(n => {
       const age = Date.now() - new Date(n.time).getTime();
-      return age < 24 * 60 * 60 * 1000; // last 24h
+      return age < 24 * 60 * 60 * 1000;
     });
 
-    // Generate text report
     const dayName = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     let report = 'STANDUP — ' + hub.name + ' — ' + dayName + '\n\n';
     report += 'TODAY: ' + todayStats.total + ' deliveries\n';
     report += '  Ready: ' + todayStats.ready + ' (' + (todayStats.active ? Math.round(todayStats.ready / todayStats.active * 100) : 0) + '%)\n';
     if (todayStats.notReady) report += '  Not ready: ' + todayStats.notReady + '\n';
     if (todayStats.delivered) report += '  Already delivered: ' + todayStats.delivered + '\n';
+    if (todayStats.avgScore) report += '  Avg score: ' + todayStats.avgScore + '\n';
     if (todayStats.holds.length) {
       report += '  Holds (' + todayStats.holds.length + '):\n';
       todayStats.holds.forEach(hld => { report += '    - ' + hld.rn + ' ' + hld.name + ' (' + hld.type + ')\n'; });
     }
     if (todayStats.notReadyList.length) {
       report += '  Action needed:\n';
-      todayStats.notReadyList.slice(0, 8).forEach(item => {
+      todayStats.notReadyList.slice(0, 10).forEach(item => {
         report += '    - [' + item.score + '] ' + item.rn + ' ' + item.name + ' — ' + item.issues.join(', ') + '\n';
       });
     }
@@ -1562,6 +1632,12 @@ app.get('/api/standup', async (req, res) => {
     report += '  Ready: ' + tmrwStats.ready + '\n';
     if (tmrwStats.notReady) report += '  Not ready: ' + tmrwStats.notReady + '\n';
     if (tmrwStats.holds.length) report += '  Holds: ' + tmrwStats.holds.length + '\n';
+    if (tmrwStats.notReadyList.length) {
+      report += '  Action needed:\n';
+      tmrwStats.notReadyList.slice(0, 8).forEach(item => {
+        report += '    - [' + item.score + '] ' + item.rn + ' ' + item.name + ' — ' + item.issues.join(', ') + '\n';
+      });
+    }
 
     if (lowCharge.length) {
       report += '\nLOW CHARGE (<50%):\n';
@@ -1582,10 +1658,13 @@ app.get('/api/standup', async (req, res) => {
       recentNotifs: recentNotifs.slice(0, 10),
       notifications: recentNotifs.length,
       hubName: hub.name,
-      date: dayName
+      date: dayName,
+      source: 'customer-dashboard+advisor'
     });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
+
 
 // ============================================================
 // DELIVERY NOTES API
