@@ -21,6 +21,15 @@
       "printer": "",
       "printerIP": "",
       "ces": []
+    },
+    "bordeaux": {
+      "name": "Bordeaux",
+      "trtId": 0,
+      "country": "FR",
+      "location": "EU-FR-Bordeaux",
+      "printer": "",
+      "printerIP": "",
+      "ces": []
     }
   },
   "defaultHub": "rennes",

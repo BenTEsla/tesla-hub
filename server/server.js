@@ -1398,10 +1398,25 @@ app.get('/api/bookmarklet.js', (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  const hubId = req.query.hub || config.defaultHub;
+  const hubId = config.defaultHub;
   const hub = config.hubs[hubId];
   if (!hub) return res.status(404).json({ error: 'Hub not found' });
-  res.json({ hub, hubId, allHubs: Object.keys(config.hubs) });
+  res.json({ hub, currentHub: hubId, hubs: config.hubs });
+});
+
+// Switch active hub
+app.post('/api/config/switch', (req, res) => {
+  const hubKey = req.body.hub;
+  if (!hubKey || !config.hubs[hubKey]) return res.status(400).json({ error: 'Invalid hub' });
+  config.defaultHub = hubKey;
+  // Persist to config.json
+  const fs2 = require('fs');
+  const configPath = path.join(__dirname, 'config.json');
+  const rawConfig = JSON.parse(fs2.readFileSync(configPath, 'utf8'));
+  rawConfig.defaultHub = hubKey;
+  fs2.writeFileSync(configPath, JSON.stringify(rawConfig, null, 2));
+  console.log('Hub switched to:', hubKey, '-', config.hubs[hubKey].name);
+  res.json({ ok: true, hub: hubKey, name: config.hubs[hubKey].name });
 });
 
 // ============================================================

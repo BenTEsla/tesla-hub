@@ -17,6 +17,13 @@
   var AUTH = { token: '', userId: '' };
   var BASE = '/api/dro';
   var CFG = { trtId: 28498, cc: 'FR' };
+
+  // Switch hub
+  function SWITCHHUB(hubKey) {
+    fetch('/api/config/switch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hub: hubKey }) })
+      .then(function(r) { return r.json(); })
+      .then(function(j) { if (j.ok) window.location.reload(); });
+  }
   var CES = ['Ben Daubin', 'Sacha Villa', 'Sophie MACE'];
   var DATA = [];
   </script>
@@ -40,6 +47,7 @@
       <path d="M12.0003 3.21675C14.8463 3.19475 18.1052 3.65878 21.4397 5.11887C21.8858 4.31349 22 3.95746 22 3.95746C18.3541 2.5087 14.9399 2.01267 11.9997 2C9.05945 2.01267 5.6459 2.5087 2 3.9568C2 3.9568 2.16264 4.39549 2.56029 5.11821C5.89485 3.65878 9.15438 3.19475 12.0003 3.21675Z"/>
     </svg>
     <span>DASH</span>
+    <select id="hubSelector" onchange="SWITCHHUB(this.value)" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:#a1a1aa;font-size:10px;padding:2px 4px;border-radius:4px;font-family:inherit;cursor:pointer;margin-left:4px;max-width:80px"></select>
   </div>
 
   <div class="sidebar-nav">
@@ -520,8 +528,21 @@
     // Set globals
     AUTH = { token: 'Bearer proxy', userId: authData.userId || '428058' };
     if (cfgData.hub) {
-      CFG = { trtId: cfgData.hub.trtId, cc: 'FR' };
+      CFG = { trtId: cfgData.hub.trtId, cc: cfgData.hub.country || 'FR', location: cfgData.hub.location || '' };
       if (cfgData.hub.ces) CES = cfgData.hub.ces.map(function(c) { return c.name; });
+    }
+
+    // Populate hub selector
+    var hubSelect = document.getElementById('hubSelector');
+    if (hubSelect && cfgData.hubs) {
+      window._allHubs = cfgData.hubs;
+      Object.keys(cfgData.hubs).forEach(function(key) {
+        var opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = cfgData.hubs[key].name;
+        if (key === cfgData.currentHub) opt.selected = true;
+        hubSelect.appendChild(opt);
+      });
     }
 
     // Check auth status - show warning but don't redirect
