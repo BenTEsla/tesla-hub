@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DASH × CSAT — One-Pager for BI</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      background: #f4f4f5;
+      color: #18181b;
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 820px;
+      margin: 24px auto;
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      padding: 36px 40px 32px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.06);
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; border: none; box-shadow: none; border-radius: 0; max-width: none; padding: 16mm; }
+      .no-print { display: none !important; }
+    }
+    .kicker {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #c2410c;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: #52525b; font-size: 14px; margin: 0 0 22px; }
+    h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #71717a;
+      margin: 22px 0 10px;
+      border-bottom: 1px solid #f4f4f5;
+      padding-bottom: 6px;
+    }
+    p, li { font-size: 13.5px; color: #27272a; }
+    ul { margin: 6px 0 0; padding-left: 18px; }
+    li { margin: 4px 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card {
+      background: #fafafa;
+      border: 1px solid #e4e4e7;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .card h3 { margin: 0 0 6px; font-size: 13px; color: #18181b; }
+    .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .stat {
+      flex: 1;
+      min-width: 100px;
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat b { display: block; font-size: 18px; color: #ea580c; }
+    .stat span { font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: .04em; }
+    .ok { color: #15803d; }
+    .warn { color: #b45309; }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 6px;
+    }
+    .table th, .table td {
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid #f4f4f5;
+      vertical-align: top;
+    }
+    .table th { color: #71717a; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .pill-green { background: #dcfce7; color: #166534; }
+    .pill-amber { background: #ffedd5; color: #9a3412; }
+    .pill-blue { background: #dbeafe; color: #1e40af; }
+    .foot {
+      margin-top: 22px;
+      padding-top: 12px;
+      border-top: 1px solid #e4e4e7;
+      font-size: 11.5px;
+      color: #71717a;
+    }
+    .actions { margin-bottom: 14px; }
+    .actions button {
+      background: #18181b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="actions no-print">
+      <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <div class="kicker">Internal · BI collaboration brief</div>
+    <h1>DASH × CSAT metrics</h1>
+    <p class="sub">
+      Request context for Sharon Lu / Global CSAT · Rennes Delivery hub · July 2026<br>
+      Contact: Ben Daubin (bdaubin) · CES, EU-FR-Saint-Jacques de la Lande
+    </p>
+
+    <h2>1. What is DASH?</h2>
+    <p>
+      <b>DASH</b> (Delivery Automation Smart Hub) is an internal ops console for Customer Experience Specialists.
+      It unifies day-of delivery workflows so the team does not jump between DRO, Delivery Planner, COGS, TSS and Tableau.
+    </p>
+    <div class="stat-row">
+      <div class="stat"><b>Readiness</b><span>Score 0–100</span></div>
+      <div class="stat"><b>Calendar</b><span>Confirm / status</span></div>
+      <div class="stat"><b>Standup</b><span>Daily report</span></div>
+      <div class="stat"><b>CSAT</b><span>Live BI panel</span></div>
+    </div>
+    <ul>
+      <li>Hub-scoped to <b>Rennes</b> today; multi-hub ready (e.g. Bordeaux) via config only</li>
+      <li>All external systems proxied server-side (CRM change impacts adapters, not the UI)</li>
+      <li>Audience: CES + Delivery Manager (François Herbert) — not customer-facing</li>
+    </ul>
+
+    <h2>2. What we already pull for CSAT</h2>
+    <div class="grid">
+      <div class="card">
+        <h3 class="ok">Working today</h3>
+        <ul>
+          <li>Tableau REST API (PAT “DASH”)</li>
+          <li>View: Advisor + Host comparison</li>
+          <li>Filter: <code>EU-FR-Saint-Jacques de la Lande…</code></li>
+          <li>Overall score, survey counts</li>
+          <li>Breakdown by Advisor (sold by) &amp; Host (delivered by)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="warn">Blocked today</h3>
+        <ul>
+          <li>Category metrics need the workbook parameter <b>“Select CSAT Metric”</b></li>
+          <li>REST API cannot reliably override that parameter</li>
+          <li>So DASH only shows the default metric, not the full set</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>3. Metrics we want to surface in DASH</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Why for CES</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Overall Delivery CSAT</b></td>
+          <td>North-star for the hub / standup</td>
+          <td><span class="pill pill-green">Have</span></td>
+        </tr>
+        <tr>
+          <td><b>Delivery Day Experience</b></td>
+          <td>Process quality on the day (host impact)</td>
+          <td><span class="pill pill-amber">Need</span></td>
+        </tr>
+        <tr>
+          <td><b>Vehicle Quality / Condition</b></td>
+          <td>VRS / due-bills / prep signal</td>
+          <td><span class="pill pill-amber">Need</span></td>
+        </tr>
+        <tr>
+          <td><b>Vehicle Cleanliness</b></td>
+          <td>Wash / charge pipeline feedback</td>
+          <td><span class="pill pill-amber">Need</span></td>
+        </tr>
+        <tr>
+          <td><b>By Host (CES)</b></td>
+          <td>Coaching, load balance, weekly review</td>
+          <td><span class="pill pill-green">Have</span></td>
+        </tr>
+        <tr>
+          <td><b>By Advisor</b></td>
+          <td>Handoff quality with Sales</td>
+          <td><span class="pill pill-green">Have</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Preferred collaboration path</h2>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="pill pill-blue">Preferred</span> Stable multi-metric surface</h3>
+        <ul>
+          <li>New section / view that exposes <b>all metrics without parameter toggling</b> (as Sharon mentioned)</li>
+          <li>Or a fixed Tableau view / extract DASH can call daily</li>
+          <li>Same underlying logic as the main CSAT dashboard → no drift</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="pill pill-amber">Fallback</span> Direct DB (Access Portal)</h3>
+        <ul>
+          <li>Possible via Access Portal if needed later</li>
+          <li>We understand risk of logic drift vs main dashboard</li>
+          <li>Only if multi-metric surface is delayed and we block ops reviews</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>5. What “good” looks like for DASH</h2>
+    <ul>
+      <li><b>Scope:</b> Delivery location = Rennes Saint-Jacques (extendable to other FR hubs later)</li>
+      <li><b>Grain:</b> Hub total + by Host (CES) + by metric category</li>
+      <li><b>Refresh:</b> Daily is enough (standup / weekly ops)</li>
+      <li><b>Format (any of):</b> Tableau view id we can query · CSV/crosstab export · documented fields on a shared connection</li>
+      <li><b>Auth:</b> We already use Tableau PAT; happy to switch to whatever your team standardizes</li>
+    </ul>
+
+    <h2>6. Ask</h2>
+    <ol style="margin:6px 0 0;padding-left:18px;font-size:13.5px;color:#27272a">
+      <li>Keep us in the loop on the <b>new multi-metric section</b> (option 2) — we can pilot Rennes as soon as it’s available.</li>
+      <li>If useful, a 15‑min call to align fields + refresh cadence.</li>
+      <li>Optional: your team owns the CSAT connection / view; DASH only consumes it (happy to avoid custom Vertica queries).</li>
+    </ol>
+
+    <div class="foot">
+      DASH — Delivery Automation Smart Hub · Tesla internal · Not customer-facing<br>
+      Hub: EU-FR-Saint-Jacques de la Lande-Rue de la Pitardière · trtId 28498<br>
+      Owner: Ben Daubin · Manager: François Herbert · CES: Sacha Villa, Sophie Macé
+    </div>
+  </div>
+</body>
+</html>
