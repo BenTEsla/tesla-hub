@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>TSS Token Capture</title>
+<style>
+body{font-family:Inter,Segoe UI,system-ui,sans-serif;text-align:center;padding:40px;background:#0b0b0c;color:#f4f4f5}
+.card{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:28px;max-width:520px;margin:0 auto}
+.btn{padding:12px 28px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;border-radius:10px;border:none;cursor:pointer;margin:8px 4px}
+.btn:hover{background:#2563eb}
+.btn.sec{background:rgba(255,255,255,.06);color:#e4e4e7;border:1px solid rgba(255,255,255,.1)}
+.step{text-align:left;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:13px;line-height:1.55;color:#d4d4d8}
+.step b{color:#60a5fa}
+#dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle;background:#71717a}
+.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fcd34d;border-radius:10px;padding:12px;font-size:13px;margin:14px 0;text-align:left}
+code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:6px;font-size:12px}
+a{color:#93c5fd}
+</style></head><body>
+<div class="card">
+  <h2 style="margin:0 0 6px">TSS Token Capture</h2>
+  <p style="color:#71717a;font-size:13px;margin:0 0 16px">Required for Calendar Confirm / Scheduled → Confirmed</p>
+
+  <div class="warn">
+    <b>Pourquoi « Token not found! » ?</b><br>
+    Le favori <b>Delivery Hub</b> lit les tokens <b>DRO</b> (<code>delops_id_token</code>).
+    Sur <b>tss.tesla.com</b> ce storage n’existe pas → alert. Utilisez le script ci-dessous à la place.
+  </div>
+
+  <div style="margin:18px 0">
+    <span id="dot"></span>
+    <span id="status" style="font-size:16px;font-weight:600">Checking...</span>
+  </div>
+
+  <button class="btn" onclick="copyScript()">Copier le script TSS</button>
+  <button class="btn sec" onclick="window.open('https://tss.tesla.com/react/delivery/appointments/dashboard','_blank')">Ouvrir TSS</button>
+  <div id="copied" style="color:#22c55e;font-size:13px;display:none;margin-top:8px">Copié !</div>
+
+  <div class="step"><b>1.</b> Cliquez <b>Copier le script TSS</b></div>
+  <div class="step"><b>2.</b> Allez sur <a href="https://tss.tesla.com/react/delivery/appointments/dashboard" target="_blank">tss.tesla.com</a> (Rennes)</div>
+  <div class="step"><b>3.</b> F12 → Console → <b>Ctrl+V</b> → Enter</div>
+  <div class="step"><b>4.</b> Cliquez un créneau / RN pour générer un appel API</div>
+  <div class="step"><b>5.</b> Titre de l’onglet → <b>[TSS OK]</b> — token envoyé à DASH</div>
+  <div class="step"><b>6.</b> Retour Calendar → Confirm devrait marcher (~30 jours JWT)</div>
+</div>
+<script>
+// Capture script: intercept Authorization JWT headers + scan storage
+var SCRIPT = "(function(){var SERVER='http://localhost:3000';var last='';function send(tok){if(!tok||tok===last)return;last=tok;tok=tok.replace(/^JWT\\s+/i,'').replace(/^Bearer\\s+/i,'');fetch(SERVER+'/api/auth/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tssToken:tok})}).then(function(r){return r.json()}).then(function(){document.title='[TSS OK] '+new Date().toLocaleTimeString();console.log('[DASH] TSS token sent')} ).catch(function(e){console.warn('[DASH] send failed',e);document.title='[TSS ERR] localhost?'})}\nfunction looksJwt(s){return typeof s==='string'&&s.split('.').length===3&&s.length>80}\nfunction scanStorage(store){try{for(var i=0;i<store.length;i++){var k=store.key(i);var v=store.getItem(k);if(!v)continue;if(looksJwt(v)){send(v);return true}try{var j=JSON.parse(v);if(j&&typeof j==='object'){var cands=[j.token,j.access_token,j.accessToken,j.id_token,j.jwt,j.Authorization,j.authorization];for(var c=0;c<cands.length;c++){if(looksJwt(cands[c])){send(cands[c]);return true}}}}catch(e){}}}catch(e){}return false}\n// Hook XHR\nvar _srh=XMLHttpRequest.prototype.setRequestHeader;XMLHttpRequest.prototype.setRequestHeader=function(k,v){if(k&&/authorization/i.test(k)&&v){send(v)}return _srh.apply(this,arguments)};\n// Hook fetch\nvar _fetch=window.fetch;window.fetch=function(input,init){try{var h=(init&&init.headers)||{};if(h instanceof Headers){var a=h.get('Authorization')||h.get('authorization');if(a)send(a)}else if(h){var a2=h.Authorization||h.authorization;if(a2)send(a2)}}catch(e){}return _fetch.apply(this,arguments)};\n// Scan storage now + periodically\nscanStorage(localStorage);scanStorage(sessionStorage);\nsetInterval(function(){scanStorage(localStorage);scanStorage(sessionStorage)},3000);\ndocument.title='[TSS Capture ON]';console.log('[DASH] TSS capture ON — click an appointment to fire API calls');alert('TSS Capture ON — cliquez un créneau puis regardez le titre [TSS OK]')})();";
+
+function copyScript() {
+  navigator.clipboard.writeText(SCRIPT).then(function() {
+    document.getElementById('copied').style.display = 'block';
+    setTimeout(function() { document.getElementById('copied').style.display = 'none'; }, 2500);
+  });
+}
+
+function checkStatus() {
+  fetch('/api/auth/status').then(function(r){return r.json()}).then(function(j) {
+    var d = document.getElementById('dot');
+    var s = document.getElementById('status');
+    if (j.hasTss) {
+      d.style.background = '#22c55e';
+      s.textContent = 'TSS token OK';
+      s.style.color = '#22c55e';
+    } else {
+      d.style.background = '#ef4444';
+      s.textContent = 'TSS token missing';
+      s.style.color = '#f87171';
+    }
+  }).catch(function() {
+    document.getElementById('status').textContent = 'Server offline';
+  });
+}
+checkStatus();
+setInterval(checkStatus, 3000);
+</script>
+</body></html>
