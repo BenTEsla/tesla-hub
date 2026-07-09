@@ -1956,13 +1956,28 @@ function LOADCALENDAR() {
                 if (ampm === 'AM' && hr === 12) hr = 0;
                 var slot = String(hr).padStart(2,'0') + ':' + tm[2];
                 if (!days[idx].slots[slot]) days[idx].slots[slot] = [];
+                var vs = String(a.VehicleStage || c.VehicleStage || '');
+                var delivered = !!(a.IsDelivered
+                  || c.CustomerDeliveryStatus === 'Delivered'
+                  || c.CustomerDeliveryStatus === 'Complete'
+                  || vs.toLowerCase().indexOf('delivered') >= 0
+                  || String(a.AppointmentStatus || '').toLowerCase() === 'delivered'
+                  || String(a.AppointmentSystemStatus || '').toLowerCase() === 'delivered');
+                var status = delivered
+                  ? 'Delivered'
+                  : (a.AppointmentStatus || a.AppointmentSystemStatus || 'Scheduled');
+                // Normalize common variants
+                if (/^confirm/i.test(status)) status = 'Confirmed';
+                if (/^complete/i.test(status)) status = 'Complete';
                 days[idx].slots[slot].push({
                   name: a.CustomerName || c.CustomerName || '?',
                   rn: c.ReferenceNumber || '',
                   vin: a.Vin || '',
                   model: a.VehicleModel || c.VehicleModel || '',
                   host: c.HostName || a.DeliverySpecialistName || '',
-                  status: a.AppointmentStatus || a.AppointmentSystemStatus || 'Scheduled'
+                  status: status,
+                  delivered: delivered,
+                  vs: vs
                 });
               }
             });
@@ -2023,6 +2038,9 @@ function LOADCALENDAR() {
       if (s === 'delivered') return '#71717a';
       return '#ef4444';
     }
+    function isConfirmedLike(st) { return st === 'Confirmed' || st === 'Complete'; }
+    function isDeliveredLike(st) { return st === 'Delivered'; }
+    function isScheduledLike(st) { return !isConfirmedLike(st) && !isDeliveredLike(st); }
 
     // Build grid with Scheduled | Confirmed sub-columns
     var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
@@ -2033,13 +2051,21 @@ function LOADCALENDAR() {
     html += '<tr><th style="padding:8px 12px;font-size:11px;color:#71717a;font-weight:600;border-bottom:1px solid rgba(128,128,128,.1);width:75px;text-transform:uppercase">Time</th>';
     days.forEach(function(d) {
       var isToday = d.date === (now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'));
-      var dayTotal = 0, daySched = 0, dayConf = 0;
-      Object.keys(d.slots).forEach(function(s) { d.slots[s].forEach(function(e) { dayTotal++; if (e.status === 'Confirmed' || e.status === 'Complete') dayConf++; else daySched++; }); });
-      d._sched = daySched; d._conf = dayConf;
+      var dayTotal = 0, daySched = 0, dayConf = 0, dayDel = 0;
+      Object.keys(d.slots).forEach(function(s) {
+        d.slots[s].forEach(function(e) {
+          dayTotal++;
+          if (isDeliveredLike(e.status)) dayDel++;
+          else if (isConfirmedLike(e.status)) dayConf++;
+          else daySched++;
+        });
+      });
+      d._sched = daySched; d._conf = dayConf; d._del = dayDel;
       var headerCol = isToday ? '#3b82f6' : (isDark ? '#f4f4f5' : '#000000');
       html += '<th colspan="2" style="padding:16px 6px;text-align:center;border-bottom:1px solid rgba(128,128,128,.1);border-left:1px solid rgba(128,128,128,.12);' + (isToday ? 'background:rgba(59,130,246,.06)' : '') + '">';
       html += '<div style="font-size:12px;font-weight:700;color:' + (isToday ? '#3b82f6' : isDark ? '#a1a1aa' : '#374151') + ';text-transform:uppercase;letter-spacing:.5px">' + d.label + '</div>';
       html += '<div style="font-size:36px;font-weight:800;color:' + headerCol + ';line-height:1.2">' + dayTotal + '</div>';
+      if (dayDel) html += '<div style="font-size:11px;color:#71717a;margin-top:2px">' + dayDel + ' delivered</div>';
       html += '</th>';
     });
     html += '</tr>';
@@ -2047,7 +2073,7 @@ function LOADCALENDAR() {
     html += '<tr><th style="padding:6px 12px;border-bottom:2px solid rgba(128,128,128,.15)"></th>';
     days.forEach(function(d) {
       html += '<th style="padding:6px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15);border-left:1px solid rgba(128,128,128,.12)"><span style="font-size:20px;font-weight:700;color:#3b82f6">' + d._sched + '</span></th>';
-      html += '<th style="padding:6px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15)"><span style="font-size:20px;font-weight:700;color:#22c55e">' + d._conf + '</span></th>';
+      html += '<th style="padding:6px 4px;text-align:center;border-bottom:2px solid rgba(128,128,128,.15)"><span style="font-size:20px;font-weight:700;color:#22c55e">' + d._conf + '</span>' + (d._del ? '<div style="font-size:11px;color:#71717a;font-weight:600">' + d._del + ' done</div>' : '') + '</th>';
     });
     html += '</tr></thead><tbody>';
 
@@ -2068,13 +2094,15 @@ function LOADCALENDAR() {
         html += '<td style="padding:8px 12px;font-weight:600;border-bottom:1px solid rgba(128,128,128,.06);color:' + (isDark ? '#a1a1aa' : '#6b7280') + ';font-size:13px">' + t + '</td>';
         days.forEach(function(d, dayIndex) {
           var entries = d.slots[t] || [];
-          var sched = entries.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; }).length;
-          var conf = entries.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; }).length;
+          var sched = entries.filter(function(e) { return isScheduledLike(e.status); }).length;
+          var conf = entries.filter(function(e) { return isConfirmedLike(e.status); }).length;
+          var del = entries.filter(function(e) { return isDeliveredLike(e.status); }).length;
           html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'scheduled\')" style="padding:8px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);border-left:1px solid rgba(128,128,128,.12);border-right:1px solid rgba(128,128,128,.04);cursor:pointer">';
           html += sched > 0 ? '<span style="font-weight:700;font-size:20px;color:#3b82f6">' + sched + '</span>' : '';
           html += '</td>';
           html += '<td onclick="SHOWCALDETAIL(' + dayIndex + ',\'' + t + '\',\'confirmed\')" style="padding:8px 4px;text-align:center;border-bottom:1px solid rgba(128,128,128,.06);cursor:pointer">';
-          html += conf > 0 ? '<span style="font-weight:700;font-size:20px;color:#22c55e">' + conf + '</span>' : '';
+          if (conf > 0) html += '<span style="font-weight:700;font-size:20px;color:#22c55e">' + conf + '</span>';
+          if (del > 0) html += (conf > 0 ? '<br>' : '') + '<span style="font-weight:700;font-size:' + (conf > 0 ? '12' : '20') + 'px;color:#71717a" title="Delivered">' + del + (conf > 0 ? '✓' : '') + '</span>';
           html += '</td>';
         });
       }
@@ -2088,12 +2116,13 @@ function LOADCALENDAR() {
     // Update week stats
     var statsEl = document.getElementById('calWeekStats');
     if (statsEl) {
-      var totalWeek = 0, totalSched = 0, totalConf = 0;
+      var totalWeek = 0, totalSched = 0, totalConf = 0, totalDel = 0;
       days.forEach(function(d) {
         Object.keys(d.slots).forEach(function(s) {
           d.slots[s].forEach(function(e) {
             totalWeek++;
-            if (e.status === 'Confirmed' || e.status === 'Complete') totalConf++;
+            if (isDeliveredLike(e.status)) totalDel++;
+            else if (isConfirmedLike(e.status)) totalConf++;
             else totalSched++;
           });
         });
@@ -2101,7 +2130,8 @@ function LOADCALENDAR() {
       var ss = 'display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid rgba(128,128,128,.1);font-size:14px;font-weight:600';
       statsEl.innerHTML = '<div style="' + ss + '"><span style="font-size:26px;font-weight:700">' + totalWeek + '</span> Deliveries</div>'
         + '<div style="' + ss + ';color:#3b82f6"><span style="font-size:26px">' + totalSched + '</span> Scheduled</div>'
-        + '<div style="' + ss + ';color:#22c55e"><span style="font-size:26px">' + totalConf + '</span> Confirmed</div>';
+        + '<div style="' + ss + ';color:#22c55e"><span style="font-size:26px">' + totalConf + '</span> Confirmed</div>'
+        + '<div style="' + ss + ';color:#a1a1aa"><span style="font-size:26px">' + totalDel + '</span> Delivered</div>';
     }
   });
 }
@@ -3315,13 +3345,16 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
   
   // Filter by status if specified
   if (filter === 'scheduled') {
-    items = items.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete'; });
+    items = items.filter(function(e) { return e.status !== 'Confirmed' && e.status !== 'Complete' && e.status !== 'Delivered'; });
   } else if (filter === 'confirmed') {
-    items = items.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete'; });
+    // Confirmed column click: show confirmed + delivered (done side)
+    items = items.filter(function(e) { return e.status === 'Confirmed' || e.status === 'Complete' || e.status === 'Delivered'; });
+  } else if (filter === 'delivered') {
+    items = items.filter(function(e) { return e.status === 'Delivered'; });
   }
   if (!items.length) return;
 
-  var filterLabel = filter === 'scheduled' ? ' · Scheduled' : filter === 'confirmed' ? ' · Confirmed' : '';
+  var filterLabel = filter === 'scheduled' ? ' · Scheduled' : filter === 'confirmed' ? ' · Confirmed / Delivered' : filter === 'delivered' ? ' · Delivered' : '';
   var titleCol = !document.getElementById('lightThemeCSS') ? '#f4f4f5' : '#111827'; title.innerHTML = '<span style="font-size:20px;font-weight:700;color:' + titleCol + '">' + day.label + '</span> <span style="font-size:20px;color:' + titleCol + ';opacity:.5;font-weight:400">— ' + time + '</span>' + (filterLabel ? '<span style="font-size:14px;color:' + (filter === 'scheduled' ? '#3b82f6' : '#22c55e') + ';font-weight:600;margin-left:8px">' + filterLabel + '</span>' : '');
   panel.style.display = 'flex';
   body.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading details...</div>';
@@ -3365,11 +3398,14 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
       var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified' || a.InsuranceActionStatus === 'COMPLETE');
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.IsContainmentHold || a.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
-      var vs = String(a.VehicleStage || '');
+      var vs = String(a.VehicleStage || it.vs || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0 || vs.indexOf('service center') >= 0;
       var hasTI = !!(window._tiR && window._tiR[it.rn]); // Widget API verified
       var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
-      var delivered = !!a.IsDelivered;
+      var delivered = !!(it.delivered || a.IsDelivered
+        || c2.CustomerDeliveryStatus === 'Delivered' || c2.CustomerDeliveryStatus === 'Complete'
+        || vs.toLowerCase().indexOf('delivered') >= 0
+        || it.status === 'Delivered');
       var allReady = payOk && regOk && otg && !hold;
       var tiMs = hasTI ? 'Approved' : '';
       var score = delivered ? 100 : calcScore(payOk, regOk, insOk, otg, hold, tiMs);
@@ -3382,12 +3418,13 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var scoreTitle = scoreIssues.length ? scoreIssues.join(', ') : 'Ready';
       var vin = it.vin || a.Vin || '';
 
-      var statusDot = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : '#3b82f6';
       var statusLabel = it.status || 'Scheduled';
-      if (delivered) { statusDot = '#71717a'; statusLabel = 'Delivered'; }
+      if (delivered) statusLabel = 'Delivered';
+      else if (/^confirm/i.test(statusLabel)) statusLabel = 'Confirmed';
+      else if (/^complete/i.test(statusLabel)) statusLabel = 'Complete';
 
       var cardBg, cardBdr, leftBar;
-      if (delivered) { cardBg = isDark ? 'rgba(34,197,94,.04)' : '#f0fdf4'; cardBdr = isDark ? 'rgba(34,197,94,.1)' : 'rgba(34,197,94,.12)'; leftBar = '#22c55e'; }
+      if (delivered) { cardBg = isDark ? 'rgba(113,113,122,.08)' : '#f4f4f5'; cardBdr = isDark ? 'rgba(113,113,122,.15)' : 'rgba(0,0,0,.08)'; leftBar = '#71717a'; }
       else if (hold) { cardBg = isDark ? 'rgba(239,68,68,.06)' : '#fef2f2'; cardBdr = isDark ? 'rgba(239,68,68,.1)' : 'rgba(239,68,68,.12)'; leftBar = '#ef4444'; }
       else if (allReady) { cardBg = isDark ? 'rgba(34,197,94,.03)' : '#fafffe'; cardBdr = isDark ? 'rgba(34,197,94,.06)' : 'rgba(34,197,94,.08)'; leftBar = '#22c55e'; }
       else { cardBg = isDark ? 'rgba(255,255,255,.03)' : '#fafafa'; cardBdr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'; leftBar = '#f59e0b'; }
@@ -3399,12 +3436,13 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="font-size:16px;font-weight:700">' + it.name + '</span>';
       if (isEnt) html += '<span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">B2B</span>';
       if (hasTI) html += '<span style="font-size:10px;background:rgba(168,85,247,.15);color:#a855f7;padding:2px 8px;border-radius:10px;font-weight:600">Trade-In</span>';
-      if (hold) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
+      if (hold && !delivered) html += '<span style="font-size:10px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700">HOLD</span>';
+      if (delivered) html += '<span style="font-size:10px;background:rgba(113,113,122,.2);color:#a1a1aa;padding:2px 8px;border-radius:10px;font-weight:700">DELIVERED</span>';
       if (String(a.VehicleTitleStatus || '') === 'USED') html += '<span style="font-size:10px;background:rgba(249,115,22,.15);color:#f97316;padding:2px 8px;border-radius:10px;font-weight:600">USED</span>';
       html += '<span style="color:#71717a;font-size:12px">' + it.model + '</span>';
       html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + it.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600">' + it.rn + '</a>';
       html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + vin + '</span>';
-      html += '<span style="font-weight:600;font-size:12px;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
+      html += '<span style="font-weight:600;font-size:12px;color:' + (delivered ? '#71717a' : otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
       html += '<span data-charge-rn="' + it.rn + '" data-charge-vin="' + vin + '" style="font-size:11px;color:#52525b">🔋 ...</span>';
       // Readiness score badge
       html += '<span title="' + scoreTitle + '" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">';
@@ -3420,11 +3458,15 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (payOk?ckG:ckR) + ';color:' + (payOk?'#22c55e':'#ef4444') + '">' + (payOk?'\u2713':'\u2717') + ' Pay</span>';
       html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (regOk?ckG:ckR) + ';color:' + (regOk?'#22c55e':'#ef4444') + '">' + (regOk?'\u2713':'\u2717') + ' Reg</span>';
       html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (insOk?ckG:ckR) + ';color:' + (insOk?'#22c55e':'#ef4444') + '">' + (insOk?'\u2713':'\u2717') + ' Ins</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (otg?ckG:ckR) + ';color:' + (otg?'#22c55e':'#f59e0b') + '">' + (otg?'\u2713':'\u2717') + ' OTG</span>';
-      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' Hold</span>';
-      // Status dropdown
-      var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
-      html += '<select data-status-rn="' + it.rn + '" onchange="UPDATESTATUS(\'' + it.rn + '\',this.value,this,\'' + dateStr + '\',\'' + vin + '\')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (otg||delivered?ckG:ckR) + ';color:' + (otg||delivered?'#22c55e':'#f59e0b') + '">' + (otg||delivered?'\u2713':'\u2717') + ' OTG</span>';
+      html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (!hold||delivered?ckG:ckR) + ';color:' + (!hold||delivered?'#22c55e':'#ef4444') + '">' + (!hold||delivered?'\u2713':'\u2717') + ' Hold</span>';
+      // Status: badge if delivered, else editable dropdown
+      if (delivered) {
+        html += '<span style="padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700;color:#a1a1aa;border:1px solid rgba(113,113,122,.25);margin-left:4px">● Delivered</span>';
+      } else {
+        var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' || statusLabel === 'Complete' ? ' selected' : '') + '>\u25CF Confirmed</option>';
+        html += '<select data-status-rn="' + it.rn + '" onchange="UPDATESTATUS(\'' + it.rn + '\',this.value,this,\'' + dateStr + '\',\'' + vin + '\')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' || statusLabel === 'Complete' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
+      }
       // CEE link
       if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:5px;margin-left:2px">CEE</a>';
       html += '</div>';
