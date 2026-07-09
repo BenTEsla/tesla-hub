@@ -3424,7 +3424,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:' + (!hold?ckG:ckR) + ';color:' + (!hold?'#22c55e':'#ef4444') + '">' + (!hold?'\u2713':'\u2717') + ' Hold</span>';
       // Status dropdown
       var stOpts = '<option value="Scheduled" style="color:#3b82f6"' + (statusLabel === 'Scheduled' ? ' selected' : '') + '>\u25CF Scheduled</option><option value="Confirmed" style="color:#22c55e"' + (statusLabel === 'Confirmed' ? ' selected' : '') + '>\u25CF Confirmed</option>';
-      html += '<select data-status-rn="' + it.rn + '" onchange="UPDATESTATUS(\'' + it.rn + '\',this.value,this)" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
+      html += '<select data-status-rn="' + it.rn + '" onchange="UPDATESTATUS(\'' + it.rn + '\',this.value,this,\'' + dateStr + '\',\'' + vin + '\')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.15);font-size:11px;font-weight:600;font-family:inherit;color:' + (statusLabel === 'Confirmed' ? '#22c55e' : '#3b82f6') + ';background:transparent;cursor:pointer;margin-left:4px">' + stOpts + '</select>';
       // CEE link
       if (!isEnt && a.IncentivesGate === 'Complete' && String(a.VehicleTitleStatus || '') !== 'USED') html += '<a href="https://tesla.cee.trustia.ai/admin/folder/folder/?q=' + it.rn + '" target="_blank" style="font-size:10px;color:#22c55e;text-decoration:none;font-weight:600;padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:5px;margin-left:2px">CEE</a>';
       html += '</div>';
@@ -3515,43 +3515,88 @@ function UPDATEHOST(rn, host) {
   }).catch(function() {});
 }
 
-function UPDATESTATUS(rn, status, selEl) {
+function UPDATESTATUS(rn, status, selEl, dateStr, vin) {
   var sel = selEl || document.activeElement;
-  var prev = sel ? sel.value : status;
-  if (sel) { sel.style.opacity = '0.5'; sel.disabled = true; }
+  var prevStatus = status === 'Confirmed' ? 'Scheduled' : 'Confirmed';
+  if (sel) {
+    // remember previous before user change
+    prevStatus = (status === 'Confirmed') ? 'Scheduled' : 'Confirmed';
+    sel.style.opacity = '0.5';
+    sel.disabled = true;
+  }
 
   var userId = (AUTH && AUTH.userId) ? AUTH.userId : '428058';
   var calendarId = (CFG && CFG.calendarId) ? CFG.calendarId : 14453;
-  var userName = (window._ssoUser || 'bdaubin').toLowerCase();
+  var userName = 'bdaubin';
+  var date = dateStr || '';
+  if (!date) {
+    // fallback: try today
+    var now = new Date();
+    date = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  }
 
-  fetch(SERVER + '/api/tss/delivery/getCustomerInfoByRN', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
+  // 1) Resolve appointmentId via COGS TSS appointments (reliable for hub+date)
+  // 2) Enrich customer via TSS getCustomerInfoByRN
+  // 3) saveAppointment
+  var apptP = fetch(SERVER + '/api/intrepid/cogs/api/cogs/getTssAppointmentsByDate?trtId=' + CFG.trtId + '&date=' + encodeURIComponent(date) + '&searchQuery=', {
+    headers: { 'Content-Type': 'application/json' }
+  }).then(function(r) {
+    if (!r.ok) throw new Error('COGS appointments failed (' + r.status + ')');
+    return r.json();
+  }).then(function(list) {
+    var arr = Array.isArray(list) ? list : [];
+    var appt = arr.find(function(a) { return (a.referenceNumber || a.rn) === rn; });
+    if (!appt || !appt.appointmentId) throw new Error('No appointment for ' + rn + ' on ' + date);
+    return appt;
+  });
+
+  var custP = fetch(SERVER + '/api/tss/delivery/getCustomerInfoByRN', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId: parseInt(userId, 10) || userId, rn: rn, calendarId: calendarId })
   }).then(function(r) {
-    if (r.status === 401) throw new Error('TSS token missing/expired — open TSS (tss.tesla.com) to capture token');
-    if (!r.ok) throw new Error('TSS lookup failed (' + r.status + ')');
-    return r.json();
+    if (r.status === 401) throw new Error('TSS token missing/expired — open /tss-keepalive.html');
+    if (!r.ok) return {};
+    return r.json().catch(function() { return {}; });
   }).then(function(info) {
-    if (info && info.error) throw new Error(info.error);
-    var appts = (info.response || info || []);
-    if (!Array.isArray(appts)) appts = appts ? [appts] : [];
-    var appt = appts.find(function(a) { return (a.rn || a.referenceNumber) === rn; }) || appts[0];
-    if (!appt || !appt.appointmentId) throw new Error('No TSS appointment found for ' + rn);
+    return (info && info.response) ? info.response : (info || {});
+  }).catch(function(e) {
+    // Customer enrich is optional if COGS has enough
+    if (String(e.message || '').indexOf('TSS token') >= 0) throw e;
+    return {};
+  });
+
+  Promise.all([apptP, custP]).then(function(results) {
+    var appt = results[0];
+    var cust = results[1] || {};
+    var customer = {
+      firstName: cust.firstName || '',
+      lastName: cust.lastName || '',
+      emailAddress: cust.emailAddress || '',
+      phoneNumber: cust.phoneNumber || '',
+      name: cust.name || ((cust.firstName || '') + ' ' + (cust.lastName || '')).trim(),
+      referenceNumber: rn,
+      vin: cust.vin || appt.vin || vin || '',
+      userId: cust.userId || appt.userId || '',
+      model: cust.model || appt.model || '',
+      deliveryType: cust.deliveryType || appt.appointmentType || 'CustomerPickup',
+      pickupLocationId: cust.pickupLocationId || ''
+    };
+
     return fetch(SERVER + '/api/tss/delivery/saveAppointment', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customer: appt.customerContact || {},
-        startDateTime: appt.appointmentStartDateTime,
+        customer: customer,
+        startDateTime: appt.startDateTime || appt.appointmentDate,
         trtId: CFG.trtId,
         appointmentType: appt.appointmentType || 'CustomerPickup',
         appointmentStatus: status,
         appointmentSubStatus: null,
-        model: '',
+        model: appt.model || customer.model || '',
         userId: parseInt(userId, 10) || userId,
         internalNotes: '',
         appointmentId: appt.appointmentId,
         referenceNumber: rn,
-        vin: appt.vin || '',
+        vin: appt.vin || vin || customer.vin || '',
         deliveryType: 3,
         userName: userName,
         calendarId: calendarId,
@@ -3564,16 +3609,18 @@ function UPDATESTATUS(rn, status, selEl) {
     });
   }).then(function(r) {
     if (!r) return null;
-    if (r.status === 401) throw new Error('TSS token missing/expired — open TSS to capture token');
+    if (r.status === 401) throw new Error('TSS token missing/expired — open /tss-keepalive.html');
     if (!r.ok) throw new Error('TSS save failed (' + r.status + ')');
-    return r.json().catch(function() { return { ok: true }; });
-  }).then(function() {
+    return r.json().catch(function() { return { success: true }; });
+  }).then(function(j) {
+    if (j && j.success === false) throw new Error((j.message || j.error || 'TSS rejected status change'));
     if (sel) {
       sel.style.opacity = '1';
       sel.disabled = false;
       sel.style.color = status === 'Confirmed' ? '#22c55e' : '#3b82f6';
+      sel.value = status;
     }
-    // Update local calendar cache so grid counts stay in sync
+    // Update local calendar cache
     (_calAllDays || []).forEach(function(day) {
       Object.keys(day.slots || {}).forEach(function(slot) {
         (day.slots[slot] || []).forEach(function(e) {
@@ -3586,8 +3633,7 @@ function UPDATESTATUS(rn, status, selEl) {
       sel.style.opacity = '1';
       sel.disabled = false;
       sel.style.color = '#ef4444';
-      // revert selection
-      try { sel.value = (prev === 'Confirmed' ? 'Scheduled' : prev); } catch (err) {}
+      try { sel.value = prevStatus; } catch (err) {}
       setTimeout(function() { if (sel) sel.style.color = ''; }, 4000);
     }
     alert('Confirm failed: ' + (e.message || e));
