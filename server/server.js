@@ -1444,32 +1444,92 @@ app.get('/api/standup', async (req, res) => {
     const todayData = await fetchDay(fmtDate(today));
     const tmrwData = await fetchDay(fmtDate(tomorrow));
 
+    const scoreOf = (d) => {
+      let s = 0;
+      const payOk = d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete';
+      const regOk = !!(d.LicensePlate && d.LicensePlate.indexOf('-') >= 0);
+      const insOk = d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE';
+      const vs = d.VehicleStage || '';
+      const otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0;
+      const hold = !!(d.IsContainmentHold || d.IsRepairOrderHold);
+      if (payOk) s += 25;
+      if (regOk) s += 20;
+      if (insOk) s += 15;
+      if (otg) s += 25;
+      if (!hold) s += 10;
+      s += 5; // trade-in unknown default OK
+      return s;
+    };
+
+    const issuesOf = (d) => {
+      const issues = [];
+      if (!(d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete')) issues.push('Payment');
+      if (!(d.LicensePlate && d.LicensePlate.indexOf('-') >= 0)) issues.push('Reg');
+      if (!(d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE')) issues.push('Insurance');
+      const vs = d.VehicleStage || '';
+      if (!(vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0)) issues.push('Vehicle');
+      if (d.IsContainmentHold || d.IsRepairOrderHold) issues.push('HOLD');
+      return issues;
+    };
+
     const analyze = (data) => {
       const total = data.length;
       const delivered = data.filter(d => d.IsDelivered).length;
       const active = data.filter(d => !d.IsDelivered);
       const payOk = active.filter(d => d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete').length;
       const regOk = active.filter(d => d.LicensePlate && d.LicensePlate.indexOf('-') >= 0).length;
-      const insOk = active.filter(d => d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified').length;
+      const insOk = active.filter(d => d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE').length;
       const otg = active.filter(d => { const vs = d.VehicleStage || ''; return vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0; }).length;
       const holds = active.filter(d => d.IsContainmentHold || d.IsRepairOrderHold);
-      const ready = active.filter(d => {
+      const readyList = [];
+      const notReadyList = [];
+      active.forEach(d => {
         const p = d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete';
         const r = d.LicensePlate && d.LicensePlate.indexOf('-') >= 0;
         const o = d.VehicleStage === 'Finished Goods' || (d.VehicleStage || '').indexOf('Arrived') >= 0;
-        const h = d.IsContainmentHold || d.IsRepairOrderHold;
-        return p && r && o && !h;
-      }).length;
-      const notReady = active.length - ready;
+        const hld = d.IsContainmentHold || d.IsRepairOrderHold;
+        const item = {
+          rn: d.ReferenceNumber,
+          name: d.CustomerName,
+          model: d.VehicleModel || '',
+          score: scoreOf(d),
+          issues: issuesOf(d),
+          vin: d.Vin || ''
+        };
+        if (p && r && o && !hld) readyList.push(item);
+        else notReadyList.push(item);
+      });
+      notReadyList.sort((a, b) => a.score - b.score);
+      const ready = readyList.length;
+      const notReady = notReadyList.length;
       const issues = [];
       if (active.length - payOk > 0) issues.push((active.length - payOk) + ' payment pending');
       if (active.length - regOk > 0) issues.push((active.length - regOk) + ' reg pending');
       if (active.length - otg > 0) issues.push((active.length - otg) + ' not on site');
-      return { total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg, holds: holds.map(d => ({ rn: d.ReferenceNumber, name: d.CustomerName, type: d.IsContainmentHold ? 'Containment' : 'Repair Order' })), issues };
+      return {
+        total, delivered, active: active.length, ready, notReady, payOk, regOk, insOk, otg,
+        holds: holds.map(d => ({ rn: d.ReferenceNumber, name: d.CustomerName, type: d.IsContainmentHold ? 'Containment' : 'Repair Order' })),
+        issues, notReadyList: notReadyList.slice(0, 15), readyList
+      };
     };
 
     const todayStats = analyze(todayData);
     const tmrwStats = analyze(tmrwData);
+
+    // Low charge for today (sample up to 15 active VINs)
+    const lowCharge = [];
+    const chargeCandidates = todayData.filter(d => !d.IsDelivered && d.Vin && d.ReferenceNumber).slice(0, 15);
+    await Promise.all(chargeCandidates.map(async (d) => {
+      try {
+        const cr = await fetch(config.apis.dro + '/widget/overview/' + d.ReferenceNumber + '/info?vin=' + d.Vin, { headers: h });
+        const cj = await cr.json();
+        const charge = cj.Data && cj.Data.VinCharge != null ? parseInt(cj.Data.VinCharge) : null;
+        if (charge != null && charge < 50) {
+          lowCharge.push({ rn: d.ReferenceNumber, name: d.CustomerName, model: d.VehicleModel || '', vin: d.Vin, charge });
+        }
+      } catch (e) {}
+    }));
+    lowCharge.sort((a, b) => a.charge - b.charge);
 
     // Recent notifications
     const recentNotifs = notifications.filter(n => {
@@ -1479,29 +1539,49 @@ app.get('/api/standup', async (req, res) => {
 
     // Generate text report
     const dayName = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    let report = '📋 STANDUP — ' + hub.name + ' — ' + dayName + '\n\n';
-    report += '📊 TODAY: ' + todayStats.total + ' deliveries\n';
-    report += '   ✅ ' + todayStats.ready + ' ready (' + (todayStats.active ? Math.round(todayStats.ready / todayStats.active * 100) : 0) + '%)\n';
-    if (todayStats.notReady) report += '   ⚠️ ' + todayStats.notReady + ' not ready\n';
-    if (todayStats.delivered) report += '   🏁 ' + todayStats.delivered + ' already delivered\n';
+    let report = 'STANDUP — ' + hub.name + ' — ' + dayName + '\n\n';
+    report += 'TODAY: ' + todayStats.total + ' deliveries\n';
+    report += '  Ready: ' + todayStats.ready + ' (' + (todayStats.active ? Math.round(todayStats.ready / todayStats.active * 100) : 0) + '%)\n';
+    if (todayStats.notReady) report += '  Not ready: ' + todayStats.notReady + '\n';
+    if (todayStats.delivered) report += '  Already delivered: ' + todayStats.delivered + '\n';
     if (todayStats.holds.length) {
-      report += '   🔴 ' + todayStats.holds.length + ' hold(s):\n';
-      todayStats.holds.forEach(h => { report += '      • ' + h.rn + ' ' + h.name + ' (' + h.type + ')\n'; });
+      report += '  Holds (' + todayStats.holds.length + '):\n';
+      todayStats.holds.forEach(hld => { report += '    - ' + hld.rn + ' ' + hld.name + ' (' + hld.type + ')\n'; });
     }
-    if (todayStats.issues.length) report += '   📝 ' + todayStats.issues.join(', ') + '\n';
+    if (todayStats.notReadyList.length) {
+      report += '  Action needed:\n';
+      todayStats.notReadyList.slice(0, 8).forEach(item => {
+        report += '    - [' + item.score + '] ' + item.rn + ' ' + item.name + ' — ' + item.issues.join(', ') + '\n';
+      });
+    }
+    if (todayStats.issues.length) report += '  Issues: ' + todayStats.issues.join(', ') + '\n';
 
-    report += '\n📊 TOMORROW: ' + tmrwStats.total + ' deliveries\n';
-    report += '   ✅ ' + tmrwStats.ready + ' ready\n';
-    if (tmrwStats.notReady) report += '   ⚠️ ' + tmrwStats.notReady + ' not ready\n';
-    if (tmrwStats.holds.length) report += '   🔴 ' + tmrwStats.holds.length + ' hold(s)\n';
+    report += '\nTOMORROW: ' + tmrwStats.total + ' deliveries\n';
+    report += '  Ready: ' + tmrwStats.ready + '\n';
+    if (tmrwStats.notReady) report += '  Not ready: ' + tmrwStats.notReady + '\n';
+    if (tmrwStats.holds.length) report += '  Holds: ' + tmrwStats.holds.length + '\n';
+
+    if (lowCharge.length) {
+      report += '\nLOW CHARGE (<50%):\n';
+      lowCharge.forEach(v => { report += '  - ' + v.charge + '% ' + v.rn + ' ' + v.name + ' (' + v.model + ')\n'; });
+    }
 
     if (recentNotifs.length) {
-      report += '\n🔔 LAST 24H CHANGES: ' + recentNotifs.length + '\n';
-      recentNotifs.slice(0, 5).forEach(n => { report += '   ' + (n.priority === 'high' ? '🔴' : '🟡') + ' ' + n.title + '\n'; });
-      if (recentNotifs.length > 5) report += '   ... +' + (recentNotifs.length - 5) + ' more\n';
+      report += '\nLAST 24H CHANGES: ' + recentNotifs.length + '\n';
+      recentNotifs.slice(0, 5).forEach(n => { report += '  - ' + n.title + '\n'; });
+      if (recentNotifs.length > 5) report += '  ... +' + (recentNotifs.length - 5) + ' more\n';
     }
 
-    res.json({ report, today: todayStats, tomorrow: tmrwStats, notifications: recentNotifs.length, hubName: hub.name, date: dayName });
+    res.json({
+      report,
+      today: todayStats,
+      tomorrow: tmrwStats,
+      lowCharge,
+      recentNotifs: recentNotifs.slice(0, 10),
+      notifications: recentNotifs.length,
+      hubName: hub.name,
+      date: dayName
+    });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2512,6 +2592,7 @@ async function checkDeliveries() {
     const today = new Date();
     const tomorrow = new Date(Date.now() + 86400000);
     const dates = [today, tomorrow].map(d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+    const LOW_CHARGE_THRESHOLD = 50;
 
     for (const date of dates) {
       const r = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
@@ -2521,6 +2602,35 @@ async function checkDeliveries() {
       if (!r.ok) continue;
       const j = await r.json();
       const deliveries = (j.Data && j.Data.Dashboard) || [];
+      const isToday = date === dates[0];
+
+      // Low-charge check only for today (limit API load)
+      if (isToday) {
+        const chargeTargets = deliveries.filter(d => !d.IsDelivered && d.Vin && d.ReferenceNumber).slice(0, 20);
+        for (let i = 0; i < chargeTargets.length; i += 5) {
+          const chunk = chargeTargets.slice(i, i + 5);
+          await Promise.all(chunk.map(async (d) => {
+            try {
+              const cr = await fetch(config.apis.dro + '/widget/overview/' + d.ReferenceNumber + '/info?vin=' + d.Vin, { headers: h });
+              const cj = await cr.json();
+              const charge = cj.Data && cj.Data.VinCharge != null ? parseInt(cj.Data.VinCharge) : null;
+              if (charge == null) return;
+              const prev = watchState[d.ReferenceNumber] || {};
+              const wasLow = !!prev.lowCharge;
+              const isLow = charge < LOW_CHARGE_THRESHOLD;
+              if (isLow && !wasLow) {
+                addNotif('charge', 'Low charge: ' + (d.CustomerName || d.ReferenceNumber), d.ReferenceNumber + ' — ' + charge + '% (' + (d.VehicleModel || '') + ')', charge < 30 ? 'high' : 'medium');
+              }
+              // store charge for next cycle
+              watchState[d.ReferenceNumber] = Object.assign({}, prev, {
+                charge,
+                lowCharge: isLow,
+                lastSeen: new Date().toISOString()
+              });
+            } catch (e) {}
+          }));
+        }
+      }
 
       deliveries.forEach(d => {
         const rn = d.ReferenceNumber;
@@ -2530,7 +2640,6 @@ async function checkDeliveries() {
         if (d.DeliveryLocation && !d.DeliveryLocation.includes(hub.location.split('-').slice(0,3).join('-'))) return;
 
         const prev = watchState[rn] || {};
-        const isToday = date === dates[0];
         const dayLabel = isToday ? "aujourd'hui" : 'demain';
 
         // 1. PUSHBACK: SDD changed to a later date
@@ -2566,13 +2675,15 @@ async function checkDeliveries() {
           addNotif('new_delivery', 'New Delivery: ' + (d.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' ajouté ' + dayLabel, 'low');
         }
 
-        // Update state
+        // Update state (preserve charge fields if set)
         watchState[rn] = {
           sdd: d.ScheduledDeliveryDate || prev.sdd,
           vs: vs || prev.vs,
           hold: hasHold,
           name: d.CustomerName || prev.name,
           model: d.VehicleModel || prev.model,
+          charge: prev.charge,
+          lowCharge: prev.lowCharge,
           lastSeen: new Date().toISOString()
         };
       });
@@ -2591,6 +2702,6 @@ function startDeliveryWatcher() {
     checkDeliveries();
     // Then every 5 minutes
     setInterval(checkDeliveries, WATCH_INTERVAL);
-    console.log('  Watcher:    Active (every 5 min) — pushback, holds, vehicle ready');
+    console.log('  Watcher:    Active (every 5 min) — pushback, holds, vehicle ready, low charge');
   }, 30000);
 }

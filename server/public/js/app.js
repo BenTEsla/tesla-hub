@@ -132,40 +132,159 @@ function scoreLabel(d) {
 // ============================================
 function STANDUP() {
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center';
+  overlay.id = 'standupOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)';
   overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 
   var modal = document.createElement('div');
-  modal.style.cssText = 'background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)';
-  modal.innerHTML = '<div style="text-align:center;padding:20px;color:#71717a">Loading standup report...</div>';
+  modal.style.cssText = 'background:#141414;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:0;max-width:720px;width:100%;max-height:85vh;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.55);display:flex;flex-direction:column';
+  modal.innerHTML = '<div style="text-align:center;padding:40px;color:#71717a">Loading standup report...</div>';
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
   fetch(SERVER + '/api/standup').then(function(r) { return r.json(); }).then(function(j) {
-    if (j.error) { modal.innerHTML = '<div style="color:#ef4444;padding:20px">Error: ' + j.error + '</div>'; return; }
+    if (j.error) {
+      modal.innerHTML = '<div style="color:#ef4444;padding:28px">Error: ' + j.error + '</div>';
+      return;
+    }
 
-    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
-    html += '<h2 style="font-size:18px;font-weight:700;margin:0">📋 Standup Report</h2>';
+    var t = j.today || {};
+    var tm = j.tomorrow || {};
+    var readyPct = t.active ? Math.round((t.ready || 0) / t.active * 100) : 0;
+    var readyCol = readyPct >= 80 ? '#22c55e' : readyPct >= 50 ? '#f59e0b' : '#ef4444';
+
+    function statCard(label, value, sub, color) {
+      return '<div style="flex:1;min-width:110px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 16px">'
+        + '<div style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">' + label + '</div>'
+        + '<div style="font-size:28px;font-weight:800;color:' + (color || '#f4f4f5') + ';line-height:1">' + value + '</div>'
+        + (sub ? '<div style="font-size:11px;color:#52525b;margin-top:6px">' + sub + '</div>' : '')
+        + '</div>';
+    }
+
+    var html = '';
+    // Header
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.06)">';
+    html += '<div><div style="font-size:18px;font-weight:700">Standup Report</div>';
+    html += '<div style="font-size:12px;color:#71717a;margin-top:2px">' + (j.date || '') + ' · ' + (j.hubName || '') + '</div></div>';
     html += '<div style="display:flex;gap:8px">';
-    html += '<button onclick="COPYSTANDUP()" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📋 Copy</button>';
-    html += '<button onclick="this.closest(\'div\').closest(\'div\').closest(\'div\').remove()" style="background:none;border:1px solid rgba(255,255,255,.1);color:#71717a;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Close</button>';
+    html += '<button id="standupCopyBtn" onclick="COPYSTANDUP()" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Copy for Teams</button>';
+    html += '<button onclick="document.getElementById(\'standupOverlay\').remove()" style="background:none;border:1px solid rgba(255,255,255,.1);color:#a1a1aa;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Close</button>';
     html += '</div></div>';
-    html += '<div style="font-size:12px;color:#52525b;margin-bottom:16px">' + j.date + ' · ' + j.hubName + '</div>';
-    html += '<pre id="standupText" style="background:#111;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:16px;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:inherit;color:#e5e5e5;margin:0">' + j.report + '</pre>';
+
+    // Scroll body
+    html += '<div style="overflow-y:auto;padding:20px 22px;flex:1">';
+
+    // Today stats
+    html += '<div style="font-size:12px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Today</div>';
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
+    html += statCard('Total', t.total || 0, (t.delivered || 0) + ' delivered');
+    html += statCard('Ready', t.ready || 0, readyPct + '% of active', readyCol);
+    html += statCard('Not ready', t.notReady || 0, (t.issues || []).join(' · ') || '—', (t.notReady || 0) > 0 ? '#f59e0b' : '#22c55e');
+    html += statCard('Holds', (t.holds || []).length, '', (t.holds || []).length ? '#ef4444' : '#22c55e');
+    html += '</div>';
+
+    // Holds list
+    if (t.holds && t.holds.length) {
+      html += '<div style="margin-bottom:18px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">Holds</div>';
+      t.holds.forEach(function(h) {
+        html += '<div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:8px;margin-bottom:6px">';
+        html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + h.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:12px">' + h.rn + '</a>';
+        html += '<span style="font-size:13px;font-weight:600">' + (h.name || '') + '</span>';
+        html += '<span style="font-size:11px;color:#ef4444;margin-left:auto;font-weight:600">' + (h.type || 'Hold') + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Not ready list
+    if (t.notReadyList && t.notReadyList.length) {
+      html += '<div style="margin-bottom:18px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:8px">Action needed (' + t.notReadyList.length + ')</div>';
+      t.notReadyList.forEach(function(item) {
+        var sc = item.score >= 70 ? '#f59e0b' : '#ef4444';
+        html += '<div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px;margin-bottom:6px">';
+        html += '<span style="font-size:12px;font-weight:700;color:' + sc + ';min-width:28px">' + item.score + '</span>';
+        html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + item.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:12px">' + item.rn + '</a>';
+        html += '<span style="font-size:13px">' + (item.name || '') + '</span>';
+        html += '<span style="font-size:11px;color:#71717a;margin-left:auto">' + (item.issues || []).join(', ') + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Tomorrow
+    html += '<div style="font-size:12px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 10px">Tomorrow</div>';
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
+    html += statCard('Total', tm.total || 0);
+    html += statCard('Ready', tm.ready || 0, '', (tm.ready || 0) === (tm.active || 0) && tm.active ? '#22c55e' : '#f59e0b');
+    html += statCard('Not ready', tm.notReady || 0, '', (tm.notReady || 0) > 0 ? '#f59e0b' : '#22c55e');
+    html += statCard('Holds', (tm.holds || []).length, '', (tm.holds || []).length ? '#ef4444' : '#22c55e');
+    html += '</div>';
+
+    // Low charge
+    if (j.lowCharge && j.lowCharge.length) {
+      html += '<div style="margin-bottom:18px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">Low charge (&lt;50%)</div>';
+      j.lowCharge.forEach(function(v) {
+        html += '<div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.1);border-radius:8px;margin-bottom:6px">';
+        html += '<span style="font-size:13px;font-weight:700;color:#ef4444">' + v.charge + '%</span>';
+        html += '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + v.rn + '" target="_blank" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:12px">' + v.rn + '</a>';
+        html += '<span style="font-size:13px">' + (v.name || '') + '</span>';
+        html += '<span style="font-size:11px;color:#71717a;margin-left:auto">' + (v.model || '') + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Last 24h
+    if (j.recentNotifs && j.recentNotifs.length) {
+      html += '<div style="margin-bottom:18px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Last 24h (' + j.recentNotifs.length + ')</div>';
+      j.recentNotifs.slice(0, 8).forEach(function(n) {
+        var icon = n.priority === 'high' ? '🔴' : n.type === 'charge' ? '🔋' : '🟡';
+        html += '<div style="padding:6px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)">' + icon + ' ' + (n.title || '') + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Raw text (for copy)
+    html += '<div style="font-size:11px;color:#52525b;margin-bottom:6px;text-transform:uppercase;font-weight:600">Teams paste</div>';
+    html += '<pre id="standupText" style="background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;font-size:12px;line-height:1.55;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#d4d4d8;margin:0">' + (j.report || '') + '</pre>';
+    html += '</div>';
+
     modal.innerHTML = html;
   }).catch(function(e) {
-    modal.innerHTML = '<div style="color:#ef4444;padding:20px">Error: ' + e.message + '</div>';
+    modal.innerHTML = '<div style="color:#ef4444;padding:28px">Error: ' + e.message + '</div>';
   });
 }
 
 function COPYSTANDUP() {
   var text = document.getElementById('standupText');
-  if (text) {
-    navigator.clipboard.writeText(text.textContent).then(function() {
-      var btn = document.querySelector('[onclick="COPYSTANDUP()"]');
-      if (btn) { btn.textContent = '✓ Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 2000); }
-    });
-  }
+  var btn = document.getElementById('standupCopyBtn');
+  if (!text) return;
+  navigator.clipboard.writeText(text.textContent).then(function() {
+    if (btn) {
+      btn.textContent = '✓ Copied!';
+      btn.style.background = 'rgba(34,197,94,.15)';
+      btn.style.color = '#22c55e';
+      btn.style.borderColor = 'rgba(34,197,94,.3)';
+      setTimeout(function() {
+        btn.textContent = 'Copy for Teams';
+        btn.style.background = 'rgba(59,130,246,.15)';
+        btn.style.color = '#60a5fa';
+        btn.style.borderColor = 'rgba(59,130,246,.3)';
+      }, 2000);
+    }
+  }).catch(function() {
+    // Fallback
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { document.execCommand('copy'); if (btn) btn.textContent = '✓ Copied!'; } catch (e) {}
+  });
 }
 
 // ============================================
@@ -187,7 +306,7 @@ function LOADNOTIFS() {
     if (!notifs.length) { list.innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:13px">No notifications</div>'; return; }
     var isDark = !document.getElementById('lightThemeCSS');
     var html = '';
-    var icons = { hold: '🔴', ready: '🟢', payment: '🔵', scan: '🟣', pushback: '⚡', duebill: '📋', info: 'ℹ️' };
+    var icons = { hold: '🔴', ready: '🟢', payment: '🔵', scan: '🟣', pushback: '⚡', duebill: '📋', info: 'ℹ️', charge: '🔋', vehicle_ready: '🟢', hold_resolved: '✅', new_delivery: '🆕', car_command: '🚨' };
     notifs.forEach(function(n) {
       var icon = icons[n.type] || '🔔';
       var ago = Math.round((Date.now() - new Date(n.time).getTime()) / 60000);
@@ -1060,7 +1179,31 @@ async function L() {
         batches.push(vinsToCharge.slice(bi, bi + batchSize));
       }
       (function processBatch(idx) {
-        if (idx >= batches.length) return;
+        if (idx >= batches.length) {
+          // After all charges loaded: surface low-charge banner
+          var low = DATA.filter(function(d) { return !d.delivered && d.charge != null && d.charge < 50; })
+            .sort(function(a, b) { return a.charge - b.charge; });
+          var banner = document.getElementById('lowChargeBanner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'lowChargeBanner';
+            var tbl = document.getElementById('tbl');
+            if (tbl && tbl.parentNode) tbl.parentNode.insertBefore(banner, tbl);
+          }
+          if (low.length) {
+            banner.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);font-size:13px';
+            banner.innerHTML = '<span style="font-weight:700;color:#ef4444">🔋 Low charge</span>'
+              + '<span style="color:#a1a1aa">' + low.length + ' vehicle' + (low.length > 1 ? 's' : '') + ' under 50%</span>'
+              + low.slice(0, 6).map(function(d) {
+                return '<a href="https://dro.tesla.com/advisor?sidepanel_fullscreen=yes&rn=' + d.rn + '" target="_blank" style="color:#fca5a5;text-decoration:none;font-weight:600;font-size:12px">' + d.charge + '% ' + d.rn + '</a>';
+              }).join('')
+              + (low.length > 6 ? '<span style="color:#71717a;font-size:12px">+' + (low.length - 6) + ' more</span>' : '');
+          } else if (banner) {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+          }
+          return;
+        }
         Promise.all(batches[idx].map(function(v) {
           return fetch(SERVER + '/api/dro/widget/overview/' + v.rn + '/info?vin=' + v.vin)
             .then(function(r) { return r.json(); })
@@ -3124,7 +3267,7 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
 
       var regOk = !!(a.HasPlates || (a.LicensePlate && a.LicensePlate.indexOf('-') >= 0));
       var payOk = a.AmountDueActionStatus === 'Yes' || a.FinalPaymentGate === 'Complete';
-      var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified');
+      var insOk = !!(a.InsuranceGate === 'Complete' || a.InsuranceGate === 'Verified' || a.InsuranceActionStatus === 'COMPLETE');
       var hold = !!(c2.IsContainmentHold || c2.IsRepairOrderHold || a.ServiceVisitGate === 'Incomplete');
       var vs = String(a.VehicleStage || '');
       var otg = vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('Deliverable') >= 0 || vs.indexOf('service center') >= 0;
@@ -3132,6 +3275,15 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       var isEnt = !!(c2.IsEnterpriseOrder || a.IsEnterpriseOrder);
       var delivered = !!a.IsDelivered;
       var allReady = payOk && regOk && otg && !hold;
+      var tiMs = hasTI ? 'Approved' : '';
+      var score = delivered ? 100 : calcScore(payOk, regOk, insOk, otg, hold, tiMs);
+      var scoreIssues = [];
+      if (!payOk) scoreIssues.push('Payment');
+      if (!regOk) scoreIssues.push('Reg');
+      if (!insOk) scoreIssues.push('Insurance');
+      if (!otg) scoreIssues.push('Vehicle');
+      if (hold) scoreIssues.push('HOLD');
+      var scoreTitle = scoreIssues.length ? scoreIssues.join(', ') : 'Ready';
 
       var statusDot = it.status === 'Confirmed' || it.status === 'Complete' ? '#22c55e' : '#3b82f6';
       var statusLabel = it.status || 'Scheduled';
@@ -3157,6 +3309,11 @@ function SHOWCALDETAIL(dayIdx, time, filter) {
       html += '<span style="font-family:monospace;font-size:11px;color:#71717a">' + (it.vin || a.Vin || '') + '</span>';
       html += '<span style="font-weight:600;font-size:12px;color:' + (otg ? '#22c55e' : vs.indexOf('Transit') >= 0 ? '#f59e0b' : '#71717a') + '">' + (vs || '') + '</span>';
       html += '<span data-charge-vin="' + (it.vin || a.Vin || '') + '" style="font-size:11px;color:#52525b">🔋 ...</span>';
+      // Readiness score badge
+      html += '<span title="' + scoreTitle + '" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">';
+      html += '<div style="width:28px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden"><div style="width:' + score + '%;height:100%;background:' + scoreColor(score) + ';border-radius:3px"></div></div>';
+      html += '<span style="font-size:11px;font-weight:700;color:' + scoreColor(score) + '">' + score + '</span>';
+      html += '</span>';
       html += '</div>';
 
       // Row 2: Readiness + Status + Links
