@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DASH — Stats</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,sans-serif;background:#09090b;color:#fafafa;overflow-x:hidden}
+.hero{text-align:center;padding:60px 24px 40px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(249,115,22,.12),transparent 70%);pointer-events:none}
+.logo{font-size:64px;font-weight:900;letter-spacing:-3px;background:linear-gradient(135deg,#f97316,#ef4444,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.sub{color:#71717a;font-size:15px;margin-bottom:32px}
+.ver{display:inline-block;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);color:#fb923c;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.5px;margin-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:900px;margin:0 auto 40px;padding:0 24px}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:24px 16px;text-align:center;transition:transform .2s}
+.card:hover{transform:translateY(-4px)}
+.card b{display:block;font-size:42px;font-weight:800;line-height:1;margin-bottom:6px}
+.card span{font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.g{color:#22c55e}.b{color:#3b82f6}.o{color:#f97316}.r{color:#ef4444}.p{color:#a855f7}.y{color:#f59e0b}
+.timeline{max-width:700px;margin:0 auto 40px;padding:0 24px}
+.tl-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#71717a;font-weight:700;margin-bottom:16px;text-align:center}
+.tl-item{display:flex;gap:12px;margin-bottom:8px;font-size:13px;align-items:flex-start}
+.tl-ver{min-width:56px;font-weight:700;color:#f97316;text-align:right}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:#27272a;border:2px solid #52525b;margin-top:4px;flex-shrink:0}
+.tl-item.hot .tl-dot{background:#f97316;border-color:#f97316;box-shadow:0 0 8px rgba(249,115,22,.5)}
+.tl-text{color:#a1a1aa;flex:1}
+.tl-text b{color:#e4e4e7;font-weight:600}
+.apis{max-width:700px;margin:0 auto 40px;padding:0 24px}
+.api-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.api-name{color:#d4d4d8;font-weight:600}
+.api-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.api-ok{background:rgba(34,197,94,.12);color:#22c55e}
+.api-warn{background:rgba(245,158,11,.12);color:#f59e0b}
+.api-off{background:rgba(113,113,122,.12);color:#71717a}
+.quote{max-width:600px;margin:40px auto;text-align:center;padding:0 24px}
+.quote p{font-size:15px;color:#52525b;font-style:italic;line-height:1.6}
+.quote .author{color:#71717a;font-size:12px;margin-top:8px}
+.foot{text-align:center;padding:24px;color:#27272a;font-size:11px}
+.konami{display:none;text-align:center;padding:20px;font-size:24px}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="logo">DASH</div>
+  <div class="sub">Delivery Automation Smart Hub</div>
+  <div class="ver">v22.28 · Built with Claude Opus 4 + one CES who doesn't sleep</div>
+</div>
+
+<div class="grid" id="stats">
+  <div class="card"><b class="o" id="sVersions">28</b><span>Versions</span></div>
+  <div class="card"><b class="b" id="sLines">-</b><span>Lines of Code</span></div>
+  <div class="card"><b class="g" id="sApis">7</b><span>APIs Proxied</span></div>
+  <div class="card"><b class="r" id="sBugs">15</b><span>Bugs Fixed</span></div>
+  <div class="card"><b class="p" id="sPages">12</b><span>Views</span></div>
+  <div class="card"><b class="y" id="sNotifs">6</b><span>Alert Types</span></div>
+  <div class="card"><b class="g" id="sHubs">3</b><span>Hubs Config</span></div>
+  <div class="card"><b class="o" id="sCoffee">0</b><span>Coffees (AI)</span></div>
+</div>
+
+<div class="timeline">
+  <div class="tl-title">Session Timeline — July 10, 2026</div>
+  <div class="tl-item"><div class="tl-ver">v22.16</div><div class="tl-dot"></div><div class="tl-text"><b>Readiness Score</b> + Daily Standup</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.17</div><div class="tl-dot"></div><div class="tl-text"><b>Calendar score</b> + low-charge + Standup UX</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.18</div><div class="tl-dot"></div><div class="tl-text"><b>Dashboard Pulse</b> — avg score, holds, charge</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.19</div><div class="tl-dot"></div><div class="tl-text"><b>Score everywhere</b> — Dispatch, Pull-up, demo pack</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.20</div><div class="tl-dot"></div><div class="tl-text"><b>Ghost data fix</b> — Customer Dashboard onlyMyLocation</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.21</div><div class="tl-dot"></div><div class="tl-text"><b>Calendar charge</b> fast + confirm error handling</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.22</div><div class="tl-dot"></div><div class="tl-text"><b>TSS capture</b> page — Bouncer auth</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.23</div><div class="tl-dot"></div><div class="tl-text"><b>Confirm fix</b> — COGS appointmentId</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.24</div><div class="tl-dot"></div><div class="tl-text"><b>Delivered status</b> — grey cards, badge, stats</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.25</div><div class="tl-dot"></div><div class="tl-text"><b>Low-score alerts</b> veille + watcher location fix</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.26</div><div class="tl-dot"></div><div class="tl-text"><b>Auto-refresh</b> — 2 min polling + notif pulse</div></div>
+  <div class="tl-item hot"><div class="tl-ver">v22.27</div><div class="tl-dot"></div><div class="tl-text"><b>HOTFIX</b> — SDD timezone shift (sorry Sacha)</div></div>
+  <div class="tl-item"><div class="tl-ver">v22.28</div><div class="tl-dot"></div><div class="tl-text"><b>Dashboard polish</b> — compact, grey zeros, progress</div></div>
+</div>
+
+<div class="apis">
+  <div class="tl-title">API integrations</div>
+  <div class="api-row"><span class="api-name">DRO (mytdeliveryopsapi)</span><span class="api-status" id="apiDro">...</span></div>
+  <div class="api-row"><span class="api-name">TSS (tss.tesla.com)</span><span class="api-status" id="apiTss">...</span></div>
+  <div class="api-row"><span class="api-name">COGS (intrepidapi)</span><span class="api-status" id="apiCogs">...</span></div>
+  <div class="api-row"><span class="api-name">Tableau BI</span><span class="api-status" id="apiTab">...</span></div>
+  <div class="api-row"><span class="api-name">DocGen</span><span class="api-status" id="apiDoc">...</span></div>
+  <div class="api-row"><span class="api-name">Delivery Planner (OS)</span><span class="api-status" id="apiOs">...</span></div>
+  <div class="api-row"><span class="api-name">Tesladex (Garage EU)</span><span class="api-status" id="apiTdx">...</span></div>
+</div>
+
+<div class="quote">
+  <p>"La France entière était devant le foot et pendant ce temps Ben il modifiait des SDD de clients du lendemain ptdrrr"</p>
+  <div class="author">— Sacha Villa, 8:37 AM</div>
+</div>
+
+<div class="quote">
+  <p>"Fais attention Nova prend le contrôle !!!"</p>
+  <div class="author">— Sacha Villa, 8:39 AM</div>
+</div>
+
+<div class="quote">
+  <p>"Les bugs des premiers essais 😊"</p>
+  <div class="author">— Sophie Macé, 12:42 PM</div>
+</div>
+
+<div class="konami" id="konami">
+  🎮 ↑↑↓↓←→←→BA — You found the Konami code!<br>
+  <span style="font-size:48px;margin-top:12px;display:block">🚗⚡</span>
+</div>
+
+<div class="foot">
+  DASH · Tesla Delivery · Rennes Saint-Jacques · Built by Ben Daubin + Claude Opus 4 via Nova<br>
+  "Given the much lower cost of Grok 4.5..." — Elon, July 9 2026. We're still here.
+</div>
+
+<script>
+// Live stats
+fetch('/api/auth/status').then(r=>r.json()).then(j=>{
+  var s=function(id,ok,label){var e=document.getElementById(id);e.textContent=label||'';e.className='api-status '+(ok==='ok'?'api-ok':ok==='warn'?'api-warn':'api-off')};
+  s('apiDro',j.hasDro?'ok':'off',j.hasDro?'Connected ('+j.droMinLeft+'m)':'Offline');
+  s('apiTss',j.hasTss?'ok':'off',j.hasTss?'Connected':'No token');
+  s('apiOs',j.hasOs?'ok':'off',j.hasOs?'Connected':'No token');
+  s('apiDoc',j.hasDocgen?'ok':'off',j.hasDocgen?'Connected':'Expired');
+}).catch(()=>{});
+fetch('/api/cotg/inventory').then(r=>r.ok?'ok':'off').then(s=>{var e=document.getElementById('apiCogs');e.textContent=s==='ok'?'Connected':'Error';e.className='api-status '+(s==='ok'?'api-ok':'api-off')}).catch(()=>{});
+fetch('/api/bi/csat').then(r=>r.json()).then(j=>{var e=document.getElementById('apiTab');e.textContent=j.error?'Error':'Connected';e.className='api-status '+(j.error?'api-warn':'api-ok')}).catch(()=>{var e=document.getElementById('apiTab');e.textContent='Offline';e.className='api-status api-off'});
+document.getElementById('apiTdx').textContent='Cookie auth';document.getElementById('apiTdx').className='api-status api-warn';
+
+// Count lines
+fetch('/js/app.js').then(r=>r.text()).then(t=>{
+  var lines=t.split('\n').length;
+  fetch('/dash.html').then(r=>r.text()).then(h=>{
+    lines+=h.split('\n').length;
+    document.getElementById('sLines').textContent=Math.round(lines/100)/10+'k';
+  });
+});
+
+// Konami code
+var k=[],seq='38,38,40,40,37,39,37,39,66,65';
+document.addEventListener('keydown',function(e){
+  k.push(e.keyCode);if(k.length>10)k.shift();
+  if(k.join(',')===seq){document.getElementById('konami').style.display='block';document.body.style.background='#0a0a2e'}
+});
+</script>
+</body>
+</html>
