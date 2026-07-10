@@ -2,8 +2,7 @@
 
 var DASH_BLOCKS = {
   readiness: { label: 'Readiness Pulse', icon: '🟠', default: true },
-  today:    { label: 'Today', icon: '🔵', default: true },
-  tomorrow: { label: 'Tomorrow', icon: '🟣', default: true },
+  today:    { label: 'Today + Tomorrow', icon: '🔵', default: true },
   week:     { label: 'This Week', icon: '🟢', default: true },
   quality:  { label: 'Quality & Ops', icon: '🟡', default: true }
 };
@@ -11,7 +10,15 @@ var DASH_BLOCKS = {
 function loadBlockPrefs() {
   try {
     var saved = JSON.parse(localStorage.getItem('dash_blocks'));
-    if (saved) return saved;
+    if (saved) {
+      // If saved prefs don't include newer blocks, add defaults
+      var updated = false;
+      Object.keys(DASH_BLOCKS).forEach(function(k) {
+        if (saved[k] === undefined) { saved[k] = DASH_BLOCKS[k].default; updated = true; }
+      });
+      if (updated) saveBlockPrefs(saved);
+      return saved;
+    }
   } catch(e) {}
   var defaults = {};
   Object.keys(DASH_BLOCKS).forEach(function(k) { defaults[k] = DASH_BLOCKS[k].default; });

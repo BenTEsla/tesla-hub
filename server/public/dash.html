@@ -256,42 +256,50 @@
       <div id="dashPulseAlerts" style="display:none"></div>
     </div>
 
-    <!-- BLOCK: TODAY -->
+    <!-- BLOCK: TODAY + TOMORROW (compact) -->
     <div id="dashBlock_today" style="margin-bottom:24px">
-      <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Today
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px">
-        <div class="dash-card" onclick="NAVTODAY()" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashDeliveries">-</div><div class="dash-card-sub" id="dashDeliveriesSub"></div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashOnSite">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashInTransit">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashInWash">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">Finished Goods</div><div class="dash-card-value dash-green" id="dashReady">-</div></div>
-      </div>
-    </div>
-
-    <!-- BLOCK: TOMORROW -->
-    <div id="dashBlock_tomorrow" style="margin-bottom:24px">
-      <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a855f7;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span> Tomorrow
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px">
-        <div class="dash-card" onclick="NAVTOMORROW()" style="cursor:pointer;min-height:100px"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashTmrwDeliveries">-</div><div class="dash-card-sub" id="dashTmrwSub"></div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashTmrwOnSite">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashTmrwInTransit">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashTmrwInWash">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">Finished Goods</div><div class="dash-card-value dash-green" id="dashTmrwFG">-</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- TODAY -->
+        <div>
+          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Today
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <div class="dash-card dash-card-sm" onclick="NAVTODAY()" style="cursor:pointer"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashDeliveries">-</div><div class="dash-card-sub" id="dashDeliveriesSub"></div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashOnSite">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashInTransit">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashInWash">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">Finished Goods</div><div class="dash-card-value dash-green" id="dashReady">-</div></div>
+          </div>
+        </div>
+        <!-- TOMORROW -->
+        <div>
+          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a855f7;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#a855f7;display:inline-block"></span> Tomorrow
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <div class="dash-card dash-card-sm" onclick="NAVTOMORROW()" style="cursor:pointer"><div class="dash-card-label">Deliveries</div><div class="dash-card-value" id="dashTmrwDeliveries">-</div><div class="dash-card-sub" id="dashTmrwSub"></div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">On Site</div><div class="dash-card-value dash-green" id="dashTmrwOnSite">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">In Transit</div><div class="dash-card-value dash-yellow" id="dashTmrwInTransit">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">In Wash</div><div class="dash-card-value dash-blue" id="dashTmrwInWash">-</div></div>
+            <div class="dash-card dash-card-sm"><div class="dash-card-label">Finished Goods</div><div class="dash-card-value dash-green" id="dashTmrwFG">-</div></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- BLOCK: THIS WEEK -->
     <div id="dashBlock_week" style="margin-bottom:24px">
-      <div style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#22c55e;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span> This Week
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#22c55e;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block"></span> This Week
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 3fr;gap:10px">
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">Weekly Target</div><div class="dash-card-value" id="dashWeeklyTarget" style="cursor:pointer" onclick="var v=prompt('Weekly target:',this.textContent);if(v){this.textContent=v;localStorage.setItem('dashWeeklyTarget',v)}">-</div></div>
-        <div class="dash-card" style="min-height:100px"><div class="dash-card-label">Not Ready</div><div class="dash-card-value dash-red" id="dashNotReady">-</div><div class="dash-card-sub" id="dashNotReadySub"></div></div>
+      <div style="display:grid;grid-template-columns:1fr 3fr;gap:10px">
+        <div class="dash-card" style="min-height:100px;padding:16px">
+          <div class="dash-card-label">Weekly Target</div>
+          <div class="dash-card-value" id="dashWeeklyTarget" style="cursor:pointer;font-size:32px" onclick="var v=prompt('Weekly target:',this.textContent);if(v){this.textContent=v;localStorage.setItem('dashWeeklyTarget',v)}">-</div>
+          <div id="dashWeekProgress" style="width:100%;margin-top:10px"></div>
+          <div class="dash-card-sub" id="dashWeekProgressSub"></div>
+        </div>
         <div class="dash-chart-card" onclick="NAV(2,document.querySelector('[data-tooltip=&quot;Arrivals&quot;]'))" style="cursor:pointer"><div class="dash-chart-title">Arrivals This Week</div><div class="dash-bar-chart" id="dashArrChart"></div></div>
       </div>
     </div>

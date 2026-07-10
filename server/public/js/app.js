@@ -3123,6 +3123,17 @@ function LOADDASH() {
       upd.textContent = 'Updated ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       upd.style.color = '#52525b';
     }
+
+    // Grey out zero-value cards
+    setTimeout(function() {
+      document.querySelectorAll('#dashView .dash-card').forEach(function(card) {
+        var val = card.querySelector('.dash-card-value');
+        if (!val) return;
+        var txt = (val.textContent || '').trim();
+        var isZero = txt === '0' || txt === '-' || txt === '0%';
+        card.classList.toggle('dash-zero', isZero);
+      });
+    }, 500);
   }).catch(function() {});
 
   // 1. Load today's deliveries
@@ -3139,9 +3150,25 @@ function LOADDASH() {
     var dEl = document.getElementById("dashDeliveries"); if (dEl) dEl.textContent = total;
     var dSub = document.getElementById("dashDeliveriesSub"); if (dSub) dSub.textContent = delivered + " delivered";
     var rEl = document.getElementById("dashReady"); if (rEl) rEl.textContent = fg;
-    // dashReadySub removed
     var nrEl = document.getElementById("dashNotReady"); if (nrEl && nrEl.textContent === '-') nrEl.textContent = notReady;
     var nrSub = document.getElementById("dashNotReadySub"); if (nrSub && !nrSub.textContent) nrSub.textContent = "not ready";
+
+    // Weekly progress bar: delivered today contributes to weekly target
+    var progressEl = document.getElementById('dashWeekProgress');
+    var progressSub = document.getElementById('dashWeekProgressSub');
+    var targetEl = document.getElementById('dashWeeklyTarget');
+    if (progressEl && targetEl) {
+      var target = parseInt(targetEl.textContent) || 0;
+      if (target > 0) {
+        var pct = Math.min(Math.round(delivered / target * 100), 100);
+        var col = pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+        progressEl.innerHTML = '<div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + col + ';border-radius:3px;transition:width .5s"></div></div>';
+        if (progressSub) progressSub.textContent = delivered + ' / ' + target + ' delivered (' + pct + '%)';
+      } else {
+        progressEl.innerHTML = '';
+        if (progressSub) progressSub.textContent = 'click to set target';
+      }
+    }
 
     // Schedule removed - use Calendar
   }).catch(function(e) {
