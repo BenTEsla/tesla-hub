@@ -2668,105 +2668,179 @@ async function checkDeliveries() {
   try {
     const h = { 'Authorization': 'Bearer ' + tokens.dro, 'Content-Type': 'application/json', 'userid': tokens.userId || '', 'role': 'Customer Experience Specialist, Delivery' };
     const hub = config.hubs[config.defaultHub];
+    const LOW_CHARGE_THRESHOLD = 50;
+    const LOW_SCORE_THRESHOLD = 70;
 
-    // Fetch today + tomorrow deliveries
+    // Fetch today + tomorrow via Customer Dashboard (location-filtered) + Advisor enrich
     const today = new Date();
     const tomorrow = new Date(Date.now() + 86400000);
     const dates = [today, tomorrow].map(d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
-    const LOW_CHARGE_THRESHOLD = 50;
+
+    const scoreOf = (d) => {
+      let s = 0;
+      if (d.AmountDueActionStatus === 'Yes' || d.FinalPaymentGate === 'Complete') s += 25;
+      if (d.LicensePlate && d.LicensePlate.indexOf('-') >= 0) s += 20;
+      if (d.InsuranceGate === 'Complete' || d.InsuranceGate === 'Verified' || d.InsuranceActionStatus === 'COMPLETE') s += 15;
+      const vs = d.VehicleStage || '';
+      if (vs === 'Finished Goods' || vs.indexOf('Arrived') >= 0 || vs.indexOf('service center') >= 0 || vs.indexOf('Deliverable') >= 0) s += 25;
+      if (!(d.IsContainmentHold || d.IsRepairOrderHold || d.ServiceVisitGate === 'Incomplete')) s += 10;
+      s += 5; // trade-in default OK
+      return s;
+    };
 
     for (const date of dates) {
-      const r = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
-        method: 'POST', headers: h,
-        body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ScheduledDeliveryDate: date, TrtIds: [hub.trtId], Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
-      });
-      if (!r.ok) continue;
-      const j = await r.json();
-      const deliveries = (j.Data && j.Data.Dashboard) || [];
       const isToday = date === dates[0];
+      const isTomorrow = date === dates[1];
 
-      // Low-charge check only for today (limit API load)
+      // 1) Customer Dashboard = location-filtered source of truth
+      let rns = [];
+      const custMap = {};
+      try {
+        const custR = await fetch(config.apis.dro + '/deliveryops/Customers/Dashboard', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({
+            fromDeliveryDate: date, trtId: hub.trtId, customerHasNoHost: false,
+            skip: 0, take: 200, fromTime: '00:00', toTime: '23:59',
+            countryCode: hub.country || 'FR', onlyMyLocation: true,
+            sort: {}, stage: [], status: [], deliveryType: [], paperwork: [],
+            customerDeliveryStatus: [], inboundStatus: [], VehicleTypes: [],
+            pdcFilter: [], dmvDocumentStages: []
+          })
+        });
+        if (!custR.ok) continue;
+        const custJ = await custR.json();
+        (custJ.Data || []).forEach(c => { if (c.ReferenceNumber) { rns.push(c.ReferenceNumber); custMap[c.ReferenceNumber] = c; } });
+      } catch (e) { continue; }
+      if (!rns.length) continue;
+
+      // 2) Advisor enrich
+      const advMap = {};
+      try {
+        const advR = await fetch(config.apis.dro + '/advisor/Dashboard?isSidePanelFullScreen=true', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ condition: 'and', rules: [{ condition: 'and', ReferenceNumbers: rns, Countries: [] }], Skip: 0, Take: 200, SortOrder: [], SelectedColumns: [] })
+        });
+        if (advR.ok) {
+          const advJ = await advR.json();
+          ((advJ.Data && advJ.Data.Dashboard) || []).forEach(a => { advMap[a.ReferenceNumber] = a; });
+        }
+      } catch (e) {}
+
+      // 3) Low-charge check (today only)
       if (isToday) {
-        const chargeTargets = deliveries.filter(d => !d.IsDelivered && d.Vin && d.ReferenceNumber).slice(0, 20);
+        const chargeTargets = rns.filter(rn => {
+          const a = advMap[rn] || {};
+          return !a.IsDelivered && (a.Vin || (custMap[rn] || {}).Vin);
+        }).slice(0, 20);
         for (let i = 0; i < chargeTargets.length; i += 5) {
           const chunk = chargeTargets.slice(i, i + 5);
-          await Promise.all(chunk.map(async (d) => {
+          await Promise.all(chunk.map(async (rn) => {
             try {
-              const cr = await fetch(config.apis.dro + '/widget/overview/' + d.ReferenceNumber + '/info?vin=' + d.Vin, { headers: h });
+              const a = advMap[rn] || {};
+              const vin = a.Vin || (custMap[rn] || {}).Vin;
+              if (!vin) return;
+              const cr = await fetch(config.apis.dro + '/widget/overview/' + rn + '/info?vin=' + vin, { headers: h });
               const cj = await cr.json();
               const charge = cj.Data && cj.Data.VinCharge != null ? parseInt(cj.Data.VinCharge) : null;
               if (charge == null) return;
-              const prev = watchState[d.ReferenceNumber] || {};
+              const prev = watchState[rn] || {};
               const wasLow = !!prev.lowCharge;
               const isLow = charge < LOW_CHARGE_THRESHOLD;
               if (isLow && !wasLow) {
-                addNotif('charge', 'Low charge: ' + (d.CustomerName || d.ReferenceNumber), d.ReferenceNumber + ' — ' + charge + '% (' + (d.VehicleModel || '') + ')', charge < 30 ? 'high' : 'medium');
+                addNotif('charge', 'Low charge: ' + (a.CustomerName || rn), rn + ' — ' + charge + '% (' + (a.VehicleModel || '') + ')', charge < 30 ? 'high' : 'medium');
               }
-              // store charge for next cycle
-              watchState[d.ReferenceNumber] = Object.assign({}, prev, {
-                charge,
-                lowCharge: isLow,
-                lastSeen: new Date().toISOString()
-              });
+              watchState[rn] = Object.assign({}, prev, { charge, lowCharge: isLow, lastSeen: new Date().toISOString() });
             } catch (e) {}
           }));
         }
       }
 
-      deliveries.forEach(d => {
-        const rn = d.ReferenceNumber;
-        if (!rn) return;
-        // Skip delivered or obviously wrong entries
-        if (d.IsDelivered) return;
-        if (d.DeliveryLocation && !d.DeliveryLocation.includes(hub.location.split('-').slice(0,3).join('-'))) return;
+      // 4) Per-delivery checks
+      const dayLabel = isToday ? "aujourd'hui" : 'demain';
+      rns.forEach(rn => {
+        const c = custMap[rn] || {};
+        const d = advMap[rn] || {};
+        const delivered = !!(d.IsDelivered || c.CustomerDeliveryStatus === 'Delivered' || c.CustomerDeliveryStatus === 'Complete');
+        if (delivered) return;
 
         const prev = watchState[rn] || {};
-        const dayLabel = isToday ? "aujourd'hui" : 'demain';
+        const vs = String(d.VehicleStage || c.VehicleStage || '');
 
-        // 1. PUSHBACK: SDD changed to a later date
+        // PUSHBACK
         if (prev.sdd && d.ScheduledDeliveryDate && prev.sdd !== d.ScheduledDeliveryDate) {
           const oldDate = new Date(prev.sdd);
           const newDate = new Date(d.ScheduledDeliveryDate);
           if (newDate > oldDate) {
-            addNotif('pushback', 'Pushback: ' + (d.CustomerName || rn), rn + ' repoussé du ' + oldDate.toLocaleDateString('fr-FR') + ' au ' + newDate.toLocaleDateString('fr-FR'), 'high');
+            addNotif('pushback', 'Pushback: ' + (d.CustomerName || c.CustomerName || rn), rn + ' repoussé du ' + oldDate.toLocaleDateString('fr-FR') + ' au ' + newDate.toLocaleDateString('fr-FR'), 'high');
           }
         }
 
-        // 2. NEW HOLD: containment or repair hold appeared
-        const hasHold = !!(d.IsContainmentHold || d.IsRepairOrderHold);
+        // NEW HOLD
+        const hasHold = !!(d.IsContainmentHold || d.IsRepairOrderHold || c.IsContainmentHold || c.IsRepairOrderHold);
         if (hasHold && !prev.hold) {
-          const holdType = d.IsContainmentHold ? 'Containment' : 'Repair Order';
-          addNotif('hold', 'New Hold: ' + (d.CustomerName || rn), rn + ' — ' + holdType + ' hold (' + dayLabel + ')', 'high');
+          const holdType = d.IsContainmentHold || c.IsContainmentHold ? 'Containment' : 'Repair Order';
+          addNotif('hold', 'New Hold: ' + (d.CustomerName || c.CustomerName || rn), rn + ' — ' + holdType + ' hold (' + dayLabel + ')', 'high');
         }
 
-        // 3. HOLD RESOLVED
+        // HOLD RESOLVED
         if (!hasHold && prev.hold) {
-          addNotif('hold_resolved', 'Hold Resolved: ' + (d.CustomerName || rn), rn + ' — hold levé (' + dayLabel + ')', 'medium');
+          addNotif('hold_resolved', 'Hold Resolved: ' + (d.CustomerName || c.CustomerName || rn), rn + ' — hold levé (' + dayLabel + ')', 'medium');
         }
 
-        // 4. VEHICLE READY: moved to Finished Goods
-        const vs = String(d.VehicleStage || '');
+        // VEHICLE READY
         const isFG = vs === 'Finished Goods' || vs.indexOf('Deliverable') >= 0;
         if (isFG && prev.vs && !['Finished Goods'].includes(prev.vs) && prev.vs.indexOf('Deliverable') < 0) {
-          addNotif('vehicle_ready', 'Vehicle Ready: ' + (d.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' prêt (' + dayLabel + ')', 'medium');
+          addNotif('vehicle_ready', 'Vehicle Ready: ' + (d.CustomerName || c.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' prêt (' + dayLabel + ')', 'medium');
         }
 
-        // 5. NEW DELIVERY: RN not seen before for this date
-        if (!prev.sdd && d.ScheduledDeliveryDate) {
-          addNotif('new_delivery', 'New Delivery: ' + (d.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' ajouté ' + dayLabel, 'low');
+        // NEW DELIVERY
+        if (!prev.sdd && (d.ScheduledDeliveryDate || date)) {
+          addNotif('new_delivery', 'New Delivery: ' + (d.CustomerName || c.CustomerName || rn), rn + ' — ' + (d.VehicleModel || '') + ' ajouté ' + dayLabel, 'low');
         }
 
-        // Update state (preserve charge fields if set)
-        watchState[rn] = {
-          sdd: d.ScheduledDeliveryDate || prev.sdd,
-          vs: vs || prev.vs,
-          hold: hasHold,
-          name: d.CustomerName || prev.name,
-          model: d.VehicleModel || prev.model,
-          charge: prev.charge,
-          lowCharge: prev.lowCharge,
-          lastSeen: new Date().toISOString()
-        };
+        // 5) LOW SCORE for TOMORROW (veille alert)
+        if (isTomorrow) {
+          const merged = Object.assign({}, c, d); // d (advisor) overrides c (customer)
+          const score = scoreOf(merged);
+          const wasLowScore = !!prev.lowScoreAlerted;
+          const isLowScore = score < LOW_SCORE_THRESHOLD;
+          if (isLowScore && !wasLowScore) {
+            const issues = [];
+            if (!(merged.AmountDueActionStatus === 'Yes' || merged.FinalPaymentGate === 'Complete')) issues.push('Payment');
+            if (!(merged.LicensePlate && merged.LicensePlate.indexOf('-') >= 0)) issues.push('Reg');
+            if (!(merged.InsuranceGate === 'Complete' || merged.InsuranceGate === 'Verified' || merged.InsuranceActionStatus === 'COMPLETE')) issues.push('Insurance');
+            const vsCheck = merged.VehicleStage || '';
+            if (!(vsCheck === 'Finished Goods' || vsCheck.indexOf('Arrived') >= 0 || vsCheck.indexOf('Deliverable') >= 0)) issues.push('Vehicle');
+            if (hasHold) issues.push('HOLD');
+            addNotif('low_score', 'Low score demain: ' + (d.CustomerName || c.CustomerName || rn),
+              rn + ' — score ' + score + ' (' + issues.join(', ') + ')',
+              score < 50 ? 'high' : 'medium');
+          }
+          watchState[rn] = Object.assign({}, prev, {
+            sdd: d.ScheduledDeliveryDate || date || prev.sdd,
+            vs: vs || prev.vs,
+            hold: hasHold,
+            name: d.CustomerName || c.CustomerName || prev.name,
+            model: d.VehicleModel || prev.model,
+            charge: prev.charge,
+            lowCharge: prev.lowCharge,
+            lowScoreAlerted: isLowScore,
+            score: score,
+            lastSeen: new Date().toISOString()
+          });
+        } else {
+          // Today: update state without low-score alert
+          watchState[rn] = Object.assign({}, prev, {
+            sdd: d.ScheduledDeliveryDate || date || prev.sdd,
+            vs: vs || prev.vs,
+            hold: hasHold,
+            name: d.CustomerName || c.CustomerName || prev.name,
+            model: d.VehicleModel || prev.model,
+            charge: prev.charge,
+            lowCharge: prev.lowCharge,
+            lastSeen: new Date().toISOString()
+          });
+        }
       });
     }
 
@@ -2783,6 +2857,6 @@ function startDeliveryWatcher() {
     checkDeliveries();
     // Then every 5 minutes
     setInterval(checkDeliveries, WATCH_INTERVAL);
-    console.log('  Watcher:    Active (every 5 min) — pushback, holds, vehicle ready, low charge');
+    console.log('  Watcher:    Active (every 5 min) — pushback, holds, vehicle ready, low charge, low score (tomorrow)');
   }, 30000);
 }

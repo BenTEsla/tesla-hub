@@ -308,7 +308,7 @@ function LOADNOTIFS() {
     if (!notifs.length) { list.innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:13px">No notifications</div>'; return; }
     var isDark = !document.getElementById('lightThemeCSS');
     var html = '';
-    var icons = { hold: '🔴', ready: '🟢', payment: '🔵', scan: '🟣', pushback: '⚡', duebill: '📋', info: 'ℹ️', charge: '🔋', vehicle_ready: '🟢', hold_resolved: '✅', new_delivery: '🆕', car_command: '🚨' };
+    var icons = { hold: '🔴', ready: '🟢', payment: '🔵', scan: '🟣', pushback: '⚡', duebill: '📋', info: 'ℹ️', charge: '🔋', vehicle_ready: '🟢', hold_resolved: '✅', new_delivery: '🆕', car_command: '🚨', low_score: '⚠️' };
     notifs.forEach(function(n) {
       var icon = icons[n.type] || '🔔';
       var ago = Math.round((Date.now() - new Date(n.time).getTime()) / 60000);
