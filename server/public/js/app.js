@@ -3684,7 +3684,6 @@ function UPDATESTATUS(rn, status, selEl, dateStr, vin) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customer: customer,
-        startDateTime: appt.startDateTime || appt.appointmentDate,
         trtId: CFG.trtId,
         appointmentType: appt.appointmentType || 'CustomerPickup',
         appointmentStatus: status,
