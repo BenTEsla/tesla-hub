@@ -338,9 +338,53 @@ setInterval(function() {
   fetch(SERVER + '/api/notifications').then(function(r) { return r.json(); }).then(function(notifs) {
     var unread = notifs.filter(function(n) { return !n.read; }).length;
     var badge = document.getElementById('notifBadge');
-    if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+    if (badge) {
+      badge.textContent = unread;
+      badge.style.display = unread > 0 ? '' : 'none';
+      // Pulse animation on new notifs
+      if (unread > 0 && badge.dataset.prev !== String(unread)) {
+        badge.style.animation = 'none';
+        badge.offsetHeight; // reflow
+        badge.style.animation = 'pulse .6s ease';
+      }
+      badge.dataset.prev = String(unread);
+    }
   }).catch(function() {});
 }, 120000);
+
+// Auto-refresh Dashboard home every 2 minutes (only when visible)
+var _dashAutoTimer = null;
+var _currentNavIdx = 0;
+function startDashAutoRefresh() {
+  if (_dashAutoTimer) return;
+  _dashAutoTimer = setInterval(function() {
+    if (_currentNavIdx !== 0) return; // only refresh when on dashboard
+    if (document.hidden) return; // skip if tab not visible
+    // Subtle refresh: update data without full page flash
+    var upd = document.getElementById('dashLastUpdated');
+    if (upd) { upd.textContent = 'Refreshing...'; upd.style.color = '#3b82f6'; }
+    LOADDASH();
+    setTimeout(function() {
+      if (upd) {
+        var now = new Date();
+        upd.textContent = 'Updated ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        upd.style.color = '#52525b';
+      }
+    }, 3000);
+  }, 120000); // 2 min
+}
+// Start on first load
+setTimeout(startDashAutoRefresh, 5000);
+// Pause when tab hidden, resume when visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    if (_dashAutoTimer) { clearInterval(_dashAutoTimer); _dashAutoTimer = null; }
+  } else {
+    startDashAutoRefresh();
+    // Immediate refresh on tab return if on dashboard
+    if (_currentNavIdx === 0 && typeof LOADDASH === 'function') LOADDASH();
+  }
+});
 
 function NAVTOMORROW() {
   _calWeekOffset = 0;
@@ -1712,6 +1756,7 @@ function NAV(idx, el) {
    SWITCH TAB: show/hide views
    ============================================ */
 function STAB(idx, btn) {
+  _currentNavIdx = idx;
   document.querySelectorAll(".tab").forEach(function(t) {
     t.classList.remove("on");
   });
@@ -2995,6 +3040,9 @@ function LOADDASH() {
   var ds = new Date();
   var today = ds.getFullYear() + '-' + String(ds.getMonth()+1).padStart(2,'0') + '-' + String(ds.getDate()).padStart(2,'0');
 
+  // Track last update timestamp
+  var _dashLoadStart = Date.now();
+
   // 0. Readiness Pulse from standup API (score, holds, low charge)
   fetch(SERVER + '/api/standup').then(function(r) { return r.json(); }).then(function(j) {
     if (j.error) return;
@@ -3067,6 +3115,14 @@ function LOADDASH() {
     if (weekNr && t.notReady != null) weekNr.textContent = t.notReady;
     var weekNrSub = document.getElementById('dashNotReadySub');
     if (weekNrSub && t.notReady != null) weekNrSub.textContent = 'today not ready';
+
+    // Update timestamp
+    var upd = document.getElementById('dashLastUpdated');
+    if (upd) {
+      var now = new Date();
+      upd.textContent = 'Updated ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      upd.style.color = '#52525b';
+    }
   }).catch(function() {});
 
   // 1. Load today's deliveries
